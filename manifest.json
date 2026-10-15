@@ -1,0 +1,26 @@
+{
+  "name": "Insight — Personal Wealth & Portfolio Analytics",
+  "short_name": "Insight",
+  "description": "High-craft personal net worth, savings tracking, and portfolio allocation analytics.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#030509",
+  "theme_color": "#030509",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
