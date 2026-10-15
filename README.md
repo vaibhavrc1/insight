@@ -10,7 +10,7 @@ This repository serves the standalone Progressive Web App wrapper for **Insight 
 2. In your terminal inside this folder (`insight-pwa`), link and push:
    ```bash
    git branch -M main
-   git remote add origin https://github.com/VaibhavChavan1998/insight.git
+   git remote add origin https://github.com/vaibhavrc1/insight.git
    git push -u origin main
    ```
 
@@ -20,7 +20,7 @@ This repository serves the standalone Progressive Web App wrapper for **Insight 
    * Click **Save**.
 
 4. Your live PWA URL will be:
-   👉 **`https://vaibhavchavan1998.github.io/insight/`**
+   👉 **`https://vaibhavrc1.github.io/insight/`**
 
 ### Opening in Chrome on Android:
 * Open `https://vaibhavchavan1998.github.io/insight/` in Chrome.
