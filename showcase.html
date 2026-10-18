@@ -273,7 +273,7 @@
 
     <!-- 5 Concept Selector Tabs -->
     <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6">
-      <button class="argon-tab active" onclick="setConcept(1)" id="tab-1">
+      <button class="argon-tab" onclick="setConcept(1)" id="tab-1">
         <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#38BDF8]"></span>
         <span>1. Perimeter Laser Aura</span>
       </button>
@@ -289,9 +289,9 @@
         <span class="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_#C084FC]"></span>
         <span>4. Sub-Surface Aurora Wash</span>
       </button>
-      <button class="argon-tab" onclick="setConcept(5)" id="tab-5">
+      <button class="argon-tab active" onclick="setConcept(5)" id="tab-5">
         <span class="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_#FB7185]"></span>
-        <span>5. Specular Foil Matrix</span>
+        <span>5. Specular Foil Matrix ★</span>
       </button>
     </div>
   </div>
@@ -493,7 +493,7 @@
   </div>
 
   <script>
-    var ACTIVE_ID = 1;
+    var ACTIVE_ID = 5;
     var isDragging = false;
     var startY = 0;
     var currentRawY = 0;
