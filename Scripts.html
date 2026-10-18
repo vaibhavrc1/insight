@@ -254,14 +254,18 @@
     if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
 
-    // 3. Two-Screen Concurrent Kinetic Card Stagger with Holographic Foil
+    // 3. Two-Screen Concurrent Kinetic Card Stagger with Continuous Holographic Dissipation
     var prevView = document.getElementById('view-' + prevViewId);
     var nextView = document.getElementById('view-' + viewId);
 
-    // Reset any ongoing tab hologram timers and clear previous hologram attributes
-    if (TAB_HOLOGRAM_FADE_TIMER) { clearTimeout(TAB_HOLOGRAM_FADE_TIMER); TAB_HOLOGRAM_FADE_TIMER = null; }
-    if (TAB_HOLOGRAM_CLEANUP_TIMER) { clearTimeout(TAB_HOLOGRAM_CLEANUP_TIMER); TAB_HOLOGRAM_CLEANUP_TIMER = null; }
+    // Cancel any previous hologram cleanup timer
+    if (TAB_HOLOGRAM_CLEANUP_TIMER) {
+      clearTimeout(TAB_HOLOGRAM_CLEANUP_TIMER);
+      TAB_HOLOGRAM_CLEANUP_TIMER = null;
+    }
+    // Remove tab-hologram-landing from all sections
     document.querySelectorAll('.view-section').forEach(function(el) {
+      el.classList.remove('tab-hologram-landing');
       el.removeAttribute('data-tab-hologram');
     });
 
@@ -276,27 +280,16 @@
       var inClass = isForward ? 'stagger-in-right' : 'stagger-in-left';
 
       prevView.className = 'view-section active ' + outClass;
-      nextView.className = 'view-section active ' + inClass;
-
-      // Activate specular hologram effect on the incoming view's cards as they cascade in
-      nextView.setAttribute('data-tab-hologram', 'active');
-
-      // Once cards finish their cascade settle (620ms), trigger graceful optical dissipation
-      TAB_HOLOGRAM_FADE_TIMER = setTimeout(function() {
-        if (nextView) nextView.setAttribute('data-tab-hologram', 'fading');
-      }, 620);
-
-      // Cleanly remove attribute after smooth 0.58s fade completes
-      TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
-        if (nextView) nextView.removeAttribute('data-tab-hologram');
-      }, 1250);
+      // Incoming view starts its kinetic stagger AND begins the continuous 2.4s holographic dissolve
+      nextView.className = 'view-section active ' + inClass + ' tab-hologram-landing';
 
       var finished = false;
       function finalize() {
         if (finished) return;
         finished = true;
         prevView.className = 'view-section'; // Unmount outgoing view
-        nextView.className = 'view-section active'; // Keep target view active
+        // Keep target view active AND preserve tab-hologram-landing so its continuous CSS dissolve runs uninterrupted!
+        nextView.className = 'view-section active tab-hologram-landing';
         prevView.classList.remove('stagger-out-left', 'stagger-out-right', 'active');
         nextView.classList.remove('stagger-in-right', 'stagger-in-left');
         Array.from(nextView.children).forEach(function(c) { c.style.animation = ''; });
@@ -312,6 +305,11 @@
       } else {
         setTimeout(finalize, 550);
       }
+
+      // After 2.4s continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
+      TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
+        if (nextView) nextView.classList.remove('tab-hologram-landing');
+      }, 2600);
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
       nextView.classList.add('active');

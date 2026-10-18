@@ -570,6 +570,95 @@
     100% { transform: translateX(0); opacity: 1; }
   }
 
+  /* =========================================================================
+     INCOMING CARD HOLOGRAPHIC FOIL DISSIPATION SYSTEM (Smooth & Continuous)
+     - 0% to 18%: Luminous emergence with card entrance
+     - 18% to 50%: Luminous specular hold while cards settle
+     - 50% to 100%: Long, graceful optical dissipation down to zero (zero abrupt snap)
+     ========================================================================= */
+  .view-section.tab-hologram-landing .liquid-slab::before,
+  .view-section.tab-hologram-landing .pillar-card::before,
+  .view-section.tab-hologram-landing .brand-orb::before,
+  .view-section.tab-hologram-landing .pillar-icon::before,
+  .view-section.tab-hologram-landing .btn-emissive::before,
+  .view-section.tab-hologram-landing .btn-subtle::before,
+  .view-section.tab-hologram-landing .btn-action-icon::before,
+  .view-section.tab-hologram-landing .pillar-bar-fill::before,
+  .view-section.tab-hologram-landing .glow-badge::before,
+  .view-section.tab-hologram-landing .note-pill::before,
+  .view-section.tab-hologram-landing .slider-group::before,
+  .view-section.tab-hologram-landing .history-actions-row::before,
+  .view-section.tab-hologram-landing .yearly-card-stats::before,
+  .view-section.tab-hologram-landing hr::after,
+  .view-section.tab-hologram-landing .horizontal-ruler::after,
+  .view-section.tab-hologram-landing .line-breaker::after {
+    opacity: 0;
+    animation: tabHologramDissolve 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  /* Synchronized stagger delays matching each incoming card */
+  .view-section.tab-hologram-landing > *:nth-child(1) *::before,
+  .view-section.tab-hologram-landing > *:nth-child(1)::before,
+  .view-section.tab-hologram-landing > *:nth-child(1) *::after,
+  .view-section.tab-hologram-landing > *:nth-child(1)::after {
+    animation-delay: 0ms !important;
+  }
+  .view-section.tab-hologram-landing > *:nth-child(2) *::before,
+  .view-section.tab-hologram-landing > *:nth-child(2)::before,
+  .view-section.tab-hologram-landing > *:nth-child(2) *::after,
+  .view-section.tab-hologram-landing > *:nth-child(2)::after {
+    animation-delay: 60ms !important;
+  }
+  .view-section.tab-hologram-landing > *:nth-child(3) *::before,
+  .view-section.tab-hologram-landing > *:nth-child(3)::before,
+  .view-section.tab-hologram-landing > *:nth-child(3) *::after,
+  .view-section.tab-hologram-landing > *:nth-child(3)::after {
+    animation-delay: 120ms !important;
+  }
+  .view-section.tab-hologram-landing > *:nth-child(4) *::before,
+  .view-section.tab-hologram-landing > *:nth-child(4)::before,
+  .view-section.tab-hologram-landing > *:nth-child(4) *::after,
+  .view-section.tab-hologram-landing > *:nth-child(4)::after {
+    animation-delay: 180ms !important;
+  }
+  .view-section.tab-hologram-landing > *:nth-child(n+5) *::before,
+  .view-section.tab-hologram-landing > *:nth-child(n+5)::before,
+  .view-section.tab-hologram-landing > *:nth-child(n+5) *::after,
+  .view-section.tab-hologram-landing > *:nth-child(n+5)::after {
+    animation-delay: 240ms !important;
+  }
+
+  @keyframes tabHologramDissolve {
+    0% {
+      opacity: 0;
+      filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.4));
+    }
+    18% {
+      opacity: 1;
+      filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 22px rgba(52, 211, 153, 0.8));
+    }
+    38% {
+      opacity: 0.95;
+      filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.85)) drop-shadow(0 0 18px rgba(56, 189, 248, 0.75));
+    }
+    55% {
+      opacity: 0.85;
+      filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.7)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.6));
+    }
+    75% {
+      opacity: 0.42;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
+    }
+    90% {
+      opacity: 0.15;
+      filter: drop-shadow(0 0 3px rgba(52, 211, 153, 0.2));
+    }
+    100% {
+      opacity: 0;
+      filter: drop-shadow(0 0 0 transparent);
+    }
+  }
+
   /* ==========================================================================
      8. DASHBOARD CARDS, BADGES & BENTO GRIDS
      ========================================================================== */
@@ -2985,52 +3074,36 @@
 
   body[data-ptr-state="syncing"] .liquid-slab::before,
   body[data-hologram-active="true"] .liquid-slab::before,
-  .view-section[data-tab-hologram="active"] .liquid-slab::before,
   body[data-ptr-state="syncing"] .pillar-card::before,
   body[data-hologram-active="true"] .pillar-card::before,
-  .view-section[data-tab-hologram="active"] .pillar-card::before,
   body[data-ptr-state="syncing"] .brand-orb::before,
   body[data-hologram-active="true"] .brand-orb::before,
-  .view-section[data-tab-hologram="active"] .brand-orb::before,
   body[data-ptr-state="syncing"] .pillar-icon::before,
   body[data-hologram-active="true"] .pillar-icon::before,
-  .view-section[data-tab-hologram="active"] .pillar-icon::before,
   body[data-ptr-state="syncing"] .btn-emissive::before,
   body[data-hologram-active="true"] .btn-emissive::before,
-  .view-section[data-tab-hologram="active"] .btn-emissive::before,
   body[data-ptr-state="syncing"] .btn-subtle::before,
   body[data-hologram-active="true"] .btn-subtle::before,
-  .view-section[data-tab-hologram="active"] .btn-subtle::before,
   body[data-ptr-state="syncing"] .btn-action-icon::before,
   body[data-hologram-active="true"] .btn-action-icon::before,
-  .view-section[data-tab-hologram="active"] .btn-action-icon::before,
   body[data-ptr-state="syncing"] .pillar-bar-fill::before,
   body[data-hologram-active="true"] .pillar-bar-fill::before,
-  .view-section[data-tab-hologram="active"] .pillar-bar-fill::before,
   body[data-ptr-state="syncing"] .glow-badge::before,
   body[data-hologram-active="true"] .glow-badge::before,
-  .view-section[data-tab-hologram="active"] .glow-badge::before,
   body[data-ptr-state="syncing"] .note-pill::before,
   body[data-hologram-active="true"] .note-pill::before,
-  .view-section[data-tab-hologram="active"] .note-pill::before,
   body[data-ptr-state="syncing"] .slider-group::before,
   body[data-hologram-active="true"] .slider-group::before,
-  .view-section[data-tab-hologram="active"] .slider-group::before,
   body[data-ptr-state="syncing"] .history-actions-row::before,
   body[data-hologram-active="true"] .history-actions-row::before,
-  .view-section[data-tab-hologram="active"] .history-actions-row::before,
   body[data-ptr-state="syncing"] .yearly-card-stats::before,
   body[data-hologram-active="true"] .yearly-card-stats::before,
-  .view-section[data-tab-hologram="active"] .yearly-card-stats::before,
   body[data-ptr-state="syncing"] hr::after,
   body[data-hologram-active="true"] hr::after,
-  .view-section[data-tab-hologram="active"] hr::after,
   body[data-ptr-state="syncing"] .horizontal-ruler::after,
   body[data-hologram-active="true"] .horizontal-ruler::after,
-  .view-section[data-tab-hologram="active"] .horizontal-ruler::after,
   body[data-ptr-state="syncing"] .line-breaker::after,
   body[data-hologram-active="true"] .line-breaker::after,
-  .view-section[data-tab-hologram="active"] .line-breaker::after,
   body[data-ptr-state="syncing"] .modal-header::after,
   body[data-hologram-active="true"] .modal-header::after,
   body[data-ptr-state="syncing"] .month-detail-header::after,
@@ -3128,37 +3201,21 @@
   body[data-ptr-state="settling"] .nav-well::before,
   body[data-ptr-state="settling"] .segment-well::before,
   body[data-hologram-fade="true"] .liquid-slab::before,
-  .view-section[data-tab-hologram="fading"] .liquid-slab::before,
   body[data-hologram-fade="true"] .pillar-card::before,
-  .view-section[data-tab-hologram="fading"] .pillar-card::before,
   body[data-hologram-fade="true"] .brand-orb::before,
-  .view-section[data-tab-hologram="fading"] .brand-orb::before,
   body[data-hologram-fade="true"] .pillar-icon::before,
-  .view-section[data-tab-hologram="fading"] .pillar-icon::before,
   body[data-hologram-fade="true"] .btn-emissive::before,
-  .view-section[data-tab-hologram="fading"] .btn-emissive::before,
   body[data-hologram-fade="true"] .btn-subtle::before,
-  .view-section[data-tab-hologram="fading"] .btn-subtle::before,
   body[data-hologram-fade="true"] .btn-action-icon::before,
-  .view-section[data-tab-hologram="fading"] .btn-action-icon::before,
   body[data-hologram-fade="true"] .pillar-bar-fill::before,
-  .view-section[data-tab-hologram="fading"] .pillar-bar-fill::before,
   body[data-hologram-fade="true"] .glow-badge::before,
-  .view-section[data-tab-hologram="fading"] .glow-badge::before,
   body[data-hologram-fade="true"] .note-pill::before,
-  .view-section[data-tab-hologram="fading"] .note-pill::before,
   body[data-hologram-fade="true"] .slider-group::before,
-  .view-section[data-tab-hologram="fading"] .slider-group::before,
   body[data-hologram-fade="true"] .history-actions-row::before,
-  .view-section[data-tab-hologram="fading"] .history-actions-row::before,
   body[data-hologram-fade="true"] .yearly-card-stats::before,
-  .view-section[data-tab-hologram="fading"] .yearly-card-stats::before,
   body[data-hologram-fade="true"] hr::after,
-  .view-section[data-tab-hologram="fading"] hr::after,
   body[data-hologram-fade="true"] .horizontal-ruler::after,
-  .view-section[data-tab-hologram="fading"] .horizontal-ruler::after,
   body[data-hologram-fade="true"] .line-breaker::after,
-  .view-section[data-tab-hologram="fading"] .line-breaker::after,
   body[data-hologram-fade="true"] .modal-header::after,
   body[data-hologram-fade="true"] .month-detail-header::after,
   body[data-hologram-fade="true"] .liquid-drilldown-header::after,
@@ -3168,7 +3225,7 @@
   body[data-hologram-fade="true"] .segment-well::before {
     opacity: 0 !important;
     filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.4)) !important;
-    transition: opacity 0.58s cubic-bezier(0.16, 1, 0.3, 1), filter 0.58s ease !important;
+    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1), filter 0.48s ease !important;
     animation: none !important;
   }
 
