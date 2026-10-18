@@ -104,6 +104,8 @@
   var CURRENT_VIEW = 'dashboard';
   var VIEW_ORDER = ['dashboard', 'yearly', 'simulator', 'entry', 'history'];
   var IS_VIEW_TRANSITIONING = false;
+  var VIEW_TRANSITION_TOKEN = 0;
+  var CURRENT_FINALIZE_TIMER = null;
   var TAB_HOLOGRAM_FADE_TIMER = null;
   var TAB_HOLOGRAM_CLEANUP_TIMER = null;
 
@@ -225,7 +227,7 @@
     var pop = document.getElementById('custom-month-popover');
     if (pop) pop.classList.remove('open');
 
-    if (viewId === CURRENT_VIEW) return;
+    if (viewId === CURRENT_VIEW && !IS_VIEW_TRANSITIONING) return;
 
     var prevViewId = CURRENT_VIEW;
     CURRENT_VIEW = viewId;
@@ -254,22 +256,32 @@
     if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
 
-    // 3. Two-Screen Concurrent Kinetic Card Stagger with Continuous Holographic Dissipation
-    var prevView = document.getElementById('view-' + prevViewId);
-    var nextView = document.getElementById('view-' + viewId);
+    // 3. Increment transition token to instantly invalidate any previous in-flight transitions
+    VIEW_TRANSITION_TOKEN++;
+    var thisTransitionToken = VIEW_TRANSITION_TOKEN;
 
-    // Cancel any previous hologram cleanup timer
+    if (CURRENT_FINALIZE_TIMER) {
+      clearTimeout(CURRENT_FINALIZE_TIMER);
+      CURRENT_FINALIZE_TIMER = null;
+    }
     if (TAB_HOLOGRAM_CLEANUP_TIMER) {
       clearTimeout(TAB_HOLOGRAM_CLEANUP_TIMER);
       TAB_HOLOGRAM_CLEANUP_TIMER = null;
     }
-    // Remove tab-hologram-landing from all sections
+
+    var prevView = document.getElementById('view-' + prevViewId);
+    var nextView = document.getElementById('view-' + viewId);
+
+    // Clean up ANY stale views that are NOT nextView and NOT prevView
     document.querySelectorAll('.view-section').forEach(function(el) {
-      el.classList.remove('tab-hologram-landing');
-      el.removeAttribute('data-tab-hologram');
+      if (el !== nextView && el !== prevView) {
+        el.className = 'view-section';
+        el.removeAttribute('data-tab-hologram');
+        Array.from(el.children).forEach(function(c) { c.style.animation = ''; });
+      }
     });
 
-    if (prevView && nextView) {
+    if (prevView && nextView && prevView !== nextView) {
       IS_VIEW_TRANSITIONING = true;
 
       // Clear any previous child styles
@@ -280,15 +292,15 @@
       var inClass = isForward ? 'stagger-in-right' : 'stagger-in-left';
 
       prevView.className = 'view-section active ' + outClass;
-      // Incoming view starts its kinetic stagger AND begins the continuous 2.4s holographic dissolve
       nextView.className = 'view-section active ' + inClass + ' tab-hologram-landing';
 
       var finished = false;
       function finalize() {
         if (finished) return;
+        if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return; // Discard stale transition
         finished = true;
+
         prevView.className = 'view-section'; // Unmount outgoing view
-        // Keep target view active AND preserve tab-hologram-landing so its continuous CSS dissolve runs uninterrupted!
         nextView.className = 'view-section active tab-hologram-landing';
         prevView.classList.remove('stagger-out-left', 'stagger-out-right', 'active');
         nextView.classList.remove('stagger-in-right', 'stagger-in-left');
@@ -298,22 +310,21 @@
         observeRevealItems();
       }
 
-      var lastChild = nextView.lastElementChild;
-      if (lastChild) {
-        lastChild.addEventListener('animationend', finalize, { once: true });
-        setTimeout(finalize, 1600);
-      } else {
-        setTimeout(finalize, 1200);
-      }
+      CURRENT_FINALIZE_TIMER = setTimeout(finalize, 450);
 
-      // After continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
+        if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return;
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 2600);
+      }, 1600);
+
     } else if (nextView) {
-      document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
-      nextView.classList.add('active');
+      document.querySelectorAll('.view-section').forEach(function(el) {
+        el.className = 'view-section';
+        Array.from(el.children).forEach(function(c) { c.style.animation = ''; });
+      });
+      nextView.className = 'view-section active tab-hologram-landing';
       nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
+      IS_VIEW_TRANSITIONING = false;
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
