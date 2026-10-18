@@ -792,30 +792,30 @@
   /* =========================================================================
      KINETIC CARD STAGGER WITH SPECULAR HOLOGRAPHIC FOIL DISSIPATION
      ========================================================================= */
-  /* Outgoing View: Slides smoothly away */
+  /* Outgoing View: Slides smoothly away (2x slower: 0.64s) */
   .view-section.stagger-out-left {
     display: flex !important;
-    animation: viewSlideOutLeft 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation: viewSlideOutLeft 0.64s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     pointer-events: none;
     z-index: 1;
   }
   .view-section.stagger-out-right {
     display: flex !important;
-    animation: viewSlideOutRight 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation: viewSlideOutRight 0.64s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     pointer-events: none;
     z-index: 1;
   }
 
   @keyframes viewSlideOutLeft {
     0% { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(-24px); opacity: 0; }
+    100% { transform: translateX(-32px); opacity: 0; }
   }
   @keyframes viewSlideOutRight {
     0% { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(24px); opacity: 0; }
+    100% { transform: translateX(32px); opacity: 0; }
   }
 
-  /* Incoming View: Cards cascade with refined, snappy micro-staggers */
+  /* Incoming View: Cards cascade with luxurious 2x slower micro-staggers */
   .view-section.stagger-in-right {
     display: flex !important;
     z-index: 2;
@@ -827,24 +827,24 @@
     background: var(--bg-obsidian);
   }
 
-  .view-section.stagger-in-right > *:nth-child(1) { animation: cardStaggerInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
-  .view-section.stagger-in-right > *:nth-child(2) { animation: cardStaggerInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) 35ms both; }
-  .view-section.stagger-in-right > *:nth-child(3) { animation: cardStaggerInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) 70ms both; }
-  .view-section.stagger-in-right > *:nth-child(4) { animation: cardStaggerInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) 105ms both; }
-  .view-section.stagger-in-right > *:nth-child(n+5) { animation: cardStaggerInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) 140ms both; }
+  .view-section.stagger-in-right > *:nth-child(1) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+  .view-section.stagger-in-right > *:nth-child(2) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 100ms both; }
+  .view-section.stagger-in-right > *:nth-child(3) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 200ms both; }
+  .view-section.stagger-in-right > *:nth-child(4) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 300ms both; }
+  .view-section.stagger-in-right > *:nth-child(n+5) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 400ms both; }
 
-  .view-section.stagger-in-left > *:nth-child(1) { animation: cardStaggerInLeft 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
-  .view-section.stagger-in-left > *:nth-child(2) { animation: cardStaggerInLeft 0.36s cubic-bezier(0.16, 1, 0.3, 1) 35ms both; }
-  .view-section.stagger-in-left > *:nth-child(3) { animation: cardStaggerInLeft 0.36s cubic-bezier(0.16, 1, 0.3, 1) 70ms both; }
-  .view-section.stagger-in-left > *:nth-child(4) { animation: cardStaggerInLeft 0.36s cubic-bezier(0.16, 1, 0.3, 1) 105ms both; }
-  .view-section.stagger-in-left > *:nth-child(n+5) { animation: cardStaggerInLeft 0.36s cubic-bezier(0.16, 1, 0.3, 1) 140ms both; }
+  .view-section.stagger-in-left > *:nth-child(1) { animation: cardStaggerInLeft 0.88s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+  .view-section.stagger-in-left > *:nth-child(2) { animation: cardStaggerInLeft 0.88s cubic-bezier(0.16, 1, 0.3, 1) 100ms both; }
+  .view-section.stagger-in-left > *:nth-child(3) { animation: cardStaggerInLeft 0.88s cubic-bezier(0.16, 1, 0.3, 1) 200ms both; }
+  .view-section.stagger-in-left > *:nth-child(4) { animation: cardStaggerInLeft 0.88s cubic-bezier(0.16, 1, 0.3, 1) 300ms both; }
+  .view-section.stagger-in-left > *:nth-child(n+5) { animation: cardStaggerInLeft 0.88s cubic-bezier(0.16, 1, 0.3, 1) 400ms both; }
 
   @keyframes cardStaggerInRight {
-    0% { transform: translateX(24px); opacity: 0; }
+    0% { transform: translateX(36px); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
   }
   @keyframes cardStaggerInLeft {
-    0% { transform: translateX(-24px); opacity: 0; }
+    0% { transform: translateX(-36px); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
   }
 
@@ -887,7 +887,7 @@
     background-size: 200% 100% !important;
     background-attachment: local !important;
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 18px rgba(52, 211, 153, 0.6));
-    animation: tabHologramDissolve 1.5s both !important;
+    animation: tabHologramDissolve 2.4s both !important;
     will-change: opacity;
   }
 
@@ -902,25 +902,25 @@
   .view-section.tab-hologram-landing > *:nth-child(2)::before,
   .view-section.tab-hologram-landing > *:nth-child(2) *::after,
   .view-section.tab-hologram-landing > *:nth-child(2)::after {
-    animation-delay: 35ms !important;
+    animation-delay: 100ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(3) *::before,
   .view-section.tab-hologram-landing > *:nth-child(3)::before,
   .view-section.tab-hologram-landing > *:nth-child(3) *::after,
   .view-section.tab-hologram-landing > *:nth-child(3)::after {
-    animation-delay: 70ms !important;
+    animation-delay: 200ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(4) *::before,
   .view-section.tab-hologram-landing > *:nth-child(4)::before,
   .view-section.tab-hologram-landing > *:nth-child(4) *::after,
   .view-section.tab-hologram-landing > *:nth-child(4)::after {
-    animation-delay: 105ms !important;
+    animation-delay: 300ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(n+5) *::before,
   .view-section.tab-hologram-landing > *:nth-child(n+5)::before,
   .view-section.tab-hologram-landing > *:nth-child(n+5) *::after,
   .view-section.tab-hologram-landing > *:nth-child(n+5)::after {
-    animation-delay: 140ms !important;
+    animation-delay: 400ms !important;
   }
 
   /* Single, continuous mathematical bezier curve (ZERO in-between steps) */
@@ -1670,6 +1670,7 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0 4px;
+    text-align: center;
   }
 
   .liquid-table-wrap table thead tr th {
@@ -1679,20 +1680,33 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: center !important;
+    vertical-align: middle !important;
   }
 
   .liquid-table-wrap table tbody tr {
     position: relative;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
+    text-align: center !important;
   }
 
-  .liquid-table-wrap table tbody tr td {
+  .liquid-table-wrap table tbody tr td,
+  .liquid-table-row td,
+  .liquid-table-wrap table td {
     padding: 12px 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     background: rgba(14, 22, 40, 0.45);
     transition: all 0.25s ease;
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+
+  .liquid-table-wrap table tbody tr td > *,
+  .liquid-table-row td > * {
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .liquid-table-wrap table tbody tr td:first-child {
@@ -1717,18 +1731,18 @@
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr td,
   .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr td,
   .liquid-table-row.tab-hologram-landing td {
-    animation: tabRowHologramShimmer 1.4s cubic-bezier(0.25, 1, 0.5, 1) both !important;
+    animation: tabRowHologramShimmer 2.4s cubic-bezier(0.25, 1, 0.5, 1) both !important;
   }
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td,
-  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td { animation-delay: 30ms !important; }
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td { animation-delay: 80ms !important; }
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td,
-  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td { animation-delay: 60ms !important; }
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td { animation-delay: 160ms !important; }
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td,
-  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td { animation-delay: 90ms !important; }
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td { animation-delay: 240ms !important; }
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td,
-  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td { animation-delay: 120ms !important; }
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td { animation-delay: 320ms !important; }
   .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td,
-  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td { animation-delay: 150ms !important; }
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td { animation-delay: 400ms !important; }
 
   @keyframes tabRowHologramShimmer {
     0% {

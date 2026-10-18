@@ -310,12 +310,12 @@
         observeRevealItems();
       }
 
-      CURRENT_FINALIZE_TIMER = setTimeout(finalize, 450);
+      CURRENT_FINALIZE_TIMER = setTimeout(finalize, 950);
 
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return;
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 1600);
+      }, 2600);
 
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) {
@@ -2482,13 +2482,13 @@
 
       var tr = document.createElement('tr');
       tr.className = 'liquid-table-row';
-      tr.style.textAlign = 'right';
+      tr.style.textAlign = 'center';
       tr.innerHTML =
-        '<td style="padding:10px 14px; text-align:left; font-weight:800; color:#FFF;">' + calYear + '</td>' +
-        '<td style="padding:10px 14px;">' + formatIndian(currentMonthlySaving, false) + '/mo</td>' +
-        '<td style="padding:10px 14px;">+' + formatIndian(yearContrib, false) + '</td>' +
-        '<td style="padding:10px 14px; color:var(--emerald-bright);">+' + formatIndian(yearGain, false) + '</td>' +
-        '<td style="padding:10px 14px; font-weight:800; color:var(--cyan-core);">' + formatIndian(runningWealth, false) + '</td>';
+        '<td style="padding:10px 14px; text-align:center; font-weight:800; color:#FFF;">' + calYear + '</td>' +
+        '<td style="padding:10px 14px; text-align:center;">' + formatIndian(currentMonthlySaving, false) + '/mo</td>' +
+        '<td style="padding:10px 14px; text-align:center;">+' + formatIndian(yearContrib, false) + '</td>' +
+        '<td style="padding:10px 14px; text-align:center; color:var(--emerald-bright);">+' + formatIndian(yearGain, false) + '</td>' +
+        '<td style="padding:10px 14px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(runningWealth, false) + '</td>';
       tbody.appendChild(tr);
 
       currentMonthlySaving = currentMonthlySaving * (1 + (stepUpPct / 100));
