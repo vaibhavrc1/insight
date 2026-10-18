@@ -399,8 +399,8 @@
   /* =========================================================================
      TRIPLE-PUSH SPECULAR BORDER REFRESH ENGINE (PURE VISUAL - NO COOLDOWN)
      ========================================================================= */
-  var PUSH_TARGET_COUNT   = 3;   // Requires 3 deliberate pushes to trigger
-  var PUSH_THRESHOLD_PX   = 55;  // Downward pull distance to trigger a push
+  var PUSH_TARGET_COUNT   = 1;   // 1 deliberate pull to trigger
+  var PUSH_THRESHOLD_PX   = 220; // 4x length: 220px downward pull distance to trigger refresh
   var PUSH_DECAY_MS       = 4000; // 4 seconds before push count decays to 0
   var MIN_SYNC_FLOOR_MS   = 600; // Smooth visual display floor
   var SETTLE_DURATION_MS  = 250; // Instant reset for back-to-back refresh
@@ -477,50 +477,23 @@
   function registerPush() {
     if (ptrState === 'syncing' || ptrState === 'settling') return;
 
-    pushCount++;
-    resetPushDecayTimer();
+    pushCount = 1;
+    clearTimeout(pushDecayTimer);
 
     wasArmed = false;
     document.body.removeAttribute('data-ptr-armed');
 
-    // Release elastic stretch back to rest with spring bounce
+    // Release elastic stretch back to rest
     document.body.classList.remove('ptr-dragging');
     rootStyle.setProperty('--ptr-stretch-y', '0px');
     rootStyle.setProperty('--ptr-scale-x', '1');
     rootStyle.setProperty('--ptr-scale-y', '1');
 
-    if (pushCount === 1) {
-      triggerHaptic('tick');
-      document.body.setAttribute('data-ptr-push', '1');
-      // Flash confirmation then smoothly fade to 0 (never stays permanently on!)
-      rootStyle.setProperty('--ptr-border-opacity', '0.5');
-      rootStyle.setProperty('--ptr-bg-dim', '0.35');
-      setTimeout(function() {
-        if (!isDragging && ptrState === 'idle') {
-          rootStyle.setProperty('--ptr-border-opacity', '0');
-          rootStyle.setProperty('--ptr-bg-dim', '0');
-        }
-      }, 220);
-    } else if (pushCount === 2) {
-      triggerHaptic('double');
-      document.body.setAttribute('data-ptr-push', '2');
-      // Brighter flash confirmation then smoothly fade to 0
-      rootStyle.setProperty('--ptr-border-opacity', '0.8');
-      rootStyle.setProperty('--ptr-bg-dim', '0.55');
-      setTimeout(function() {
-        if (!isDragging && ptrState === 'idle') {
-          rootStyle.setProperty('--ptr-border-opacity', '0');
-          rootStyle.setProperty('--ptr-bg-dim', '0');
-        }
-      }, 240);
-    } else if (pushCount >= 3) {
-      triggerHaptic('success');
-      document.body.setAttribute('data-ptr-push', '3');
-      rootStyle.setProperty('--ptr-border-opacity', '1');
-      rootStyle.setProperty('--ptr-bg-dim', '0.70');
-      clearTimeout(pushDecayTimer);
-      startSyncPhase();
-    }
+    triggerHaptic('success');
+    document.body.setAttribute('data-ptr-push', '1');
+    rootStyle.setProperty('--ptr-border-opacity', '1');
+    rootStyle.setProperty('--ptr-bg-dim', '0.72');
+    startSyncPhase();
   }
 
   function onPtrTouchStart(e) {
@@ -752,7 +725,8 @@
   }
 
   function triggerManualSync() {
-    registerPush();
+    if (ptrState === 'syncing' || ptrState === 'settling') return;
+    startSyncPhase();
   }
 
   function invokeRefreshAppData() {
@@ -774,6 +748,8 @@
     document.body.setAttribute('data-ptr-state', 'syncing');
     document.body.classList.remove('ptr-dragging');
     triggerHaptic('lock');
+    var syncStatus = document.getElementById('header-sync-status');
+    if (syncStatus) syncStatus.innerText = 'Refreshing...';
     rootStyle.setProperty('--ptr-border-opacity', '1');
     rootStyle.setProperty('--ptr-bg-dim', '0.72');
     rootStyle.setProperty('--ptr-stretch-y', '0px');
@@ -820,6 +796,8 @@
     setTimeout(function() {
       ptrState = 'idle';
       pushCount = 0;
+      var syncStatus = document.getElementById('header-sync-status');
+      if (syncStatus) syncStatus.innerText = 'Click to refresh';
       document.body.setAttribute('data-ptr-state', 'idle');
       document.body.setAttribute('data-ptr-push', '0');
       document.body.classList.remove('ptr-dragging');
