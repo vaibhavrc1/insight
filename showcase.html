@@ -680,6 +680,9 @@
         // Concept 5: Specular Foil Matrix (Zero layout displacement)
         stage.style.transform = `translateY(${Math.min(12, pullDistance * 0.15)}px)`;
         document.documentElement.style.setProperty('--light-y', `${progress * 100}%`);
+        var stageMult = foilPushCount === 1 ? 0.9 : foilPushCount === 2 ? 1.0 : 0.8;
+        var dynGlow = Math.min(1.0, Math.pow(Math.min(1.0, progress), 0.75) * stageMult);
+        document.documentElement.style.setProperty('--border-glow', dynGlow.toFixed(3));
       }
 
       // HUD Feedback
@@ -708,23 +711,28 @@
           foilDecayTimer = setTimeout(function() {
             foilPushCount = 0;
             document.documentElement.style.setProperty('--border-glow', '0');
-          }, 3500);
+          }, 4000);
+
+          stage.style.transform = 'translateY(0px)';
 
           if (foilPushCount === 1) {
-            document.documentElement.style.setProperty('--border-glow', '0.38');
-            stage.style.transform = 'translateY(0px)';
+            document.documentElement.style.setProperty('--border-glow', '0.5');
+            setTimeout(function() {
+              if (!isDragging && !isSyncing) document.documentElement.style.setProperty('--border-glow', '0');
+            }, 220);
           } else if (foilPushCount === 2) {
-            document.documentElement.style.setProperty('--border-glow', '0.72');
-            stage.style.transform = 'translateY(0px)';
+            document.documentElement.style.setProperty('--border-glow', '0.8');
+            setTimeout(function() {
+              if (!isDragging && !isSyncing) document.documentElement.style.setProperty('--border-glow', '0');
+            }, 240);
           } else if (foilPushCount >= 3) {
             clearTimeout(foilDecayTimer);
             document.documentElement.style.setProperty('--border-glow', '1');
             triggerActiveConcept();
           }
         } else {
-          // Mid-pull release: immediately cancel without getting stuck!
-          var comm = foilPushCount === 1 ? '0.38' : foilPushCount === 2 ? '0.72' : '0';
-          document.documentElement.style.setProperty('--border-glow', comm);
+          // Mid-pull release: immediately cancel to 0 without getting stuck!
+          document.documentElement.style.setProperty('--border-glow', '0');
           stage.style.transform = 'translateY(0px)';
         }
         return;
