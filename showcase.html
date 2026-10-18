@@ -194,7 +194,7 @@
     .scroll-stage {
       position: relative;
       flex: 1;
-      padding: 48px 14px 75px 14px;
+      padding: 48px 14px 105px 14px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -206,6 +206,11 @@
     }
     .scroll-stage:active {
       cursor: grabbing;
+    }
+
+    .showcase-pill,
+    .showcase-hr {
+      position: relative;
     }
 
     /* Bento Cards with 3D compositing & Specular Foil support */
@@ -224,7 +229,8 @@
 
     /* Concept 5: Specular Foil Pseudo Mask on Bento Cards, Pills, Buttons, Icons, and Dock */
     .specular-foil-active .argon-bento::before,
-    .specular-foil-active .phone-dock::before {
+    .specular-foil-active .phone-dock::before,
+    .specular-foil-active .showcase-pill::before {
       content: "";
       position: absolute;
       inset: -1px;
@@ -234,8 +240,9 @@
         320px circle at 50% var(--light-y, -20%),
         rgba(52, 211, 153, 0.95),
         rgba(56, 189, 248, 0.8) 35%,
-        rgba(255, 255, 255, 0.2) 60%,
-        transparent 75%
+        rgba(168, 85, 247, 0.75) 55%,
+        rgba(255, 255, 255, 0.8) 68%,
+        transparent 80%
       );
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
@@ -244,25 +251,72 @@
       z-index: 10;
     }
 
-    /* Specular foil on outer side of colored progress bar */
+    /* Specular foil directly ON THE FILLED AREA ITSELF of progress bar (No border, fill itself lights up) */
     .specular-foil-active .argon-bar-fill::before {
       content: "";
       position: absolute;
-      inset: -2px;
+      inset: 0;
       border-radius: 999px;
-      padding: 1.5px;
       background: radial-gradient(
         320px circle at 50% var(--light-y, -20%),
         rgba(52, 211, 153, 0.95),
-        rgba(56, 189, 248, 0.8) 35%,
-        rgba(255, 255, 255, 0.2) 60%,
-        transparent 75%
+        rgba(56, 189, 248, 0.9) 35%,
+        rgba(168, 85, 247, 0.85) 55%,
+        rgba(255, 255, 255, 0.95) 68%,
+        transparent 82%
       );
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
+      mix-blend-mode: screen;
       pointer-events: none;
       z-index: 10;
+    }
+
+    /* Specular foil on input boxes and simulator sliders */
+    .specular-foil-active .showcase-input {
+      border: 1.5px solid transparent !important;
+      background: 
+        linear-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95)) padding-box,
+        radial-gradient(
+          320px circle at 50% var(--light-y, -20%),
+          rgba(52, 211, 153, 0.95),
+          rgba(56, 189, 248, 0.9) 35%,
+          rgba(168, 85, 247, 0.85) 55%,
+          rgba(255, 255, 255, 0.9) 68%,
+          rgba(255, 255, 255, 0.12) 82%
+        ) border-box !important;
+    }
+
+    .specular-foil-active .showcase-slider {
+      border: 1.5px solid transparent !important;
+      background: 
+        linear-gradient(90deg, rgba(56, 189, 248, 0.4) 0%, rgba(52, 211, 153, 0.35) 100%) padding-box,
+        radial-gradient(
+          320px circle at 50% var(--light-y, -20%),
+          rgba(52, 211, 153, 0.95),
+          rgba(56, 189, 248, 0.9) 35%,
+          rgba(168, 85, 247, 0.85) 55%,
+          rgba(255, 255, 255, 0.9) 68%,
+          rgba(255, 255, 255, 0.12) 82%
+        ) border-box !important;
+    }
+
+    /* Specular foil on horizontal ruler / divider */
+    .specular-foil-active .showcase-hr::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1.5px;
+      pointer-events: none;
+      z-index: 10;
+      background: radial-gradient(
+        320px circle at 50% var(--light-y, -20%),
+        rgba(52, 211, 153, 0.95),
+        rgba(56, 189, 248, 0.9) 35%,
+        rgba(168, 85, 247, 0.85) 55%,
+        rgba(255, 255, 255, 0.95) 68%,
+        transparent 82%
+      );
     }
 
     /* Tension HUD */
@@ -378,11 +432,23 @@
                   <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Total Portfolio Net Worth</span>
                   <div class="mono text-2xl font-black text-white mt-0.5" id="val-networth">₹45,52,336</div>
                 </div>
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span class="showcase-pill px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   +₹98,375 (+2.16%)
                 </span>
               </div>
-              <div class="w-full bg-slate-800/80 h-2 rounded-full flex gap-0.5 mt-3 relative p-0.5">
+
+              <!-- Duration Pills Row (Money / Horizon) -->
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                <span class="showcase-pill px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-400/30">+14.2% this year</span>
+                <span class="showcase-pill px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-purple-500/15 text-purple-400 border border-purple-400/30">+22.8% past 1 year</span>
+                <span class="showcase-pill px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-slate-800 text-slate-400 border border-white/10">Oct 2026</span>
+              </div>
+
+              <!-- Horizontal Ruler with Specular Foil -->
+              <hr class="showcase-hr my-2 border-t border-white/10 relative">
+
+              <!-- Progress bar: Filled area ITSELF has the holographic effect -->
+              <div class="w-full bg-slate-800/80 h-2 rounded-full flex gap-0.5 mt-2 relative p-0.5">
                 <div class="h-full bg-cyan-400 w-[67%] rounded-full relative argon-bar-fill"></div>
                 <div class="h-full bg-amber-400 w-[24%] rounded-full"></div>
                 <div class="h-full bg-purple-400 w-[9%] rounded-full"></div>
@@ -405,6 +471,18 @@
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Bank & Deposits</span>
                 <div class="mono text-base font-bold text-amber-400 mt-1" id="val-bank">₹11,11,097</div>
                 <div class="text-[10px] text-slate-400 mt-0.5">HDFC + SBI Deposits</div>
+              </div>
+            </div>
+
+            <!-- Row 1.5: Simulator Slider & Value Input Box -->
+            <div class="argon-bento" id="card-sim" style="--row: 1.5;">
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <span class="font-bold text-white">Simulator & Input Controls</span>
+                <span class="showcase-pill text-[9.5px] text-cyan-400 font-bold bg-cyan-500/15 px-2 py-0.5 rounded-full border border-cyan-400/30">5 Yrs Horizon</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="range" class="showcase-slider flex-1 h-2 rounded-full cursor-pointer" min="1" max="10" value="5">
+                <input type="text" class="showcase-input w-24 text-right text-xs font-mono font-bold text-white px-2 py-1 rounded-lg" value="₹75,000">
               </div>
             </div>
 
@@ -440,7 +518,7 @@
               </div>
             </div>
 
-            <div class="text-center text-[11px] text-slate-500 font-bold pt-2">
+            <div class="text-center text-[11px] text-slate-500 font-bold pt-1 pb-4">
               ↓ Drag down phone screen or click "Simulate Gesture" below ↓
             </div>
 
@@ -789,6 +867,7 @@
             clearTimeout(foilDecayTimer);
             document.documentElement.style.setProperty('--border-glow', '1');
             document.documentElement.style.setProperty('--bg-dim', '0.70');
+            stage.style.transform = 'translateY(40px) scale3d(0.985, 1.035, 1)';
             triggerActiveConcept();
           }
         } else {
@@ -1005,6 +1084,9 @@
       hudText.innerText = 'SYNCED 100% ✓';
       hud.style.borderColor = '#34D399';
       hud.style.color = '#34D399';
+
+      scrollStage.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+      scrollStage.style.transform = '';
 
       // Live number tick animation
       var numEl = document.getElementById('val-networth');

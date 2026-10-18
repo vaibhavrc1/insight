@@ -1,0 +1,3139 @@
+<script>
+  var APP_STATE = null;
+  var TRAJECTORY_MODE = 'stacked';
+  var REACTION_FILTER = 'mf';
+  var CURRENT_YEAR_FILTER = 'all';
+  var MILESTONES_VISIBLE = true;
+
+  var CHART_NETWORTH = null;
+  var CHART_ALLOCATION = null;
+  var CHART_REACTION = null;
+  var CHART_MONTHLY_CHANGE = null;
+  var CHART_YEARLY_PILLARS = null;
+  var CHART_YEARLY_ADDED = null;
+  var CHART_SIMULATOR = null;
+
+  var CATEGORY_LABELS = {
+    net_worth: "Total Portfolio Wealth",
+    mf: "Mutual Funds",
+    total_market: "All Market Investments",
+    precious: "Gold & Silver Combined",
+    gold: "Gold",
+    silver: "Silver",
+    total_bank: "Bank & Fixed Deposits",
+    epf: "EPF Balance",
+    sbi_ppf: "SBI PPF"
+  };
+
+  /* ==========================================================================
+     1. INTERACTIVE LIGHTING, SCROLL REVEAL & NUMBER INPUT WHEEL LOCK
+     ========================================================================== */
+  function setupInteractivePhysics() {
+    // 1. Prevent Mouse Wheel from EVER changing <input type="number"> values while scrolling
+    document.addEventListener('wheel', function(e) {
+      if (document.activeElement && document.activeElement.type === 'number') {
+        document.activeElement.blur();
+      }
+    }, { passive: true });
+
+    var numInputs = document.querySelectorAll('input[type="number"]');
+    numInputs.forEach(function(inp) {
+      inp.addEventListener('wheel', function(ev) {
+        ev.preventDefault();
+        inp.blur();
+      }, { passive: false });
+    });
+
+    // 3. Scroll-Reveal Observer
+    observeRevealItems();
+  }
+
+  function observeRevealItems() {
+    var items = document.querySelectorAll('.reveal-item');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function(el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.08 });
+
+    items.forEach(function(el) { observer.observe(el); });
+  }
+
+  /* ==========================================================================
+     2. FORMATTING & NAVIGATION HELPERS
+     ========================================================================== */
+  function formatIndian(val, includeDecimals) {
+    if (val === null || val === undefined || isNaN(val)) return '₹ 0';
+    var isNeg = val < 0;
+    val = Math.abs(val);
+    var parts = val.toFixed(includeDecimals ? 2 : 0).split('.');
+    var intPart = parts[0];
+    var decPart = parts.length > 1 ? '.' + parts[1] : '';
+    var lastThree = intPart.substring(intPart.length - 3);
+    var otherNumbers = intPart.substring(0, intPart.length - 3);
+    if (otherNumbers !== '') lastThree = ',' + lastThree;
+    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree + decPart;
+    return (isNeg ? '-₹ ' : '₹ ') + res;
+  }
+
+  function formatCompactLakhs(val) {
+    var abs = Math.abs(val);
+    var sign = val < 0 ? '-' : '';
+    if (abs >= 10000000) return sign + '₹' + (abs / 10000000).toFixed(2) + ' Cr';
+    if (abs >= 100000) return sign + '₹' + (abs / 100000).toFixed(2) + ' L';
+    if (abs >= 1000) return sign + '₹' + (abs / 1000).toFixed(0) + 'k';
+    return sign + '₹' + abs.toFixed(0);
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2400);
+  }
+
+  /* ==========================================================================
+     LIQUID-MERCURY GLIDER & KINETIC CARD STAGGER NAVIGATION
+     ========================================================================== */
+  var CURRENT_VIEW = 'dashboard';
+  var VIEW_ORDER = ['dashboard', 'yearly', 'simulator', 'entry', 'history'];
+  var IS_VIEW_TRANSITIONING = false;
+
+  function repositionGliderPill(btn, gliderId, trackId, stretch) {
+    var glider = document.getElementById(gliderId);
+    var track = document.getElementById(trackId);
+    if (!glider || !track || !btn) return;
+
+    var trackRect = track.getBoundingClientRect();
+    var btnRect = btn.getBoundingClientRect();
+    if (btnRect.width === 0) return;
+
+    var left = btnRect.left - trackRect.left;
+    var width = btnRect.width;
+
+    // Strict boundary clamping so pill never exceeds track border
+    var pad = 4;
+    var maxLeft = trackRect.width - width - pad;
+    left = Math.max(pad, Math.min(left, Math.max(pad, maxLeft)));
+
+    if (stretch) {
+      // Dynamic transform-origin based on button position to prevent boundary cut
+      var buttons = Array.from(track.querySelectorAll('.nav-pill-btn, .dock-btn'));
+      var idx = buttons.indexOf(btn);
+      if (idx === 0) {
+        glider.style.transformOrigin = 'left center';
+      } else if (idx === buttons.length - 1) {
+        glider.style.transformOrigin = 'right center';
+      } else {
+        glider.style.transformOrigin = 'center center';
+      }
+      glider.classList.add('stretching');
+      setTimeout(function() { glider.classList.remove('stretching'); }, 180);
+    }
+
+    glider.style.left = left + 'px';
+    glider.style.width = width + 'px';
+  }
+
+  function syncAllGliders(stretch) {
+    var activeDesktopBtn = document.querySelector('.nav-pill-btn.active');
+    if (activeDesktopBtn) {
+      repositionGliderPill(activeDesktopBtn, 'nav-glider-pill', 'main-nav-well', stretch);
+    }
+    var activeDockBtn = document.querySelector('.dock-btn.active');
+    if (activeDockBtn) {
+      repositionGliderPill(activeDockBtn, 'dock-glider-pill', 'mobile-dock', stretch);
+    }
+  }
+
+  function repositionSegmentGlider(btn, stretch) {
+    if (!btn) return;
+    var well = btn.closest('.segment-well');
+    if (!well) return;
+
+    var glider = well.querySelector('.segment-glider-pill');
+    if (!glider) {
+      glider = document.createElement('div');
+      glider.className = 'segment-glider-pill';
+      well.insertBefore(glider, well.firstChild);
+    }
+
+    if (btn.offsetWidth === 0) return;
+
+    var left = btn.offsetLeft;
+    var top = btn.offsetTop;
+    var width = btn.offsetWidth;
+    var height = btn.offsetHeight;
+
+    if (stretch) {
+      var buttons = Array.from(well.querySelectorAll('.segment-btn'));
+      var idx = buttons.indexOf(btn);
+      if (idx === 0) {
+        glider.style.transformOrigin = 'left center';
+      } else if (idx === buttons.length - 1) {
+        glider.style.transformOrigin = 'right center';
+      } else {
+        glider.style.transformOrigin = 'center center';
+      }
+      glider.classList.add('stretching');
+      setTimeout(function() { glider.classList.remove('stretching'); }, 180);
+    }
+
+    glider.style.left = left + 'px';
+    glider.style.top = top + 'px';
+    glider.style.width = width + 'px';
+    glider.style.height = height + 'px';
+
+    // Auto-scroll the segment well horizontally to keep active button in comfortable view
+    if (well.scrollWidth > well.clientWidth) {
+      var scrollTarget = left - (well.clientWidth - width) / 2;
+      well.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
+    }
+  }
+
+  function syncAllSegmentGliders(stretch) {
+    document.querySelectorAll('.segment-well').forEach(function(well) {
+      var activeBtn = well.querySelector('.segment-btn.active');
+      if (activeBtn) {
+        repositionSegmentGlider(activeBtn, stretch);
+      }
+    });
+  }
+
+  function scrollTimelineChartsToLatest() {
+    setTimeout(function() {
+      document.querySelectorAll('.canvas-holder.scrollable-timeline, .drilldown-canvas-holder.scrollable-timeline').forEach(function(holder) {
+        holder.scrollLeft = holder.scrollWidth - holder.clientWidth;
+      });
+    }, 140);
+  }
+
+  function switchView(viewId) {
+    // Auto-close open modals/overlays when navigating tabs
+    if (typeof closeYearDrilldown === 'function') closeYearDrilldown();
+    if (typeof closeNoteModal === 'function') closeNoteModal();
+    if (typeof closeMonthDetailOverlay === 'function') closeMonthDetailOverlay();
+    if (typeof closeMonthPopover === 'function') closeMonthPopover();
+    var pop = document.getElementById('custom-month-popover');
+    if (pop) pop.classList.remove('open');
+
+    if (viewId === CURRENT_VIEW) return;
+
+    var prevViewId = CURRENT_VIEW;
+    CURRENT_VIEW = viewId;
+
+    var prevIndex = VIEW_ORDER.indexOf(prevViewId);
+    var newIndex = VIEW_ORDER.indexOf(viewId);
+    var isForward = newIndex >= prevIndex;
+
+    // 1. Update Buttons Active State
+    var targetDesktopBtn = null;
+    var targetDockBtn = null;
+
+    document.querySelectorAll('.nav-pill-btn').forEach(function(btn) {
+      var isActive = btn.getAttribute('data-view') === viewId;
+      btn.classList.toggle('active', isActive);
+      if (isActive) targetDesktopBtn = btn;
+    });
+
+    document.querySelectorAll('.dock-btn').forEach(function(btn) {
+      var isActive = btn.getAttribute('data-view') === viewId;
+      btn.classList.toggle('active', isActive);
+      if (isActive) targetDockBtn = btn;
+    });
+
+    // 2. Animate Liquid-Mercury Glider Pills
+    if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
+    if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
+
+    // 3. Two-Screen Concurrent Spatial Tab Transition
+    var prevView = document.getElementById('view-' + prevViewId);
+    var nextView = document.getElementById('view-' + viewId);
+
+    if (prevView && nextView) {
+      IS_VIEW_TRANSITIONING = true;
+
+      var outClass = isForward ? 'vision-out-left' : 'vision-out-right';
+      var inClass = isForward ? 'vision-in-right' : 'vision-in-left';
+
+      prevView.className = 'view-section active ' + outClass;
+      nextView.className = 'view-section active ' + inClass;
+
+      var finished = false;
+      function finalize() {
+        if (finished) return;
+        finished = true;
+        prevView.className = 'view-section'; // Unmount outgoing view
+        nextView.className = 'view-section active'; // Keep target view active
+        prevView.classList.remove('vision-out-left', 'vision-out-right', 'active');
+        nextView.classList.remove('vision-in-right', 'vision-in-left');
+        IS_VIEW_TRANSITIONING = false;
+        observeRevealItems();
+      }
+
+      nextView.addEventListener('animationend', finalize, { once: true });
+      setTimeout(finalize, 360);
+    } else if (nextView) {
+      document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
+      nextView.classList.add('active');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    setTimeout(function() {
+      if (viewId === 'dashboard') {
+        if (CHART_NETWORTH) CHART_NETWORTH.resize();
+        if (CHART_ALLOCATION) CHART_ALLOCATION.resize();
+        if (CHART_REACTION) CHART_REACTION.resize();
+        if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.resize();
+      } else if (viewId === 'yearly') {
+        if (CHART_YEARLY_PILLARS) CHART_YEARLY_PILLARS.resize();
+        if (CHART_YEARLY_ADDED) CHART_YEARLY_ADDED.resize();
+      } else if (viewId === 'simulator') {
+        runYearSimulator();
+      }
+      scrollTimelineChartsToLatest();
+      syncAllSegmentGliders(false);
+    }, 100);
+  }
+
+  /* ==========================================================================
+     3. INITIALIZATION, STATE LOADING & PULL-TO-REFRESH
+     ========================================================================== */
+  var IS_PULL_REFRESHING = false;
+
+  function initKeyboardObserver() {
+    function isEditable(el) {
+      if (!el) return false;
+      var tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
+    document.addEventListener('focusin', function(e) {
+      if (isEditable(e.target)) {
+        document.body.classList.add('keyboard-open');
+      }
+    }, true);
+
+    document.addEventListener('focusout', function(e) {
+      if (isEditable(e.target)) {
+        setTimeout(function() {
+          if (!isEditable(document.activeElement)) {
+            document.body.classList.remove('keyboard-open');
+          }
+        }, 120);
+      }
+    }, true);
+
+    if (window.visualViewport) {
+      var initialViewportHeight = window.visualViewport.height;
+      window.visualViewport.addEventListener('resize', function() {
+        var currentHeight = window.visualViewport.height;
+        if (initialViewportHeight - currentHeight > 130 || currentHeight < window.innerHeight * 0.78) {
+          document.body.classList.add('keyboard-open');
+        } else if (!isEditable(document.activeElement)) {
+          document.body.classList.remove('keyboard-open');
+        }
+      });
+    }
+  }
+
+  function initApp() {
+    setupInteractivePhysics();
+    initCustomMonthPicker();
+    initPullToRefresh();
+    initKeyboardObserver();
+    setTimeout(function() { syncAllGliders(false); syncAllSegmentGliders(false); }, 140);
+    window.addEventListener('resize', function() { syncAllGliders(false); syncAllSegmentGliders(false); });
+    refreshAppData();
+  }
+
+  function refreshAppData(onDone) {
+    var syncDot = document.getElementById('sync-dot');
+    if (syncDot) syncDot.classList.add('syncing');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (syncDot) syncDot.classList.remove('syncing');
+          loadStateData(data);
+          if (onDone) onDone(true);
+        })
+        .withFailureHandler(function(err) {
+          var syncStatus = document.getElementById('header-sync-status');
+          if (syncStatus) syncStatus.innerText = 'Sync Error';
+          if (syncDot) syncDot.classList.remove('syncing');
+          var loader = document.getElementById('app-loading-screen');
+          if (loader) {
+            loader.innerHTML = '<div class="loading-glass-card" style="border-color: rgba(244, 63, 94, 0.45);">' +
+              '<div style="font-size:36px; margin-bottom:12px;">⚠️</div>' +
+              '<div class="loading-text-title" style="color:var(--coral-bright);">Connection Error</div>' +
+              '<div class="loading-text-sub" style="margin-bottom:18px;">Failed to load portfolio data. Check your Google account session or internet connection.</div>' +
+              '<button type="button" class="btn-emissive" onclick="window.location.reload()">' +
+                '<span>Try Again</span>' +
+              '</button>' +
+            '</div>';
+          }
+          if (onDone) onDone(false);
+        })
+        .getInitialData();
+    } else {
+      setTimeout(function() {
+        if (syncDot) syncDot.classList.remove('syncing');
+        if (onDone) onDone(true);
+      }, 700);
+    }
+  }
+
+  function triggerManualSync() {
+    if (ptrState === 'syncing' || ptrState === 'settling') return;
+    startSyncPhase();
+  }
+
+  /* =========================================================================
+     TRIPLE-PUSH SPECULAR BORDER REFRESH ENGINE (PURE VISUAL - NO COOLDOWN)
+     ========================================================================= */
+  var PUSH_TARGET_COUNT   = 3;   // Requires 3 deliberate pushes to trigger
+  var PUSH_THRESHOLD_PX   = 55;  // Downward pull distance to trigger a push
+  var PUSH_DECAY_MS       = 4000; // 4 seconds before push count decays to 0
+  var MIN_SYNC_FLOOR_MS   = 600; // Smooth visual display floor
+  var SETTLE_DURATION_MS  = 250; // Instant reset for back-to-back refresh
+
+  var rootStyle       = document.documentElement.style;
+  var ptrState        = 'idle'; // 'idle' | 'pulling' | 'syncing' | 'settling'
+  var pushCount       = 0;      // 0, 1, 2, 3
+  var pushDecayTimer  = null;
+
+  var touchStartX     = 0;
+  var touchStartY     = 0;
+  var isDragging      = false;
+  var wasArmed        = false;
+  var thumbX          = window.innerWidth * 0.5;
+  var thumbY          = -100;
+  var ptrRafId        = 0;
+
+  function initPullToRefresh() {
+    document.body.setAttribute('data-ptr-state', 'idle');
+    document.body.setAttribute('data-ptr-push', '0');
+    document.body.removeAttribute('data-ptr-armed');
+
+    // Touch events for mobile phones
+    window.addEventListener('touchstart', onPtrTouchStart, { passive: true });
+    window.addEventListener('touchmove', onPtrTouchMove, { passive: false });
+    window.addEventListener('touchend', onPtrTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onPtrTouchEnd, { passive: true });
+
+    // Mouse drag emulation for PC desktop
+    window.addEventListener('mousedown', onPtrMouseDown, { passive: true });
+    window.addEventListener('mousemove', onPtrMouseMove, { passive: false });
+    window.addEventListener('mouseup', onPtrMouseUp, { passive: true });
+
+    // Safety guards against stuck state
+    window.addEventListener('blur', function() { if (isDragging) cancelDragMidPull(); });
+    window.addEventListener('mouseleave', function() { if (isDragging) cancelDragMidPull(); });
+  }
+
+  function triggerHaptic(type) {
+    if (!navigator.vibrate) return;
+    try {
+      if (type === 'detent') navigator.vibrate(18); // Crisp mechanical detent engagement tick!
+      else if (type === 'tick') navigator.vibrate(12);
+      else if (type === 'double') navigator.vibrate([12, 35, 12]);
+      else if (type === 'success') navigator.vibrate([15, 40, 25]);
+    } catch (e) {}
+  }
+
+  function isModalOrPopoverOpen() {
+    return !!document.querySelector('.liquid-drilldown-backdrop.open, .liquid-modal-backdrop.open');
+  }
+
+  function isInteractiveElement(target) {
+    if (!target || !target.closest) return false;
+    return !!target.closest('button, input, select, textarea, a, .btn-action-icon, .nav-pill-btn, .dock-btn, .segment-btn, .history-card, .btn-emissive, .btn-subtle');
+  }
+
+  function resetPushDecayTimer() {
+    clearTimeout(pushDecayTimer);
+    pushDecayTimer = setTimeout(function() {
+      if (ptrState === 'syncing' || ptrState === 'settling') return;
+      pushCount = 0;
+      document.body.setAttribute('data-ptr-push', '0');
+      document.body.classList.remove('ptr-dragging');
+      rootStyle.setProperty('--ptr-border-opacity', '0');
+      rootStyle.setProperty('--ptr-bg-dim', '0');
+      rootStyle.setProperty('--ptr-stretch-y', '0px');
+      rootStyle.setProperty('--ptr-scale-x', '1');
+      rootStyle.setProperty('--ptr-scale-y', '1');
+    }, PUSH_DECAY_MS);
+  }
+
+  function registerPush() {
+    if (ptrState === 'syncing' || ptrState === 'settling') return;
+
+    pushCount++;
+    resetPushDecayTimer();
+
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+
+    // Release elastic stretch back to rest with spring bounce
+    document.body.classList.remove('ptr-dragging');
+    rootStyle.setProperty('--ptr-stretch-y', '0px');
+    rootStyle.setProperty('--ptr-scale-x', '1');
+    rootStyle.setProperty('--ptr-scale-y', '1');
+
+    if (pushCount === 1) {
+      triggerHaptic('tick');
+      document.body.setAttribute('data-ptr-push', '1');
+      // Flash confirmation then smoothly fade to 0 (never stays permanently on!)
+      rootStyle.setProperty('--ptr-border-opacity', '0.5');
+      rootStyle.setProperty('--ptr-bg-dim', '0.35');
+      setTimeout(function() {
+        if (!isDragging && ptrState === 'idle') {
+          rootStyle.setProperty('--ptr-border-opacity', '0');
+          rootStyle.setProperty('--ptr-bg-dim', '0');
+        }
+      }, 220);
+    } else if (pushCount === 2) {
+      triggerHaptic('double');
+      document.body.setAttribute('data-ptr-push', '2');
+      // Brighter flash confirmation then smoothly fade to 0
+      rootStyle.setProperty('--ptr-border-opacity', '0.8');
+      rootStyle.setProperty('--ptr-bg-dim', '0.55');
+      setTimeout(function() {
+        if (!isDragging && ptrState === 'idle') {
+          rootStyle.setProperty('--ptr-border-opacity', '0');
+          rootStyle.setProperty('--ptr-bg-dim', '0');
+        }
+      }, 240);
+    } else if (pushCount >= 3) {
+      triggerHaptic('success');
+      document.body.setAttribute('data-ptr-push', '3');
+      rootStyle.setProperty('--ptr-border-opacity', '1');
+      rootStyle.setProperty('--ptr-bg-dim', '0.70');
+      clearTimeout(pushDecayTimer);
+      startSyncPhase();
+    }
+  }
+
+  function onPtrTouchStart(e) {
+    if (ptrState === 'syncing' || ptrState === 'settling') return;
+    if (e.touches.length !== 1) return;
+    var scrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    if (scrollY > 0) return;
+    if (isModalOrPopoverOpen()) return;
+    if (isInteractiveElement(e.target)) return;
+
+    var t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    thumbX = t.clientX;
+    thumbY = t.clientY;
+    isDragging = true;
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+    document.body.classList.add('ptr-dragging');
+  }
+
+  function onPtrTouchMove(e) {
+    if (!isDragging || ptrState === 'syncing' || ptrState === 'settling') return;
+    var scrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    if (scrollY > 0) {
+      cancelDragMidPull();
+      return;
+    }
+
+    var t = e.touches[0];
+    var deltaY = t.clientY - touchStartY;
+    var deltaX = Math.abs(t.clientX - touchStartX);
+
+    if (deltaY <= 0) {
+      wasArmed = false;
+      document.body.removeAttribute('data-ptr-armed');
+      rootStyle.setProperty('--ptr-border-opacity', '0');
+      rootStyle.setProperty('--ptr-bg-dim', '0');
+      rootStyle.setProperty('--ptr-stretch-y', '0px');
+      rootStyle.setProperty('--ptr-scale-x', '1');
+      rootStyle.setProperty('--ptr-scale-y', '1');
+      return;
+    }
+
+    if (deltaX > deltaY * 0.75) {
+      return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    thumbX = t.clientX;
+    thumbY = t.clientY;
+    rootStyle.setProperty('--ptr-light-x', thumbX.toFixed(1) + 'px');
+    rootStyle.setProperty('--ptr-light-y', thumbY.toFixed(1) + 'px');
+
+    // Dynamic Kinematics: pullRatio with logarithmic overscroll resistance
+    var rawRatio = deltaY <= PUSH_THRESHOLD_PX
+      ? (deltaY / PUSH_THRESHOLD_PX)
+      : (1.0 + 0.35 * Math.log(1 + (deltaY - PUSH_THRESHOLD_PX) / 35));
+
+    var pullRatio = Math.min(1.0, deltaY / PUSH_THRESHOLD_PX);
+    var stageMult = pushCount === 1 ? 0.9 : pushCount === 2 ? 1.0 : 0.8;
+
+    // Tactile & Visual Detent Trigger: fires exact millisecond threshold is reached!
+    var isArmed = (deltaY >= PUSH_THRESHOLD_PX);
+    if (isArmed && !wasArmed) {
+      wasArmed = true;
+      triggerHaptic('detent'); // Immediate tactile click in hand!
+      document.body.setAttribute('data-ptr-armed', 'true');
+    } else if (!isArmed && wasArmed) {
+      wasArmed = false;
+      document.body.removeAttribute('data-ptr-armed');
+    }
+
+    // 1. Specular Border Brightness (ramps with depth)
+    var brightness = Math.min(1.0, Math.pow(pullRatio, 0.75) * stageMult);
+    rootStyle.setProperty('--ptr-border-opacity', brightness.toFixed(3));
+
+    // 2. Background Darkening (gets darker the more you pull)
+    var bgDim = Math.min(0.85, rawRatio * 0.82);
+    rootStyle.setProperty('--ptr-bg-dim', bgDim.toFixed(3));
+
+    // 3. Elastic Tension Stretch (downward translate + vertical elongation + Poisson narrowing)
+    var stretchY = Math.min(22, rawRatio * 15);
+    var scaleY   = 1.0 + Math.min(0.048, rawRatio * 0.040);
+    var scaleX   = 1.0 - Math.min(0.018, rawRatio * 0.014);
+
+    rootStyle.setProperty('--ptr-stretch-y', stretchY.toFixed(1) + 'px');
+    rootStyle.setProperty('--ptr-scale-y', scaleY.toFixed(4));
+    rootStyle.setProperty('--ptr-scale-x', scaleX.toFixed(4));
+  }
+
+  function onPtrTouchEnd(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+    document.body.classList.remove('ptr-dragging');
+
+    var touch = e.changedTouches ? e.changedTouches[0] : null;
+    var deltaY = touch ? (touch.clientY - touchStartY) : 0;
+    touchStartY = 0;
+
+    if (deltaY >= PUSH_THRESHOLD_PX) {
+      registerPush();
+    } else {
+      cancelDragMidPull();
+    }
+  }
+
+  /* Desktop PC Mouse Drag Interaction */
+  function onPtrMouseDown(e) {
+    if (e.button !== 0) return; // Left click only
+    if (ptrState === 'syncing' || ptrState === 'settling') return;
+    var scrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    if (scrollY > 0) return;
+    if (isModalOrPopoverOpen()) return;
+    if (isInteractiveElement(e.target)) return;
+
+    touchStartX = e.clientX;
+    touchStartY = e.clientY;
+    thumbX = e.clientX;
+    thumbY = e.clientY;
+    isDragging = true;
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+    document.body.classList.add('ptr-dragging');
+  }
+
+  function onPtrMouseMove(e) {
+    if (!isDragging || ptrState === 'syncing' || ptrState === 'settling') return;
+    var scrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    if (scrollY > 0) {
+      cancelDragMidPull();
+      return;
+    }
+
+    var deltaY = e.clientY - touchStartY;
+    var deltaX = Math.abs(e.clientX - touchStartX);
+
+    if (deltaY <= 0) {
+      wasArmed = false;
+      document.body.removeAttribute('data-ptr-armed');
+      rootStyle.setProperty('--ptr-border-opacity', '0');
+      rootStyle.setProperty('--ptr-bg-dim', '0');
+      rootStyle.setProperty('--ptr-stretch-y', '0px');
+      rootStyle.setProperty('--ptr-scale-x', '1');
+      rootStyle.setProperty('--ptr-scale-y', '1');
+      return;
+    }
+
+    if (deltaX > deltaY * 0.75) {
+      return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    thumbX = e.clientX;
+    thumbY = e.clientY;
+    rootStyle.setProperty('--ptr-light-x', thumbX.toFixed(1) + 'px');
+    rootStyle.setProperty('--ptr-light-y', thumbY.toFixed(1) + 'px');
+
+    // Dynamic Kinematics: pullRatio with logarithmic overscroll resistance
+    var rawRatio = deltaY <= PUSH_THRESHOLD_PX
+      ? (deltaY / PUSH_THRESHOLD_PX)
+      : (1.0 + 0.35 * Math.log(1 + (deltaY - PUSH_THRESHOLD_PX) / 35));
+
+    var pullRatio = Math.min(1.0, deltaY / PUSH_THRESHOLD_PX);
+    var stageMult = pushCount === 1 ? 0.9 : pushCount === 2 ? 1.0 : 0.8;
+
+    // Tactile & Visual Detent Trigger: fires exact millisecond threshold is reached!
+    var isArmed = (deltaY >= PUSH_THRESHOLD_PX);
+    if (isArmed && !wasArmed) {
+      wasArmed = true;
+      triggerHaptic('detent'); // Immediate tactile click in hand!
+      document.body.setAttribute('data-ptr-armed', 'true');
+    } else if (!isArmed && wasArmed) {
+      wasArmed = false;
+      document.body.removeAttribute('data-ptr-armed');
+    }
+
+    // 1. Specular Border Brightness (ramps with depth)
+    var brightness = Math.min(1.0, Math.pow(pullRatio, 0.75) * stageMult);
+    rootStyle.setProperty('--ptr-border-opacity', brightness.toFixed(3));
+
+    // 2. Background Darkening (gets darker the more you pull)
+    var bgDim = Math.min(0.85, rawRatio * 0.82);
+    rootStyle.setProperty('--ptr-bg-dim', bgDim.toFixed(3));
+
+    // 3. Elastic Tension Stretch (downward translate + vertical elongation + Poisson narrowing)
+    var stretchY = Math.min(22, rawRatio * 15);
+    var scaleY   = 1.0 + Math.min(0.048, rawRatio * 0.040);
+    var scaleX   = 1.0 - Math.min(0.018, rawRatio * 0.014);
+
+    rootStyle.setProperty('--ptr-stretch-y', stretchY.toFixed(1) + 'px');
+    rootStyle.setProperty('--ptr-scale-y', scaleY.toFixed(4));
+    rootStyle.setProperty('--ptr-scale-x', scaleX.toFixed(4));
+  }
+
+  function onPtrMouseUp(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+    document.body.classList.remove('ptr-dragging');
+
+    var deltaY = e.clientY - touchStartY;
+    touchStartY = 0;
+
+    if (deltaY >= PUSH_THRESHOLD_PX) {
+      registerPush();
+    } else {
+      cancelDragMidPull();
+    }
+  }
+
+  function cancelDragMidPull() {
+    isDragging = false;
+    touchStartY = 0;
+    wasArmed = false;
+    document.body.removeAttribute('data-ptr-armed');
+    document.body.classList.remove('ptr-dragging');
+    // Leaving finger mid-gesture immediately clears all effects with smooth spring/fade reset
+    rootStyle.setProperty('--ptr-border-opacity', '0');
+    rootStyle.setProperty('--ptr-bg-dim', '0');
+    rootStyle.setProperty('--ptr-stretch-y', '0px');
+    rootStyle.setProperty('--ptr-scale-x', '1');
+    rootStyle.setProperty('--ptr-scale-y', '1');
+  }
+
+  function triggerManualSync() {
+    registerPush();
+  }
+
+  function invokeRefreshAppData() {
+    return new Promise(function(resolve) {
+      if (typeof refreshAppData === 'function') {
+        refreshAppData(function(success) { resolve(Boolean(success)); });
+      } else {
+        resolve(true);
+      }
+    });
+  }
+
+  function sleep(ms) {
+    return new Promise(function(r) { setTimeout(r, ms); });
+  }
+
+  function startSyncPhase() {
+    ptrState = 'syncing';
+    document.body.setAttribute('data-ptr-state', 'syncing');
+    document.body.classList.remove('ptr-dragging');
+    rootStyle.setProperty('--ptr-border-opacity', '1');
+    rootStyle.setProperty('--ptr-bg-dim', '0.65');
+    rootStyle.setProperty('--ptr-stretch-y', '48px');
+    rootStyle.setProperty('--ptr-scale-x', '0.986');
+    rootStyle.setProperty('--ptr-scale-y', '1.038');
+
+    cancelAnimationFrame(ptrRafId);
+    var syncStart = performance.now();
+
+    // Flowing metallic glint across borders while syncing
+    function syncTick(now) {
+      if (ptrState !== 'syncing') return;
+      var t = (now - syncStart) * 0.003;
+      var lightX = (window.innerWidth * 0.5) + Math.sin(t) * (window.innerWidth * 0.45);
+      var lightY = 60 + Math.cos(t * 1.5) * 50;
+      rootStyle.setProperty('--ptr-light-x', lightX.toFixed(1) + 'px');
+      rootStyle.setProperty('--ptr-light-y', lightY.toFixed(1) + 'px');
+      ptrRafId = requestAnimationFrame(syncTick);
+    }
+    ptrRafId = requestAnimationFrame(syncTick);
+
+    Promise.all([
+      invokeRefreshAppData(),
+      sleep(MIN_SYNC_FLOOR_MS)
+    ]).then(function() {
+      cancelAnimationFrame(ptrRafId);
+      startSettlePhase();
+    });
+  }
+
+  function startSettlePhase() {
+    ptrState = 'settling';
+    document.body.setAttribute('data-ptr-state', 'settling');
+    triggerHaptic('success');
+
+    // Pulse net worth figure in emerald
+    var heroEl = document.getElementById('hero-networth');
+    if (heroEl) {
+      heroEl.style.transition = 'color 0.25s ease';
+      heroEl.style.color = '#34D399';
+      setTimeout(function() { heroEl.style.color = ''; }, 450);
+    }
+
+    setTimeout(function() {
+      ptrState = 'idle';
+      pushCount = 0;
+      document.body.setAttribute('data-ptr-state', 'idle');
+      document.body.setAttribute('data-ptr-push', '0');
+      document.body.classList.remove('ptr-dragging');
+      rootStyle.setProperty('--ptr-border-opacity', '0');
+      rootStyle.setProperty('--ptr-bg-dim', '0');
+      rootStyle.setProperty('--ptr-stretch-y', '0px');
+      rootStyle.setProperty('--ptr-scale-x', '1');
+      rootStyle.setProperty('--ptr-scale-y', '1');
+      thumbX = window.innerWidth * 0.5;
+      thumbY = -100;
+    }, SETTLE_DURATION_MS);
+  }
+
+  /* ==========================================================================
+     CHART DEFAULTS, ZOOM, GESTURE PAN & MOBILE DEFAULT TIMELINE WINDOW
+     ========================================================================== */
+  if (window.Chart) {
+    Chart.defaults.elements.line.tension = 0; // Crisp straight lines between data points to show exact slope changes
+  }
+  function getChartZoomConfig(labels) {
+    var totalPoints = (labels && labels.length) ? labels.length : 12;
+    // Moderate zoom: prevent pinch from over-zooming beyond a clean multi-month view (min 5 points)
+    var calculatedMinRange = totalPoints <= 5 ? Math.max(2, totalPoints - 1) : 5;
+    return {
+      limits: {
+        x: {
+          min: 'original',
+          max: 'original',
+          minRange: calculatedMinRange
+        },
+        y: {
+          min: 'original',
+          max: 'original'
+        }
+      },
+      pan: {
+        enabled: true,
+        mode: 'x', // ONLY pan timeline horizontally: NEVER blocks vertical page scroll!
+        threshold: 18
+      },
+      zoom: {
+        wheel: {
+          enabled: true,
+          speed: 0.05
+        },
+        pinch: {
+          enabled: true
+        },
+        mode: 'x' // Two-finger pinch zooms timeline horizontally
+      }
+    };
+  }
+
+  function attachChartZoomReset(canvas, chart) {
+    if (!canvas || !chart) return;
+    canvas.style.touchAction = 'pan-y';
+    canvas.addEventListener('dblclick', function() {
+      if (chart && typeof chart.resetZoom === 'function') chart.resetZoom();
+    });
+
+    var lastTapTime = 0;
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchMoved = false;
+    var hadMultiTouch = false;
+
+    canvas.addEventListener('touchstart', function(e) {
+      if (e.touches.length > 1) {
+        hadMultiTouch = true;
+      } else if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchMoved = false;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) {
+        hadMultiTouch = true;
+      } else if (e.touches.length === 1) {
+        var dx = Math.abs(e.touches[0].clientX - touchStartX);
+        var dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 8 || dy > 8) {
+          touchMoved = true;
+        }
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', function(e) {
+      if (hadMultiTouch) {
+        if (e.touches.length === 0) {
+          hadMultiTouch = false;
+        }
+        lastTapTime = 0;
+        return;
+      }
+
+      if (touchMoved) {
+        lastTapTime = 0;
+        return;
+      }
+
+      var now = Date.now();
+      var tapGap = now - lastTapTime;
+      if (tapGap > 40 && tapGap < 280) {
+        if (chart && typeof chart.resetZoom === 'function') {
+          chart.resetZoom();
+          if (e.cancelable) e.preventDefault();
+        }
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    });
+
+    canvas.addEventListener('touchcancel', function() {
+      hadMultiTouch = false;
+      touchMoved = false;
+      lastTapTime = 0;
+    });
+  }
+
+  function resetChartZoom(chartKey) {
+    var chartObj = null;
+    if (chartKey === 'chart-networth') chartObj = CHART_NETWORTH;
+    else if (chartKey === 'chart-reaction') chartObj = CHART_REACTION;
+    else if (chartKey === 'chart-monthly-change') chartObj = CHART_MONTHLY_CHANGE;
+    else if (chartKey === 'chart-yearly-pillars') chartObj = CHART_YEARLY_PILLARS;
+    else if (chartKey === 'chart-drilldown-year') chartObj = CHART_DRILLDOWN_YEAR;
+    else if (chartKey === 'chart-simulator') chartObj = CHART_SIMULATOR;
+
+    if (chartObj && typeof chartObj.resetZoom === 'function') {
+      chartObj.resetZoom();
+      showToast('Chart Zoom Reset');
+    }
+  }
+
+  function loadStateData(data) {
+    APP_STATE = data;
+    var loader = document.getElementById('app-loading-screen');
+    if (loader) {
+      loader.classList.add('fade-out');
+      setTimeout(function() {
+        if (loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 500);
+    }
+    if (data.summary && data.summary.avgRecentMonthly) {
+      var simSlider = document.getElementById('sim-monthly');
+      if (simSlider) simSlider.value = Math.min(300000, Math.max(10000, Math.round(data.summary.avgRecentMonthly / 5000) * 5000));
+    }
+    renderDashboard(data);
+    renderYearlyView(data);
+    runYearSimulator();
+    renderMilestones();
+    initFormDefaults(data);
+    renderHistory(data);
+    scrollTimelineChartsToLatest();
+    setTimeout(function() {
+      syncAllGliders(false);
+      syncAllSegmentGliders(false);
+    }, 60);
+  }
+
+  /* ==========================================================================
+     4. VIEW 1: OVERVIEW DASHBOARD & CHARTS
+     ========================================================================== */
+  function renderDashboard(data) {
+    var s = data.summary;
+    document.getElementById('hero-networth').innerText = formatIndian(s.netWorth, false);
+
+    var cBadge = document.getElementById('hero-change-badge');
+    var sign = s.monthlyChange >= 0 ? '+' : '';
+    var mPctStr = (s.monthlyChangePct !== undefined && s.monthlyChangePct !== null) ? ((s.monthlyChangePct >= 0 ? '+' : '') + s.monthlyChangePct.toFixed(2) + '%') : '0.00%';
+    cBadge.innerText = sign + formatIndian(s.monthlyChange, false) + ' (' + mPctStr + ') this month';
+    cBadge.className = 'glow-badge ' + (s.monthlyChange >= 0 ? 'positive' : 'negative');
+
+    var ytdBadge = document.getElementById('hero-ytd-badge');
+    if (ytdBadge) {
+      var ytdSign = s.ytdAdded >= 0 ? '+' : '';
+      var ytdPctSign = s.ytdPct >= 0 ? '+' : '';
+      var curYear = data.latest ? new Date(data.latest.monthIso).getFullYear() : new Date().getFullYear();
+      ytdBadge.innerText = ytdSign + formatIndian(s.ytdAdded, false) + ' (' + ytdPctSign + s.ytdPct.toFixed(2) + '%) in ' + curYear;
+      ytdBadge.className = 'glow-badge ' + (s.ytdAdded >= 0 ? 'positive' : 'negative');
+    }
+
+    var yoyBadge = document.getElementById('hero-yoy-badge');
+    if (yoyBadge) {
+      var yoySign = s.yoyAdded >= 0 ? '+' : '';
+      var yoyPctSign = s.yoyPct >= 0 ? '+' : '';
+      yoyBadge.innerText = yoySign + formatIndian(s.yoyAdded, false) + ' (' + yoyPctSign + s.yoyPct.toFixed(2) + '%) past 1 year';
+      yoyBadge.className = 'glow-badge ' + (s.yoyAdded >= 0 ? 'positive' : 'negative');
+    }
+
+    if (data.latest) {
+      document.getElementById('hero-latest-month').innerText = 'Snapshot: ' + formatMonthLabel(data.latest.monthIso);
+    }
+
+    // 1. Market Pillar
+    document.getElementById('kpi-market').innerText = formatIndian(s.marketWealth, false);
+    document.getElementById('kpi-market-pct').innerText = s.marketShare + ' Share';
+    document.getElementById('bar-market').style.width = s.marketShare;
+    var elMktChange = document.getElementById('kpi-market-change');
+    if (elMktChange) {
+      var mktSign = s.marketChange >= 0 ? '+' : '';
+      var mktPctSign = s.marketChangePct >= 0 ? '+' : '';
+      elMktChange.innerText = mktSign + formatIndian(s.marketChange, false) + ' (' + mktPctSign + s.marketChangePct.toFixed(2) + '%) this month';
+      elMktChange.style.color = s.marketChange >= 0 ? 'var(--emerald-bright)' : 'var(--coral-bright)';
+    }
+
+    // 2. Bank Pillar
+    document.getElementById('kpi-bank').innerText = formatIndian(s.bankBalance, false);
+    document.getElementById('kpi-bank-pct').innerText = s.bankShare + ' Share';
+    document.getElementById('bar-bank').style.width = s.bankShare;
+    var elBankChange = document.getElementById('kpi-bank-change');
+    if (elBankChange) {
+      var bankSign = s.bankChange >= 0 ? '+' : '';
+      var bankPctSign = s.bankChangePct >= 0 ? '+' : '';
+      elBankChange.innerText = bankSign + formatIndian(s.bankChange, false) + ' (' + bankPctSign + s.bankChangePct.toFixed(2) + '%) this month';
+      elBankChange.style.color = s.bankChange >= 0 ? 'var(--emerald-bright)' : 'var(--coral-bright)';
+    }
+
+    // 3. EPF Pillar
+    document.getElementById('kpi-epf').innerText = formatIndian(s.epf, false);
+    document.getElementById('kpi-epf-pct').innerText = s.epfShare + ' Share';
+    document.getElementById('bar-epf').style.width = s.epfShare;
+    var elEpfChange = document.getElementById('kpi-epf-change');
+    if (elEpfChange) {
+      var epfSign = s.epfChange >= 0 ? '+' : '';
+      var epfPctSign = s.epfChangePct >= 0 ? '+' : '';
+      elEpfChange.innerText = epfSign + formatIndian(s.epfChange, false) + ' (' + epfPctSign + s.epfChangePct.toFixed(2) + '%) this month';
+      elEpfChange.style.color = s.epfChange > 0 ? 'var(--emerald-bright)' : (s.epfChange < 0 ? 'var(--coral-bright)' : '#94A3B8');
+    }
+
+    // 4. Monthly Change Pillar
+    var kpiChange = document.getElementById('kpi-change');
+    kpiChange.innerText = (s.monthlyChange >= 0 ? '+' : '') + formatIndian(s.monthlyChange, false);
+    kpiChange.style.color = s.monthlyChange >= 0 ? 'var(--emerald-bright)' : 'var(--coral-bright)';
+    document.getElementById('kpi-change-pct').innerText = mPctStr + ' this month';
+    var elAvgPace = document.getElementById('kpi-avg-pace');
+    if (elAvgPace) {
+      elAvgPace.innerText = 'Avg: ' + formatIndian(s.avgRecentMonthly, false) + '/mo';
+    }
+
+    renderTrajectoryChart();
+    renderAllocationChart();
+    renderReactionChart();
+    renderMonthlyChangeChart();
+  }
+
+  function setTrajectoryMode(mode) {
+    TRAJECTORY_MODE = mode;
+    var btnStacked = document.getElementById('btn-mode-stacked');
+    var btnTotal = document.getElementById('btn-mode-total');
+    if (btnStacked) btnStacked.classList.toggle('active', mode === 'stacked');
+    if (btnTotal) btnTotal.classList.toggle('active', mode === 'total');
+    var target = mode === 'stacked' ? btnStacked : btnTotal;
+    if (target) repositionSegmentGlider(target, true);
+    renderTrajectoryChart();
+  }
+
+  function renderTrajectoryChart() {
+    if (!APP_STATE) return;
+    var cd = APP_STATE.chartData;
+    var ctx = document.getElementById('chart-networth').getContext('2d');
+    if (CHART_NETWORTH) CHART_NETWORTH.destroy();
+
+    var datasets = [];
+    var isStacked = TRAJECTORY_MODE === 'stacked';
+
+    if (isStacked) {
+      datasets = [
+        {
+          label: 'Market Investments',
+          data: cd.market,
+          borderColor: '#34D399',
+          backgroundColor: 'rgba(16, 185, 129, 0.32)',
+          fill: true,
+          tension: 0,
+          borderWidth: 2,
+          pointRadius: 0
+        },
+        {
+          label: 'Bank & Fixed Deposits',
+          data: cd.bank,
+          borderColor: '#FBBF24',
+          backgroundColor: 'rgba(245, 158, 11, 0.28)',
+          fill: true,
+          tension: 0,
+          borderWidth: 2,
+          pointRadius: 0
+        },
+        {
+          label: 'EPF Balance',
+          data: cd.epf,
+          borderColor: '#C084FC',
+          backgroundColor: 'rgba(168, 85, 247, 0.28)',
+          fill: true,
+          tension: 0,
+          borderWidth: 2,
+          pointRadius: 0
+        }
+      ];
+    } else {
+      var grad = ctx.createLinearGradient(0, 0, 0, 260);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      datasets = [{
+        label: 'Total Wealth',
+        data: cd.netWorth,
+        borderColor: '#38BDF8',
+        backgroundColor: grad,
+        fill: true,
+        tension: 0,
+        borderWidth: 2.8,
+        pointRadius: 0,
+        pointHoverRadius: 5
+      }];
+    }
+
+    var isMobile = window.innerWidth <= 768;
+    var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
+    var xMax = (isMobile && cd.labels.length > 8) ? cd.labels[cd.labels.length - 1] : undefined;
+
+    CHART_NETWORTH = new Chart(ctx, {
+      type: 'line',
+      data: { labels: cd.labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: isStacked,
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '600' }, boxWidth: 12 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            titleColor: '#94A3B8',
+            bodyColor: '#FFF',
+            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
+            borderColor: 'rgba(56, 189, 248, 0.35)',
+            borderWidth: 1,
+            callbacks: {
+              label: function(c) { return ' ' + formatIndian(c.raw, false); }
+            }
+          },
+          zoom: getChartZoomConfig(cd.labels)
+        },
+        scales: {
+          x: {
+            min: xMin,
+            max: xMax,
+            grid: { display: false },
+            ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 8 }
+          },
+          y: {
+            stacked: isStacked,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#64748B', font: { size: 10 }, callback: function(v) { return formatCompactLakhs(v); } }
+          }
+        }
+      }
+    });
+    attachChartZoomReset(ctx.canvas, CHART_NETWORTH);
+  }
+
+  function renderAllocationChart() {
+    if (!APP_STATE || !APP_STATE.latest) return;
+    var lat = APP_STATE.latest;
+    var ctx = document.getElementById('chart-allocation').getContext('2d');
+    if (CHART_ALLOCATION) CHART_ALLOCATION.destroy();
+
+    var items = [
+      { label: 'Mutual Funds', val: lat.mf, color: '#10B981' },
+      { label: 'Fixed Deposits', val: lat.hdfc_dep + lat.sbi_dep, color: '#F59E0B' },
+      { label: 'EPF Balance', val: lat.epf, color: '#A855F7' },
+      { label: 'SBI PPF', val: lat.sbi_ppf, color: '#38BDF8' },
+      { label: 'Gold', val: lat.gold, color: '#FACC15' },
+      { label: 'Silver', val: lat.silver, color: '#94A3B8' },
+      { label: 'Bank Savings', val: lat.hdfc_sav + lat.sbi_sav, color: '#EC4899' }
+    ];
+
+    CHART_ALLOCATION = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: items.map(function(i) { return i.label; }),
+        datasets: [{
+          data: items.map(function(i) { return i.val; }),
+          backgroundColor: items.map(function(i) { return i.color; }),
+          borderColor: '#060A13',
+          borderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#CBD5E1', font: { size: 10.5, weight: '600' }, boxWidth: 10, padding: 10 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
+            callbacks: {
+              label: function(c) {
+                var pct = ((c.raw / lat.net_worth) * 100).toFixed(1) + '%';
+                return ' ' + formatIndian(c.raw, false) + ' (' + pct + ')';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ==========================================================================
+     5. INVESTMENT TRAJECTORY VS MARKET BENCHMARKS (MF vs Nifty, Gold, Silver)
+     ========================================================================== */
+  function setReactionFilter(mode) {
+    REACTION_FILTER = mode;
+    var btnMf = document.getElementById('btn-react-mf');
+    var btnGold = document.getElementById('btn-react-gold');
+    var btnSilver = document.getElementById('btn-react-silver');
+    var btnAll = document.getElementById('btn-react-all');
+    if (btnMf) btnMf.classList.toggle('active', mode === 'mf');
+    if (btnGold) btnGold.classList.toggle('active', mode === 'gold');
+    if (btnSilver) btnSilver.classList.toggle('active', mode === 'silver');
+    if (btnAll) btnAll.classList.toggle('active', mode === 'all');
+    var target = mode === 'mf' ? btnMf : (mode === 'gold' ? btnGold : (mode === 'silver' ? btnSilver : btnAll));
+    if (target) repositionSegmentGlider(target, true);
+    renderReactionChart();
+  }
+
+  function renderReactionChart() {
+    if (!APP_STATE || !APP_STATE.chartData || !APP_STATE.chartData.reaction) return;
+    var rx = APP_STATE.chartData.reaction;
+    var ctx = document.getElementById('chart-reaction').getContext('2d');
+    if (CHART_REACTION) CHART_REACTION.destroy();
+
+    var datasets = [];
+    var scales = {};
+
+    if (REACTION_FILTER === 'mf') {
+      datasets = [
+        {
+          id: 'mf',
+          label: 'My Mutual Funds',
+          data: rx.mfRaw,
+          borderColor: '#38BDF8',
+          backgroundColor: 'rgba(56, 189, 248, 0.10)',
+          borderWidth: 2.8,
+          tension: 0,
+          fill: true,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#38BDF8',
+          yAxisID: 'yLeft'
+        },
+        {
+          id: 'nifty',
+          label: 'Nifty 50 Benchmark',
+          data: rx.niftyRaw,
+          borderColor: 'rgba(52, 211, 153, 0.45)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.8,
+          borderDash: [],
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#34D399',
+          yAxisID: 'yRight'
+        }
+      ];
+
+      scales = {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+        },
+        yLeft: {
+          type: 'linear',
+          position: 'left',
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Mutual Funds Value (₹)',
+            color: '#38BDF8',
+            font: { size: 11, weight: '700' }
+          }
+        },
+        yRight: {
+          type: 'linear',
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Nifty 50 Benchmark',
+            color: 'rgba(52, 211, 153, 0.75)',
+            font: { size: 11, weight: '700' }
+          }
+        }
+      };
+    } else if (REACTION_FILTER === 'gold') {
+      datasets = [
+        {
+          id: 'goldHolding',
+          label: 'My Gold Holdings',
+          data: rx.goldHoldingRaw,
+          borderColor: '#FACC15',
+          backgroundColor: 'rgba(250, 204, 21, 0.10)',
+          borderWidth: 2.8,
+          tension: 0,
+          fill: true,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#FACC15',
+          yAxisID: 'yLeft'
+        },
+        {
+          id: 'goldRate',
+          label: 'Gold Market Rate (10g)',
+          data: rx.goldBenchRaw,
+          borderColor: 'rgba(251, 146, 60, 0.45)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.8,
+          borderDash: [],
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#FB923C',
+          yAxisID: 'yRight'
+        }
+      ];
+
+      scales = {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+        },
+        yLeft: {
+          type: 'linear',
+          position: 'left',
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Gold Holding Value (₹)',
+            color: '#FACC15',
+            font: { size: 11, weight: '700' }
+          }
+        },
+        yRight: {
+          type: 'linear',
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Gold Rate (₹ / 10g)',
+            color: 'rgba(251, 146, 60, 0.75)',
+            font: { size: 11, weight: '700' }
+          }
+        }
+      };
+    } else if (REACTION_FILTER === 'silver') {
+      datasets = [
+        {
+          id: 'silverHolding',
+          label: 'My Silver Holdings',
+          data: rx.silverHoldingRaw,
+          borderColor: '#E2E8F0',
+          backgroundColor: 'rgba(226, 232, 240, 0.10)',
+          borderWidth: 2.8,
+          tension: 0,
+          fill: true,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#E2E8F0',
+          yAxisID: 'yLeft'
+        },
+        {
+          id: 'silverRate',
+          label: 'Silver Market Rate (1kg)',
+          data: rx.silverBenchRaw,
+          borderColor: 'rgba(96, 165, 250, 0.45)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.8,
+          borderDash: [],
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#60A5FA',
+          yAxisID: 'yRight'
+        }
+      ];
+
+      scales = {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+        },
+        yLeft: {
+          type: 'linear',
+          position: 'left',
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Silver Holding Value (₹)',
+            color: '#E2E8F0',
+            font: { size: 11, weight: '700' }
+          }
+        },
+        yRight: {
+          type: 'linear',
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Silver Rate (₹ / 1kg)',
+            color: 'rgba(96, 165, 250, 0.75)',
+            font: { size: 11, weight: '700' }
+          }
+        }
+      };
+    } else {
+      // 'all' Combined (Normalized Base-100 Trajectory)
+      datasets = [
+        {
+          id: 'mf',
+          label: 'My Mutual Funds',
+          data: rx.mfIndex,
+          borderColor: '#38BDF8',
+          borderWidth: 2.5,
+          tension: 0,
+          pointRadius: 2
+        },
+        {
+          id: 'nifty',
+          label: 'Nifty 50 Benchmark',
+          data: rx.niftyIndex,
+          borderColor: 'rgba(52, 211, 153, 0.45)',
+          borderDash: [],
+          borderWidth: 1.8,
+          tension: 0,
+          pointRadius: 0
+        },
+        {
+          id: 'goldHolding',
+          label: 'My Gold Holdings',
+          data: rx.goldHoldingIndex,
+          borderColor: '#FACC15',
+          borderWidth: 2.5,
+          tension: 0,
+          pointRadius: 2
+        },
+        {
+          id: 'goldRate',
+          label: 'Gold Rate (10g)',
+          data: rx.goldRateIndex,
+          borderColor: 'rgba(251, 146, 60, 0.45)',
+          borderDash: [],
+          borderWidth: 1.8,
+          tension: 0,
+          pointRadius: 0
+        },
+        {
+          id: 'silverHolding',
+          label: 'My Silver Holdings',
+          data: rx.silverHoldingIndex,
+          borderColor: '#CBD5E1',
+          borderWidth: 2.5,
+          tension: 0,
+          pointRadius: 2
+        },
+        {
+          id: 'silverRate',
+          label: 'Silver Rate (1kg)',
+          data: rx.silverRateIndex,
+          borderColor: 'rgba(96, 165, 250, 0.45)',
+          borderDash: [],
+          borderWidth: 1.8,
+          tension: 0,
+          pointRadius: 0
+        }
+      ];
+
+      scales = {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          grace: '5%',
+          ticks: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Normalized Growth (Base 100)',
+            color: 'rgba(148, 163, 184, 0.7)',
+            font: { size: 10.5, weight: '700' }
+          }
+        }
+      };
+    }
+
+    CHART_REACTION = new Chart(ctx, {
+      type: 'line',
+      data: { labels: rx.labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 12 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            titleColor: '#FFFFFF',
+            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
+            padding: 12,
+            boxPadding: 6,
+            callbacks: {
+              label: function(c) {
+                var val = c.raw;
+                var idx = c.dataIndex;
+                if (c.dataset.yAxisID === 'yLeft') {
+                  return ' ' + formatIndian(val, false);
+                } else if (c.dataset.yAxisID === 'yRight') {
+                  if (REACTION_FILTER === 'mf') {
+                    return ' ' + Number(val).toLocaleString('en-IN') + ' pts';
+                  } else if (REACTION_FILTER === 'gold') {
+                    return ' ₹' + Number(val).toLocaleString('en-IN') + ' / 10g';
+                  } else if (REACTION_FILTER === 'silver') {
+                    return ' ₹' + Number(val).toLocaleString('en-IN') + ' / kg';
+                  }
+                  return ' ' + Number(val).toLocaleString('en-IN');
+                } else {
+                  var diff = (val - 100).toFixed(1);
+                  var sign = diff >= 0 ? '+' : '';
+                  var extra = '';
+                  if (c.dataset.id === 'mf' && rx.mfRaw) {
+                    extra = ' (' + formatIndian(rx.mfRaw[idx], false) + ')';
+                  } else if (c.dataset.id === 'nifty' && rx.niftyRaw) {
+                    extra = ' (' + Number(rx.niftyRaw[idx]).toLocaleString('en-IN') + ' pts)';
+                  } else if (c.dataset.id === 'goldHolding' && rx.goldHoldingRaw) {
+                    extra = ' (' + formatIndian(rx.goldHoldingRaw[idx], false) + ')';
+                  } else if (c.dataset.id === 'goldRate' && rx.goldBenchRaw) {
+                    extra = ' (₹' + Number(rx.goldBenchRaw[idx]).toLocaleString('en-IN') + '/10g)';
+                  } else if (c.dataset.id === 'silverHolding' && rx.silverHoldingRaw) {
+                    extra = ' (' + formatIndian(rx.silverHoldingRaw[idx], false) + ')';
+                  } else if (c.dataset.id === 'silverRate' && rx.silverBenchRaw) {
+                    extra = ' (₹' + Number(rx.silverBenchRaw[idx]).toLocaleString('en-IN') + '/kg)';
+                  }
+                  return ' ' + sign + diff + '%' + extra;
+                }
+              }
+            }
+          },
+          zoom: getChartZoomConfig(rx.labels)
+        },
+        scales: scales
+      }
+    });
+    attachChartZoomReset(ctx.canvas, CHART_REACTION);
+  }
+
+  function renderMonthlyChangeChart() {
+    if (!APP_STATE) return;
+    var cd = APP_STATE.chartData;
+    var ctx = document.getElementById('chart-monthly-change').getContext('2d');
+    if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.destroy();
+
+    var colors = cd.monthlyChange.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
+    var isMobile = window.innerWidth <= 768;
+    var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
+    var xMax = (isMobile && cd.labels.length > 8) ? cd.labels[cd.labels.length - 1] : undefined;
+
+    CHART_MONTHLY_CHANGE = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: cd.labels,
+        datasets: [{
+          label: 'Monthly Net Wealth Change',
+          data: cd.monthlyChange,
+          borderColor: '#38BDF8',
+          borderWidth: 2.5,
+          tension: 0,
+          fill: true,
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colors,
+          pointBorderColor: '#070B14',
+          pointBorderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
+            callbacks: {
+              label: function(c) { return (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
+            }
+          },
+          zoom: getChartZoomConfig(cd.labels)
+        },
+        scales: {
+          x: {
+            min: xMin,
+            max: xMax,
+            grid: { display: false },
+            ticks: { color: '#64748B', font: { size: 9.5 }, maxTicksLimit: 10 }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#64748B', font: { size: 9.5 }, callback: function(v) { return formatCompactLakhs(v); } }
+          }
+        }
+      }
+    });
+    attachChartZoomReset(ctx.canvas, CHART_MONTHLY_CHANGE);
+  }
+
+  /* ==========================================================================
+     6. VIEW 2: YEARLY VIEW (Year-by-Year Summary, Charts & Table)
+     ========================================================================== */
+  var SELECTED_DRILLDOWN_YEAR = null;
+  var CHART_DRILLDOWN_YEAR = null;
+
+  function renderYearlyView(data) {
+    var ys = data.yearlySummary || [];
+    var cardsContainer = document.getElementById('yearly-cards-container');
+    var tbody = document.getElementById('yearly-table-body');
+    cardsContainer.innerHTML = '';
+    tbody.innerHTML = '';
+
+    ys.slice().reverse().forEach(function(y) {
+      var card = document.createElement('div');
+      card.className = 'liquid-slab interactive-lift yearly-card' + (SELECTED_DRILLDOWN_YEAR === String(y.year) ? ' active-year' : '');
+      card.setAttribute('data-year', y.year);
+      var sign = y.totalAdded >= 0 ? '+' : '';
+      var growthPctSign = y.growthPct >= 0 ? '+' : '';
+      var growthClass = y.growthPct >= 0 ? 'positive' : 'negative';
+
+      card.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+          '<span style="font-size:18px; font-weight:800; color:#FFF;">' + y.year + '</span>' +
+          '<span class="glow-badge ' + growthClass + '">' + growthPctSign + y.growthPct + '% Annual</span>' +
+        '</div>' +
+        '<div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Closing Wealth (' + y.monthsLogged + ' mos)</div>' +
+        '<div class="mono-num" style="font-size:22px; font-weight:800; color:var(--cyan-core); margin:2px 0 10px 0;">' + formatIndian(y.closingWealth, false) + '</div>' +
+        '<div style="display:flex; flex-direction:column; gap:5px; font-size:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">' +
+          '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Added in ' + y.year + ':</span><strong class="mono-num" style="color:var(--emerald-bright);">' + sign + formatIndian(y.totalAdded, false) + ' (' + growthPctSign + y.growthPct + '%)</strong></div>' +
+          '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Avg Monthly Added:</span><strong class="mono-num">' + formatIndian(y.avgMonthlyAdded, false) + '/mo</strong></div>' +
+          '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Best Month:</span><strong class="mono-num" style="color:var(--cyan-core);">' + y.bestMonthLabel + ' (' + formatCompactLakhs(y.bestMonthGain) + ')</strong></div>' +
+        '</div>';
+
+      card.onclick = function() {
+        openYearDrilldown(y.year);
+      };
+      cardsContainer.appendChild(card);
+
+      var lastRec = y.monthlyRecords[y.monthlyRecords.length - 1];
+      var bankFdOnly = lastRec ? (lastRec.total_bank - lastRec.sbi_ppf) : 0;
+      var ppfOnly = lastRec ? lastRec.sbi_ppf : 0;
+
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      tr.style.textAlign = 'center';
+      tr.style.cursor = 'pointer';
+      tr.onclick = function() { openYearDrilldown(y.year); };
+      tr.innerHTML =
+        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + y.year + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(bankFdOnly, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(ppfOnly, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(y.closingEpf, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(y.closingMf, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(y.closingGold + y.closingSilver, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(y.closingWealth, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:700; color:var(--emerald-bright);">' + sign + formatIndian(y.totalAdded, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:700; color:var(--emerald-bright);">' + growthPctSign + y.growthPct + '%</td>';
+      tbody.appendChild(tr);
+    });
+
+    // If a drilldown was already active, refresh it
+    if (SELECTED_DRILLDOWN_YEAR) {
+      openYearDrilldown(SELECTED_DRILLDOWN_YEAR);
+    }
+
+    // Yearly Charts - Continuous Spline Graphs
+    var labels = ys.map(function(y) { return y.year; });
+    var ctxP = document.getElementById('chart-yearly-pillars').getContext('2d');
+    if (CHART_YEARLY_PILLARS) CHART_YEARLY_PILLARS.destroy();
+    CHART_YEARLY_PILLARS = new Chart(ctxP, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Market Investments',
+            data: ys.map(function(y) { return y.closingMarket; }),
+            borderColor: '#34D399',
+            backgroundColor: 'rgba(52, 211, 153, 0.12)',
+            borderWidth: 2.5,
+            tension: 0,
+            fill: true,
+            pointRadius: 4
+          },
+          {
+            label: 'Bank & Fixed',
+            data: ys.map(function(y) { return y.closingBank; }),
+            borderColor: '#FBBF24',
+            backgroundColor: 'rgba(251, 191, 36, 0.12)',
+            borderWidth: 2.5,
+            tension: 0,
+            fill: true,
+            pointRadius: 4
+          },
+          {
+            label: 'EPF Balance',
+            data: ys.map(function(y) { return y.closingEpf; }),
+            borderColor: '#C084FC',
+            backgroundColor: 'rgba(192, 132, 252, 0.12)',
+            borderWidth: 2.5,
+            tension: 0,
+            fill: true,
+            pointRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 12 } },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            callbacks: { label: function(c) { return ' ' + formatIndian(c.raw, false); } }
+          },
+          zoom: getChartZoomConfig(labels)
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#CBD5E1' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748B', callback: function(v) { return formatCompactLakhs(v); } } }
+        }
+      }
+    });
+    attachChartZoomReset(ctxP.canvas, CHART_YEARLY_PILLARS);
+
+    // New Wealth Added Per Year - Elegant Bar Chart
+    var ctxA = document.getElementById('chart-yearly-added').getContext('2d');
+    if (CHART_YEARLY_ADDED) CHART_YEARLY_ADDED.destroy();
+    CHART_YEARLY_ADDED = new Chart(ctxA, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Wealth Added in Year',
+          data: ys.map(function(y) { return y.totalAdded; }),
+          backgroundColor: ys.map(function(y) {
+            return y.totalAdded >= 0 ? 'rgba(52, 211, 153, 0.85)' : 'rgba(251, 113, 133, 0.85)';
+          }),
+          borderColor: ys.map(function(y) {
+            return y.totalAdded >= 0 ? '#34D399' : '#FB7185';
+          }),
+          borderWidth: 1.5,
+          borderRadius: 8,
+          barPercentage: 0.55
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            titleColor: '#FFFFFF',
+            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
+            padding: 10,
+            callbacks: {
+              label: function(c) { return ' ' + (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
+            }
+          },
+          zoom: getChartZoomConfig(labels)
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#CBD5E1', font: { weight: '600' } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748B', callback: function(v) { return formatCompactLakhs(v); } } }
+        }
+      }
+    });
+    attachChartZoomReset(ctxA.canvas, CHART_YEARLY_ADDED);
+  }
+
+  function closeYearDrilldown() {
+    SELECTED_DRILLDOWN_YEAR = null;
+    var backdrop = document.getElementById('yearly-drilldown-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    document.querySelectorAll('.yearly-card').forEach(function(c) {
+      c.classList.remove('active-year');
+    });
+  }
+
+  function closeYearDrilldownOnBackdrop(event) {
+    if (event.target && event.target.id === 'yearly-drilldown-backdrop') {
+      closeYearDrilldown();
+    }
+  }
+
+  function editRecordFromDrilldown(monthIso) {
+    closeYearDrilldown();
+    editRecord(monthIso);
+  }
+
+  function openYearDrilldown(year) {
+    if (!APP_STATE) return;
+    SELECTED_DRILLDOWN_YEAR = String(year);
+
+    // Highlight active card
+    document.querySelectorAll('.yearly-card').forEach(function(c) {
+      c.classList.toggle('active-year', c.getAttribute('data-year') === String(year));
+    });
+
+    var ys = APP_STATE.yearlySummary || [];
+    var yData = ys.find(function(item) { return String(item.year) === String(year); });
+    if (!yData) return;
+
+    var backdrop = document.getElementById('yearly-drilldown-backdrop');
+    if (!backdrop) return;
+    backdrop.classList.add('open');
+
+    var bodyEl = backdrop.querySelector('.drilldown-dialog-body');
+    if (bodyEl) bodyEl.scrollTop = 0;
+
+    // Header info
+    document.getElementById('drilldown-title').innerText = year + ' Monthly Breakdown';
+    var sign = yData.totalAdded >= 0 ? '+' : '';
+    var gSign = yData.growthPct >= 0 ? '+' : '';
+    var gPill = document.getElementById('drilldown-growth-pill');
+    gPill.innerText = gSign + yData.growthPct + '% Year Return (' + sign + formatIndian(yData.totalAdded, false) + ')';
+    gPill.className = 'glow-badge ' + (yData.growthPct >= 0 ? 'positive' : 'negative');
+
+    document.getElementById('drilldown-chart-title').innerText = year + ' Monthly Investment Progression by Category';
+
+    // Year Switcher buttons with persistent Glider Pill & Jelly Effect
+    var switcher = document.getElementById('drilldown-year-switcher');
+    if (switcher) {
+      var existingBtns = switcher.querySelectorAll('.segment-btn');
+      var yearsList = ys.slice().reverse();
+      var needsRebuild = existingBtns.length !== yearsList.length;
+
+      if (!needsRebuild) {
+        yearsList.forEach(function(item, idx) {
+          if (existingBtns[idx].getAttribute('data-year') !== String(item.year)) {
+            needsRebuild = true;
+          }
+        });
+      }
+
+      if (needsRebuild) {
+        switcher.innerHTML = '<div class="segment-glider-pill"></div>';
+        yearsList.forEach(function(item) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'segment-btn' + (String(item.year) === String(year) ? ' active' : '');
+          btn.setAttribute('data-year', item.year);
+          btn.innerText = item.year;
+          btn.onclick = function() {
+            var y = this.getAttribute('data-year');
+            if (y === SELECTED_DRILLDOWN_YEAR) return;
+            repositionSegmentGlider(this, true);
+            openYearDrilldown(y);
+          };
+          switcher.appendChild(btn);
+        });
+      } else {
+        existingBtns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.getAttribute('data-year') === String(year));
+        });
+      }
+
+      var activeBtn = switcher.querySelector('.segment-btn.active');
+      if (activeBtn) {
+        setTimeout(function() {
+          repositionSegmentGlider(activeBtn, true);
+        }, 30);
+      }
+    }
+
+    // 4 Analytics Metric Cards
+    var kpis = document.getElementById('drilldown-kpis');
+    kpis.innerHTML =
+      '<div class="drilldown-metric-card">' +
+        '<div class="drilldown-metric-title">Annual Net Wealth Added</div>' +
+        '<div class="drilldown-metric-val" style="color:var(--emerald-bright);">' + sign + formatIndian(yData.totalAdded, false) + '</div>' +
+        '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + formatIndian(yData.startWealth, false) + ' &rarr; ' + formatIndian(yData.closingWealth, false) + ' (' + gSign + yData.growthPct + '%)</div>' +
+      '</div>' +
+      '<div class="drilldown-metric-card">' +
+        '<div class="drilldown-metric-title">Monthly Savings Pace</div>' +
+        '<div class="drilldown-metric-val">' + formatIndian(yData.avgMonthlyAdded, false) + '<span style="font-size:12px; color:var(--text-muted);"> /mo</span></div>' +
+        '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + yData.monthsLogged + ' months recorded in ' + year + '</div>' +
+      '</div>' +
+      '<div class="drilldown-metric-card">' +
+        '<div class="drilldown-metric-title">Best Month in ' + year + '</div>' +
+        '<div class="drilldown-metric-val" style="color:var(--cyan-core);">' + yData.bestMonthLabel + '</div>' +
+        '<div class="drilldown-metric-sub" style="color:var(--emerald-bright); font-family:JetBrains Mono;">+' + formatIndian(yData.bestMonthGain, false) + ' (' + (yData.bestMonthPct >= 0 ? '+' : '') + yData.bestMonthPct + '%)</div>' +
+      '</div>' +
+      '<div class="drilldown-metric-card">' +
+        '<div class="drilldown-metric-title">Lowest Month in ' + year + '</div>' +
+        '<div class="drilldown-metric-val" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + ';">' + yData.worstMonthLabel + '</div>' +
+        '<div class="drilldown-metric-sub" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + '; font-family:JetBrains Mono;">' + (yData.worstMonthGain >= 0 ? '+' : '') + formatIndian(yData.worstMonthGain, false) + ' (' + (yData.worstMonthPct >= 0 ? '+' : '') + yData.worstMonthPct + '%)</div>' +
+      '</div>';
+
+    // Render Drilldown Chart - Continuous Category Breakdown
+    var months = yData.monthlyRecords;
+    var cLabels = months.map(function(m) { return m.label; });
+    var cMarket = months.map(function(m) { return m.total_market; });
+    var cBank = months.map(function(m) { return m.total_bank; });
+    var cEpf = months.map(function(m) { return m.epf; });
+
+    var ctxD = document.getElementById('chart-drilldown-year').getContext('2d');
+    if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
+    CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
+      type: 'line',
+      data: {
+        labels: cLabels,
+        datasets: [
+          {
+            label: 'Market Assets',
+            data: cMarket,
+            borderColor: '#34D399',
+            backgroundColor: 'rgba(52, 211, 153, 0.12)',
+            borderWidth: 2.8,
+            pointBackgroundColor: '#34D399',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0,
+            fill: true
+          },
+          {
+            label: 'Bank & Fixed Deposits',
+            data: cBank,
+            borderColor: '#FBBF24',
+            backgroundColor: 'rgba(251, 191, 36, 0.12)',
+            borderWidth: 2.8,
+            pointBackgroundColor: '#FBBF24',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0,
+            fill: true
+          },
+          {
+            label: 'EPF Balance',
+            data: cEpf,
+            borderColor: '#C084FC',
+            backgroundColor: 'rgba(192, 132, 252, 0.12)',
+            borderWidth: 2.8,
+            pointBackgroundColor: '#C084FC',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            borderColor: 'rgba(56, 189, 248, 0.3)',
+            borderWidth: 1,
+            titleColor: '#FFFFFF',
+            bodyColor: '#CBD5E1',
+            padding: 12,
+            boxPadding: 6,
+            callbacks: {
+              label: function(c) {
+                return ' ' + formatIndian(c.raw, false);
+              },
+              afterBody: function(items) {
+                if (!items || items.length === 0) return '';
+                var mIdx = items[0].dataIndex;
+                var rec = months[mIdx];
+                return '\nTotal: ' + formatIndian(rec.net_worth, false) + ' (' + (rec.monthlyChange >= 0 ? '+' : '') + formatIndian(rec.monthlyChange, false) + ')';
+              }
+            }
+          },
+          zoom: getChartZoomConfig(cLabels)
+        },
+        scales: {
+          x: {
+            min: (window.innerWidth <= 768 && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
+            max: (window.innerWidth <= 768 && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#CBD5E1', font: { weight: '600' } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            grace: '8%',
+            ticks: {
+              color: '#64748B',
+              font: { family: 'JetBrains Mono', size: 10.5 },
+              callback: function(v) { return formatCompactLakhs(v); }
+            }
+          }
+        }
+      }
+    });
+    attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
+
+    // Populate Drilldown Monthly Breakdown Table with Center-Aligned Headers and Cells
+    var tBody = document.getElementById('drilldown-table-body');
+    tBody.innerHTML = '';
+    months.forEach(function(m) {
+      var mRow = document.createElement('tr');
+      mRow.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      mRow.style.textAlign = 'center';
+
+      var isPos = m.monthlyChange >= 0;
+      var cSign = isPos ? '+' : '';
+      var pctSign = m.monthlyChangePct >= 0 ? '+' : '';
+      var colorStyle = isPos ? 'color:var(--emerald-bright);' : 'color:var(--coral-bright);';
+      var noteHtml = m.notes
+        ? '<button type="button" class="compact-note-btn filled" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="View & Edit Note: ' + escapeHtml(m.notes).replace(/"/g, '&quot;') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Note</span></button>'
+        : '<button type="button" class="compact-note-btn empty" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="Add note for this month"><span>+ Note</span></button>';
+
+      mRow.innerHTML =
+        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + m.label + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_bank, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.epf, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(m.monthlyChange, false) + '</td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + m.monthlyChangePct.toFixed(2) + '%</span></td>' +
+        '<td style="padding:10px 8px; text-align:center;">' + noteHtml + '</td>' +
+        '<td style="padding:8px 8px; text-align:center; white-space:nowrap;">' +
+          '<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">' +
+            '<button type="button" class="btn-action-icon edit" onclick="editRecordFromDrilldown(\'' + m.monthIso + '\')" title="Edit Figures" aria-label="Edit">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+            '</button>' +
+            '<button type="button" class="btn-action-icon delete" onclick="deleteRecordPrompt(\'' + m.monthIso + '\')" title="Delete Month" aria-label="Delete">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+            '</button>' +
+          '</div>' +
+        '</td>';
+      tBody.appendChild(mRow);
+    });
+  }
+
+  /* ==========================================================================
+     7. VIEW 3: YEAR-WISE SIMULATOR & OPTIONAL MULTI-CATEGORY MILESTONES
+     ========================================================================== */
+  function runYearSimulator() {
+    if (!APP_STATE || !APP_STATE.latest) return;
+
+    var years = parseInt(document.getElementById('sim-years').value, 10) || 5;
+    var monthlyStart = parseFloat(document.getElementById('sim-monthly').value) || 75000;
+    var stepUpPct = parseFloat(document.getElementById('sim-stepup').value) || 0;
+    var annualRatePct = parseFloat(document.getElementById('sim-rate').value) || 11.5;
+
+    document.getElementById('val-sim-years').innerText = years + (years === 1 ? ' Year' : ' Years');
+    document.getElementById('val-sim-monthly').innerText = formatIndian(monthlyStart, false) + ' / mo';
+    document.getElementById('val-sim-stepup').innerText = stepUpPct + '% / yr';
+    document.getElementById('val-sim-rate').innerText = annualRatePct + '% / yr';
+
+    var startYear = new Date(APP_STATE.latest.monthIso).getFullYear();
+    var targetYear = startYear + years;
+    document.getElementById('sim-horizon-badge').innerText = startYear + ' → ' + targetYear;
+    document.getElementById('sim-target-year-label').innerText = 'Projected Wealth in ' + targetYear;
+
+    var currentWealth = APP_STATE.latest.net_worth;
+    var monthlyRate = (annualRatePct / 100) / 12;
+
+    var yearLabels = [String(startYear) + ' (Now)'];
+    var baseSeries = [currentWealth];
+    var contribSeries = [0];
+    var gainSeries = [0];
+
+    var runningWealth = currentWealth;
+    var cumulativeContrib = 0;
+    var cumulativeGain = 0;
+    var currentMonthlySaving = monthlyStart;
+
+    var tbody = document.getElementById('sim-year-table-body');
+    tbody.innerHTML = '';
+
+    for (var y = 1; y <= years; y++) {
+      var calYear = startYear + y;
+      var yearContrib = 0;
+      var yearGain = 0;
+
+      for (var m = 1; m <= 12; m++) {
+        var interest = runningWealth * monthlyRate;
+        runningWealth += interest + currentMonthlySaving;
+        yearContrib += currentMonthlySaving;
+        yearGain += interest;
+      }
+
+      cumulativeContrib += yearContrib;
+      cumulativeGain += yearGain;
+
+      yearLabels.push(String(calYear));
+      baseSeries.push(currentWealth);
+      contribSeries.push(Math.round(cumulativeContrib));
+      gainSeries.push(Math.round(cumulativeGain));
+
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      tr.style.textAlign = 'right';
+      tr.innerHTML =
+        '<td style="padding:10px 14px; text-align:left; font-weight:800; color:#FFF;">' + calYear + '</td>' +
+        '<td style="padding:10px 14px;">' + formatIndian(currentMonthlySaving, false) + '/mo</td>' +
+        '<td style="padding:10px 14px;">+' + formatIndian(yearContrib, false) + '</td>' +
+        '<td style="padding:10px 14px; color:var(--emerald-bright);">+' + formatIndian(yearGain, false) + '</td>' +
+        '<td style="padding:10px 14px; font-weight:800; color:var(--cyan-core);">' + formatIndian(runningWealth, false) + '</td>';
+      tbody.appendChild(tr);
+
+      currentMonthlySaving = currentMonthlySaving * (1 + (stepUpPct / 100));
+    }
+
+    document.getElementById('sim-final-wealth').innerText = formatIndian(runningWealth, false);
+    document.getElementById('sim-total-contrib').innerText = formatIndian(cumulativeContrib, false);
+    document.getElementById('sim-total-gain').innerText = '+' + formatIndian(cumulativeGain, false);
+
+    var ctxSim = document.getElementById('chart-simulator').getContext('2d');
+    if (CHART_SIMULATOR) CHART_SIMULATOR.destroy();
+
+    CHART_SIMULATOR = new Chart(ctxSim, {
+      type: 'line',
+      data: {
+        labels: yearLabels,
+        datasets: [
+          {
+            label: 'Starting Wealth',
+            data: baseSeries,
+            borderColor: '#0284C7',
+            backgroundColor: 'rgba(2, 132, 199, 0.25)',
+            borderWidth: 2,
+            tension: 0,
+            fill: true,
+            pointRadius: 3
+          },
+          {
+            label: 'Savings Added',
+            data: contribSeries,
+            borderColor: '#38BDF8',
+            backgroundColor: 'rgba(56, 189, 248, 0.25)',
+            borderWidth: 2,
+            tension: 0,
+            fill: true,
+            pointRadius: 3
+          },
+          {
+            label: 'Compounded Returns',
+            data: gainSeries,
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.25)',
+            borderWidth: 2,
+            tension: 0,
+            fill: true,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#CBD5E1', font: { size: 10.5, weight: '700' }, boxWidth: 12, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(8, 13, 25, 0.95)',
+            callbacks: { label: function(c) { return ' ' + formatIndian(c.raw, false); } }
+          },
+          zoom: getChartZoomConfig(yearLabels)
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { color: '#CBD5E1', font: { size: 10.5 } } },
+          y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748B', font: { size: 10 }, callback: function(v) { return formatCompactLakhs(v); } } }
+        }
+      }
+    });
+    attachChartZoomReset(ctxSim.canvas, CHART_SIMULATOR);
+
+    renderMilestones();
+  }
+
+  function getCategoryCurrentValue(catKey) {
+    if (!APP_STATE || !APP_STATE.latest) return 0;
+    var lat = APP_STATE.latest;
+    if (catKey === 'net_worth') return lat.net_worth;
+    if (catKey === 'mf') return lat.mf;
+    if (catKey === 'total_market') return lat.total_market;
+    if (catKey === 'precious') return lat.gold + lat.silver;
+    if (catKey === 'gold') return lat.gold;
+    if (catKey === 'silver') return lat.silver;
+    if (catKey === 'total_bank') return lat.total_bank;
+    if (catKey === 'epf') return lat.epf;
+    if (catKey === 'sbi_ppf') return lat.sbi_ppf;
+    return lat.net_worth;
+  }
+
+  function toggleMilestonesVisibility() {
+    MILESTONES_VISIBLE = !MILESTONES_VISIBLE;
+    document.getElementById('milestones-content-wrap').style.display = MILESTONES_VISIBLE ? 'block' : 'none';
+    document.getElementById('btn-toggle-milestones').innerText = MILESTONES_VISIBLE ? 'Hide Milestones' : 'Show Milestones';
+  }
+
+  function toggleAddMilestoneForm() {
+    var drawer = document.getElementById('milestone-form-drawer');
+    drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function renderMilestones() {
+    if (!APP_STATE) return;
+    var list = APP_STATE.milestones || [];
+    var grid = document.getElementById('milestones-grid');
+    grid.innerHTML = '';
+
+    if (list.length === 0) {
+      grid.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px; padding:12px;">No custom milestones active. Click "+ Add Target" if you want to track specific category goals.</div>';
+      return;
+    }
+
+    list.forEach(function(ms) {
+      var curVal = getCategoryCurrentValue(ms.category);
+      var targetVal = Number(ms.target) || 1;
+      var pct = Math.min(100, Math.max(0, (curVal / targetVal) * 100));
+      var rem = Math.max(0, targetVal - curVal);
+      var catName = CATEGORY_LABELS[ms.category] || 'Portfolio Target';
+
+      var card = document.createElement('div');
+      card.className = 'liquid-slab milestone-card';
+      card.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">' +
+          '<div>' +
+            '<div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--cyan-core); letter-spacing:0.7px;">' + catName + '</div>' +
+            '<div style="font-size:14.5px; font-weight:800; color:#FFF; margin-top:2px;">' + escapeHtml(ms.title) + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-subtle" style="padding:4px 8px; font-size:11px;" onclick="removeMilestone(\'' + ms.id + '\')">✕</button>' +
+        '</div>' +
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">' +
+          '<span class="mono-num" style="font-size:16px; font-weight:800; color:var(--emerald-bright);">' + formatIndian(curVal, false) + '</span>' +
+          '<span class="mono-num" style="font-size:11.5px; color:var(--text-muted);">of ' + formatIndian(targetVal, false) + ' (' + pct.toFixed(1) + '%)</span>' +
+        '</div>' +
+        '<div class="pillar-bar-well" style="height:8px;">' +
+          '<div class="pillar-bar-fill" style="width:' + pct + '%; background:linear-gradient(90deg, #0EA5E9, #10B981);"></div>' +
+        '</div>' +
+        '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">' +
+          '<span>' + (rem <= 0 ? 'Goal Achieved!' : formatIndian(rem, false) + ' to go') + '</span>' +
+          '<span style="color:var(--text-secondary); font-weight:700;">' + (pct >= 100 ? 'Completed' : 'In Progress') + '</span>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  function addCustomMilestone() {
+    var title = document.getElementById('ms-in-title').value.trim();
+    var category = document.getElementById('ms-in-category').value;
+    var target = parseFloat(document.getElementById('ms-in-target').value);
+
+    if (!title || isNaN(target) || target <= 0) {
+      showToast('Please enter a valid milestone name and target amount');
+      return;
+    }
+
+    var newMs = {
+      id: 'ms-' + new Date().getTime(),
+      title: title,
+      category: category,
+      target: target
+    };
+
+    APP_STATE.milestones.push(newMs);
+    document.getElementById('ms-in-title').value = '';
+    document.getElementById('ms-in-target').value = '';
+    toggleAddMilestoneForm();
+    renderMilestones();
+    persistMilestonesToCloud();
+  }
+
+  function removeMilestone(id) {
+    if (!APP_STATE) return;
+    APP_STATE.milestones = APP_STATE.milestones.filter(function(m) { return m.id !== id; });
+    renderMilestones();
+    persistMilestonesToCloud();
+  }
+
+  function persistMilestonesToCloud() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() { showToast('Milestones updated'); })
+        .saveMilestones(APP_STATE.milestones);
+    }
+  }
+
+  /* ==========================================================================
+     8. VIEW 4: CUSTOM LIQUID-GLASS MONTH PICKER & FORM
+     ========================================================================== */
+  var PICKER_YEAR = new Date().getFullYear();
+
+  function initCustomMonthPicker() {
+    document.addEventListener('click', function(e) {
+      var wrap = document.getElementById('custom-month-picker-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        closeMonthPopover();
+      }
+    });
+  }
+
+  function toggleMonthPopover(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    var popover = document.getElementById('custom-month-popover');
+    var btn = document.getElementById('custom-month-btn');
+    if (!popover) return;
+
+    var isOpen = popover.classList.contains('open');
+    if (isOpen) {
+      closeMonthPopover();
+    } else {
+      var curVal = document.getElementById('form-month').value;
+      if (curVal && curVal.length >= 7) {
+        PICKER_YEAR = parseInt(curVal.substring(0, 4), 10);
+      } else {
+        PICKER_YEAR = new Date().getFullYear();
+      }
+      renderPickerGrid();
+      popover.classList.add('open');
+      if (btn) btn.classList.add('active');
+    }
+  }
+
+  function closeMonthPopover() {
+    var popover = document.getElementById('custom-month-popover');
+    var btn = document.getElementById('custom-month-btn');
+    if (popover) popover.classList.remove('open');
+    if (btn) btn.classList.remove('active');
+  }
+
+  function changePickerYear(delta) {
+    PICKER_YEAR += delta;
+    renderPickerGrid();
+  }
+
+  function renderPickerGrid() {
+    var yearEl = document.getElementById('picker-year-title');
+    if (yearEl) yearEl.textContent = PICKER_YEAR;
+    var gridEl = document.getElementById('picker-months-grid');
+    if (!gridEl) return;
+
+    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var curVal = document.getElementById('form-month').value || '';
+    var curYear = parseInt(curVal.substring(0, 4), 10);
+    var curMonth = parseInt(curVal.substring(5, 7), 10);
+
+    var existingMonths = {};
+    if (APP_STATE && APP_STATE.records) {
+      APP_STATE.records.forEach(function(r) {
+        if (r.monthIso) existingMonths[r.monthIso.substring(0, 7)] = true;
+      });
+    }
+
+    var html = '';
+    for (var m = 1; m <= 12; m++) {
+      var mStr = (m < 10 ? '0' : '') + m;
+      var ymKey = PICKER_YEAR + '-' + mStr;
+      var isSelected = (curYear === PICKER_YEAR && curMonth === m);
+      var hasRecord = !!existingMonths[ymKey];
+
+      html += '<button type="button" class="popover-month-btn' + (isSelected ? ' selected' : '') + '" onclick="selectPickerMonth(' + PICKER_YEAR + ', ' + m + ')">';
+      html += '<span>' + monthNames[m - 1] + '</span>';
+      if (hasRecord) {
+        html += '<span class="popover-month-dot" title="Existing record logged"></span>';
+      } else {
+        html += '<span class="popover-month-dot empty"></span>';
+      }
+      html += '</button>';
+    }
+    gridEl.innerHTML = html;
+  }
+
+  function selectPickerMonth(year, month) {
+    var mStr = (month < 10 ? '0' : '') + month;
+    setFormMonthValue(year + '-' + mStr);
+    closeMonthPopover();
+    onFormMonthChange();
+  }
+
+  function selectPickerToday() {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = now.getMonth() + 1;
+    var mStr = (m < 10 ? '0' : '') + m;
+    setFormMonthValue(y + '-' + mStr);
+    closeMonthPopover();
+    onFormMonthChange();
+  }
+
+  function stepMonth(delta) {
+    var curVal = document.getElementById('form-month').value;
+    var y, m;
+    if (curVal && curVal.length >= 7) {
+      y = parseInt(curVal.substring(0, 4), 10);
+      m = parseInt(curVal.substring(5, 7), 10);
+    } else {
+      var now = new Date();
+      y = now.getFullYear();
+      m = now.getMonth() + 1;
+    }
+    m += delta;
+    if (m > 12) {
+      m = 1;
+      y++;
+    } else if (m < 1) {
+      m = 12;
+      y--;
+    }
+    var mStr = (m < 10 ? '0' : '') + m;
+    setFormMonthValue(y + '-' + mStr);
+    onFormMonthChange();
+  }
+
+  function setFormMonthValue(ymStr) {
+    var input = document.getElementById('form-month');
+    if (input) input.value = ymStr;
+    syncCustomMonthPickerUI(ymStr);
+  }
+
+  function syncCustomMonthPickerUI(ymStr) {
+    if (!ymStr) return;
+    var parts = ymStr.split('-');
+    if (parts.length >= 2) {
+      var y = parseInt(parts[0], 10);
+      var mIdx = parseInt(parts[1], 10) - 1;
+      var monthNamesFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      var label = (monthNamesFull[mIdx] || '') + ' ' + y;
+      var labelEl = document.getElementById('custom-month-label');
+      if (labelEl) labelEl.textContent = label;
+      PICKER_YEAR = y;
+      var popover = document.getElementById('custom-month-popover');
+      if (popover && popover.classList.contains('open')) {
+        renderPickerGrid();
+      }
+    }
+  }
+
+  function initFormDefaults(data) {
+    if (!data || !data.latest) return;
+    var lat = data.latest;
+    var nextYm = '';
+    if (lat.monthIso) {
+      var parts = lat.monthIso.substring(0, 7).split('-');
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10);
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+      nextYm = y + '-' + (m < 10 ? '0' : '') + m;
+    } else {
+      var now = new Date();
+      nextYm = now.getFullYear() + '-' + ((now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1));
+    }
+    setFormMonthValue(nextYm);
+    fillFormInputs(lat);
+    recalcFormLive();
+  }
+
+  function fillFormInputs(rec) {
+    document.getElementById('in-hdfcSav').value = rec.hdfc_sav;
+    document.getElementById('in-hdfcDep').value = rec.hdfc_dep;
+    document.getElementById('in-sbiSav').value = rec.sbi_sav;
+    document.getElementById('in-sbiDep').value = rec.sbi_dep;
+    document.getElementById('in-sbiPpf').value = rec.sbi_ppf;
+    document.getElementById('in-epf').value = rec.epf;
+    document.getElementById('in-mf').value = rec.mf;
+    document.getElementById('in-gold').value = rec.gold;
+    document.getElementById('in-silver').value = rec.silver;
+    document.getElementById('in-notes').value = rec.notes || '';
+
+    // Cool liquid pulse shimmer across input fields on figures load (no popup alert)
+    document.querySelectorAll('#view-entry .recessed-num-input').forEach(function(el) {
+      el.classList.remove('input-populating');
+      void el.offsetWidth; // Trigger reflow for smooth re-animation
+      el.classList.add('input-populating');
+    });
+  }
+
+  function onFormMonthChange() {
+    var sel = document.getElementById('form-month').value;
+    if (!sel || !APP_STATE) return;
+    syncCustomMonthPickerUI(sel);
+    var match = APP_STATE.records.find(function(r) { return r.monthIso.substring(0, 7) === sel; });
+    if (match) {
+      fillFormInputs(match);
+    } else if (APP_STATE.latest) {
+      fillFormInputs(APP_STATE.latest);
+      document.getElementById('in-notes').value = '';
+    }
+    recalcFormLive();
+  }
+
+  function resetFormToDefaults() {
+    if (APP_STATE && APP_STATE.latest) {
+      fillFormInputs(APP_STATE.latest);
+      document.getElementById('in-notes').value = '';
+      recalcFormLive();
+      showToast('Reset to previous month balances');
+    }
+  }
+
+  function getFormValues() {
+    return {
+      month: document.getElementById('form-month').value + '-01',
+      hdfc_sav: parseFloat(document.getElementById('in-hdfcSav').value) || 0,
+      hdfc_dep: parseFloat(document.getElementById('in-hdfcDep').value) || 0,
+      sbi_sav: parseFloat(document.getElementById('in-sbiSav').value) || 0,
+      sbi_dep: parseFloat(document.getElementById('in-sbiDep').value) || 0,
+      sbi_ppf: parseFloat(document.getElementById('in-sbiPpf').value) || 0,
+      epf: parseFloat(document.getElementById('in-epf').value) || 0,
+      mf: parseFloat(document.getElementById('in-mf').value) || 0,
+      gold: parseFloat(document.getElementById('in-gold').value) || 0,
+      silver: parseFloat(document.getElementById('in-silver').value) || 0,
+      notes: document.getElementById('in-notes').value || ''
+    };
+  }
+
+  function updateDiffLabel(id, cur, prev) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var diff = cur - prev;
+    if (Math.abs(diff) < 0.01) {
+      el.innerText = '₹0';
+      el.style.color = 'var(--text-muted)';
+    } else if (diff > 0) {
+      el.innerText = '+' + formatIndian(diff, false);
+      el.style.color = 'var(--emerald-bright)';
+    } else {
+      el.innerText = '-' + formatIndian(Math.abs(diff), false);
+      el.style.color = 'var(--coral-bright)';
+    }
+  }
+
+  function recalcFormLive() {
+    if (!APP_STATE || !APP_STATE.latest) return;
+    var f = getFormValues();
+    var prev = APP_STATE.latest;
+
+    updateDiffLabel('diff-hdfcSav', f.hdfc_sav, prev.hdfc_sav);
+    updateDiffLabel('diff-hdfcDep', f.hdfc_dep, prev.hdfc_dep);
+    updateDiffLabel('diff-sbiSav', f.sbi_sav, prev.sbi_sav);
+    updateDiffLabel('diff-sbiDep', f.sbi_dep, prev.sbi_dep);
+    updateDiffLabel('diff-sbiPpf', f.sbi_ppf, prev.sbi_ppf);
+    updateDiffLabel('diff-epf', f.epf, prev.epf);
+    updateDiffLabel('diff-mf', f.mf, prev.mf);
+    updateDiffLabel('diff-gold', f.gold, prev.gold);
+    updateDiffLabel('diff-silver', f.silver, prev.silver);
+
+    var subBank = f.hdfc_sav + f.hdfc_dep + f.sbi_sav + f.sbi_dep + f.sbi_ppf;
+    var subMarket = f.mf + f.gold + f.silver;
+    var subEpf = f.epf;
+    var totalNW = subBank + subMarket + subEpf;
+
+    document.getElementById('sub-bank').innerText = formatIndian(subBank, false);
+    document.getElementById('sub-market').innerText = formatIndian(subMarket, false);
+    document.getElementById('sub-epf').innerText = formatIndian(subEpf, false);
+    document.getElementById('live-form-networth').innerText = formatIndian(totalNW, false);
+
+    var totalDiff = totalNW - prev.net_worth;
+    var diffEl = document.getElementById('live-form-diff');
+    var prevTotal = prev.net_worth;
+    var livePct = prevTotal > 0 ? Number(((totalDiff / prevTotal) * 100).toFixed(2)) : 0;
+    var livePctSign = livePct >= 0 ? '+' : '';
+    if (Math.abs(totalDiff) < 1) {
+      diffEl.innerText = '₹0 (0.0%)';
+      diffEl.className = 'glow-badge neutral';
+    } else if (totalDiff > 0) {
+      diffEl.innerText = '+' + formatIndian(totalDiff, false) + ' (' + livePctSign + livePct.toFixed(1) + '%)';
+      diffEl.className = 'glow-badge positive';
+    } else {
+      diffEl.innerText = '-' + formatIndian(Math.abs(totalDiff), false) + ' (' + livePct.toFixed(1) + '%)';
+      diffEl.className = 'glow-badge negative';
+    }
+  }
+
+  function submitMonthlyForm() {
+    var f = getFormValues();
+    var btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.innerText = 'Saving to Google Sheet...';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(updatedData) {
+          btn.disabled = false;
+          btn.innerText = 'Save Monthly Snapshot';
+          showToast('Saved ' + f.month.substring(0, 7) + ' to portfolio');
+          loadStateData(updatedData);
+          switchView('dashboard');
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerText = 'Save Monthly Snapshot';
+          showToast('Error saving snapshot: ' + err);
+        })
+        .saveRecord(f);
+    }
+  }
+
+  /* ==========================================================================
+     9. VIEW 5: MONTHLY HISTORY
+     ========================================================================== */
+  function renderHistory(data) {
+    var listEl = document.getElementById('history-records-list');
+    listEl.innerHTML = '';
+
+    var records = data.records.slice().reverse();
+    if (CURRENT_YEAR_FILTER !== 'all') {
+      records = records.filter(function(r) { return r.year === CURRENT_YEAR_FILTER; });
+    }
+
+    document.getElementById('history-count-meta').innerText = records.length + ' monthly snapshots shown';
+
+    records.forEach(function(r) {
+      var card = document.createElement('div');
+      card.className = 'liquid-slab interactive-lift';
+      card.style.padding = '16px 20px';
+
+      var changeHtml = '';
+      if (r.monthlyChange) {
+        var isPos = r.monthlyChange > 0;
+        var pSign = r.monthlyChangePct >= 0 ? '+' : '';
+        var pctStr = (r.monthlyChangePct !== undefined && r.monthlyChangePct !== null) ? (' (' + pSign + r.monthlyChangePct.toFixed(2) + '%)') : '';
+        changeHtml = '<span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '">' +
+          (isPos ? '+' : '') + formatIndian(r.monthlyChange, false) + pctStr + '</span>';
+      }
+
+      var noteHtml = r.notes
+        ? '<div style="margin-top:8px;"><span class="note-pill filled" onclick="openNoteModal(\'' + r.monthIso + '\', event)" title="Click to view or edit note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>' + escapeHtml(r.notes) + '</span></div>'
+        : '<div style="margin-top:6px;"><span class="note-pill empty" onclick="openNoteModal(\'' + r.monthIso + '\', event)" title="Add note for this month">+ Add note</span></div>';
+
+      card.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">' +
+          '<div style="min-width:180px; flex:1 1 auto;">' +
+            '<div style="display:flex; align-items:center; gap:10px;">' +
+              '<span style="font-size:15px; font-weight:800; color:#FFF;">' + formatMonthLabel(r.monthIso) + '</span>' +
+              changeHtml +
+            '</div>' +
+            noteHtml +
+          '</div>' +
+          '<div class="history-actions-row">' +
+            '<div class="mono-num" style="font-size:18px; font-weight:800; color:#FFF;">' + formatIndian(r.net_worth, false) + '</div>' +
+            '<div class="history-actions">' +
+              '<button type="button" class="btn-action-icon view" onclick="openMonthDetailOverlay(\'' + r.monthIso + '\')" title="View Breakdown" aria-label="View Breakdown">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
+              '</button>' +
+              '<button type="button" class="btn-action-icon edit" onclick="editRecord(\'' + r.monthIso + '\')" title="Edit Figures" aria-label="Edit">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+              '</button>' +
+              '<button type="button" class="btn-action-icon delete" onclick="deleteRecordPrompt(\'' + r.monthIso + '\')" title="Delete Month" aria-label="Delete">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      listEl.appendChild(card);
+    });
+  }
+
+  function filterHistory(year, btn) {
+    CURRENT_YEAR_FILTER = year;
+    btn.parentElement.querySelectorAll('.segment-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    repositionSegmentGlider(btn, true);
+    if (APP_STATE) renderHistory(APP_STATE);
+  }
+
+  /* Single Month Deep Dive Breakdown Overlay */
+  function openMonthDetailOverlay(monthIso) {
+    if (!APP_STATE || !APP_STATE.records) return;
+    var match = APP_STATE.records.find(function(r) { return r.monthIso === monthIso; });
+    if (!match) return;
+
+    var backdrop = document.getElementById('month-detail-backdrop');
+    if (!backdrop) return;
+
+    document.getElementById('month-detail-title').innerText = formatMonthLabel(match.monthIso) + ' Breakdown';
+
+    var isPos = match.monthlyChange >= 0;
+    var sign = isPos ? '+' : '';
+    var pctSign = match.monthlyChangePct >= 0 ? '+' : '';
+    var growthPill = document.getElementById('month-detail-growth-pill');
+    growthPill.innerText = sign + formatIndian(match.monthlyChange, false) + ' (' + pctSign + (match.monthlyChangePct !== undefined && match.monthlyChangePct !== null ? match.monthlyChangePct.toFixed(2) : '0.00') + '%)';
+    growthPill.className = 'glow-badge ' + (isPos ? 'positive' : 'negative');
+
+    document.getElementById('month-detail-networth').innerText = formatIndian(match.net_worth, false);
+
+    var editBtn = document.getElementById('month-detail-edit-btn');
+    if (editBtn) {
+      editBtn.onclick = function() {
+        closeMonthDetailOverlay();
+        editRecord(match.monthIso);
+      };
+    }
+
+    // 4 Major Pillars
+    var pillarsEl = document.getElementById('month-detail-pillars');
+    var marketVal = match.mf;
+    var metalsVal = match.gold + match.silver;
+    var bankVal = match.total_bank;
+    var epfVal = match.epf + match.sbi_ppf;
+
+    pillarsEl.innerHTML =
+      '<div class="month-detail-pillar-card">' +
+        '<div class="pillar-title-row"><span>Market Assets</span><span style="font-size:10px; opacity:0.8;">MF</span></div>' +
+        '<div class="pillar-val" style="color:var(--emerald-bright);">' + formatIndian(marketVal, false) + '</div>' +
+      '</div>' +
+      '<div class="month-detail-pillar-card">' +
+        '<div class="pillar-title-row"><span>Bullion</span><span style="font-size:10px; opacity:0.8;">Au & Ag</span></div>' +
+        '<div class="pillar-val" style="color:#FACC15;">' + formatIndian(metalsVal, false) + '</div>' +
+      '</div>' +
+      '<div class="month-detail-pillar-card">' +
+        '<div class="pillar-title-row"><span>Bank & Deposits</span><span style="font-size:10px; opacity:0.8;">FD & Sav</span></div>' +
+        '<div class="pillar-val" style="color:#FBBF24;">' + formatIndian(bankVal, false) + '</div>' +
+      '</div>' +
+      '<div class="month-detail-pillar-card">' +
+        '<div class="pillar-title-row"><span>Provident Funds</span><span style="font-size:10px; opacity:0.8;">EPF & PPF</span></div>' +
+        '<div class="pillar-val" style="color:#C084FC;">' + formatIndian(epfVal, false) + '</div>' +
+      '</div>';
+
+    // Account Items
+    var itemsEl = document.getElementById('month-detail-items');
+    var items = [
+      { label: 'Mutual Funds', val: match.mf, color: '#38BDF8' },
+      { label: 'Gold Bullion', val: match.gold, color: '#FACC15' },
+      { label: 'Silver Bullion', val: match.silver, color: '#94A3B8' },
+      { label: 'HDFC Fixed Deposit', val: match.hdfc_dep, color: '#F59E0B' },
+      { label: 'SBI Fixed Deposit', val: match.sbi_dep, color: '#FBBF24' },
+      { label: 'EPF Balance', val: match.epf, color: '#A855F7' },
+      { label: 'SBI PPF', val: match.sbi_ppf, color: '#C084FC' },
+      { label: 'HDFC Savings Account', val: match.hdfc_sav, color: '#34D399' },
+      { label: 'SBI Savings Account', val: match.sbi_sav, color: '#10B981' }
+    ];
+
+    itemsEl.innerHTML = items.map(function(item) {
+      return '<div class="month-detail-item-row">' +
+        '<span class="item-left">' +
+          '<span style="width: 7px; height: 7px; border-radius: 50%; background: ' + item.color + '; flex-shrink: 0; box-shadow: 0 0 6px ' + item.color + ';"></span>' +
+          '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + item.label + '</span>' +
+        '</span>' +
+        '<span class="item-val">' + formatIndian(item.val, false) + '</span>' +
+      '</div>';
+    }).join('');
+
+    // Note
+    var noteBox = document.getElementById('month-detail-note-box');
+    var noteText = document.getElementById('month-detail-note-text');
+    if (match.notes && match.notes.trim()) {
+      noteText.innerText = match.notes.trim();
+      noteBox.style.display = 'block';
+    } else {
+      noteBox.style.display = 'none';
+    }
+
+    backdrop.classList.add('open');
+  }
+
+  function closeMonthDetailOverlay() {
+    var backdrop = document.getElementById('month-detail-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  function closeMonthDetailOverlayOnBackdrop(e) {
+    if (e.target && e.target.id === 'month-detail-backdrop') {
+      closeMonthDetailOverlay();
+    }
+  }
+
+  function editRecord(monthIso) {
+    if (!APP_STATE) return;
+    var match = APP_STATE.records.find(function(r) { return r.monthIso === monthIso; });
+    if (!match) return;
+    setFormMonthValue(monthIso.substring(0, 7));
+    fillFormInputs(match);
+    recalcFormLive();
+    switchView('entry');
+  }
+
+  /* ==========================================================================
+     10-SECOND UNDO DELETION ARCHITECTURE
+     ========================================================================== */
+  var PENDING_DELETION = null;
+
+  function deleteRecordPrompt(monthIso) {
+    if (!APP_STATE || !APP_STATE.records) return;
+
+    if (PENDING_DELETION) {
+      commitPendingDeletionNow();
+    }
+
+    var idx = APP_STATE.records.findIndex(function(r) { return r.monthIso === monthIso; });
+    if (idx === -1) return;
+    var record = APP_STATE.records[idx];
+    var label = formatMonthLabel(monthIso);
+
+    // Optimistically remove from state
+    APP_STATE.records.splice(idx, 1);
+    recalculateAppStateMetrics();
+    refreshActiveViewsAfterRecordChange();
+
+    PENDING_DELETION = {
+      record: record,
+      originalIndex: idx,
+      monthIso: monthIso,
+      label: label,
+      secondsLeft: 10,
+      intervalId: null
+    };
+
+    var toast = document.getElementById('undo-toast');
+    var labelEl = document.getElementById('undo-month-label');
+    var countEl = document.getElementById('undo-timer-count');
+    var barEl = document.getElementById('undo-progress-bar');
+
+    if (labelEl) labelEl.textContent = label;
+    if (countEl) countEl.textContent = '10s';
+    if (barEl) {
+      barEl.style.transition = 'none';
+      barEl.style.transform = 'scaleX(1)';
+      setTimeout(function() {
+        barEl.style.transition = 'transform 10s linear';
+        barEl.style.transform = 'scaleX(0)';
+      }, 30);
+    }
+    if (toast) toast.classList.add('show');
+
+    PENDING_DELETION.intervalId = setInterval(function() {
+      if (!PENDING_DELETION) return;
+      PENDING_DELETION.secondsLeft--;
+      if (countEl) countEl.textContent = PENDING_DELETION.secondsLeft + 's';
+      if (PENDING_DELETION.secondsLeft <= 0) {
+        commitPendingDeletionNow();
+      }
+    }, 1000);
+  }
+
+  function executeUndoDeletion() {
+    if (!PENDING_DELETION) return;
+    var rec = PENDING_DELETION.record;
+    var label = PENDING_DELETION.label;
+
+    clearInterval(PENDING_DELETION.intervalId);
+    PENDING_DELETION = null;
+
+    var toast = document.getElementById('undo-toast');
+    if (toast) toast.classList.remove('show');
+
+    APP_STATE.records.push(rec);
+    APP_STATE.records.sort(function(a, b) {
+      return new Date(a.monthIso) - new Date(b.monthIso);
+    });
+
+    recalculateAppStateMetrics();
+    refreshActiveViewsAfterRecordChange();
+    showToast('Restored ' + label);
+  }
+
+  function commitPendingDeletionNow() {
+    if (!PENDING_DELETION) return;
+    var monthIso = PENDING_DELETION.monthIso;
+    var label = PENDING_DELETION.label;
+
+    clearInterval(PENDING_DELETION.intervalId);
+    PENDING_DELETION = null;
+
+    var toast = document.getElementById('undo-toast');
+    if (toast) toast.classList.remove('show');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(updatedData) {
+          loadStateData(updatedData);
+        })
+        .withFailureHandler(function(err) {
+          showToast('Error syncing delete: ' + err);
+        })
+        .deleteRecord(monthIso);
+    }
+  }
+
+  window.addEventListener('beforeunload', function() {
+    if (PENDING_DELETION) {
+      commitPendingDeletionNow();
+    }
+  });
+
+  function recalculateAppStateMetrics() {
+    if (!APP_STATE || !APP_STATE.records || APP_STATE.records.length === 0) return;
+    var records = APP_STATE.records;
+    var latest = records[records.length - 1];
+    APP_STATE.latest = latest;
+    if (APP_STATE.summary) {
+      APP_STATE.summary.netWorth = latest.net_worth;
+      APP_STATE.summary.monthlyChange = latest.monthlyChange || 0;
+      APP_STATE.summary.monthlyChangePct = latest.monthlyChangePct || 0;
+      APP_STATE.summary.marketWealth = latest.total_market;
+      APP_STATE.summary.bankBalance = latest.total_bank;
+      APP_STATE.summary.epf = latest.epf;
+    }
+  }
+
+  function refreshActiveViewsAfterRecordChange() {
+    if (!APP_STATE) return;
+    renderDashboard(APP_STATE);
+    renderYearlyView(APP_STATE);
+    renderHistory(APP_STATE);
+    if (SELECTED_DRILLDOWN_YEAR) {
+      openYearDrilldown(SELECTED_DRILLDOWN_YEAR);
+    }
+  }
+
+  /* ==========================================================================
+     NOTE FULL VIEW & MODAL EDIT LOGIC
+     ========================================================================== */
+  var ACTIVE_NOTE_MONTH_ISO = null;
+  var NOTE_HAD_ORIGINAL_TEXT = false;
+
+  function openNoteModal(monthIso, event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!APP_STATE || !APP_STATE.records) return;
+    var rec = APP_STATE.records.find(function(r) { return r.monthIso === monthIso; });
+    if (!rec) return;
+
+    ACTIVE_NOTE_MONTH_ISO = monthIso;
+    var label = formatMonthLabel(monthIso);
+    var hasExistingNote = !!(rec.notes && rec.notes.trim().length > 0);
+    NOTE_HAD_ORIGINAL_TEXT = hasExistingNote;
+
+    var titleEl = document.getElementById('note-modal-title');
+    var txtEl = document.getElementById('note-modal-textarea');
+    var viewTextEl = document.getElementById('note-view-text');
+    var viewContainer = document.getElementById('note-view-container');
+    var editContainer = document.getElementById('note-edit-container');
+    var backBtn = document.getElementById('btn-note-view-back');
+    var backdrop = document.getElementById('note-modal-backdrop');
+
+    if (hasExistingNote) {
+      // Open in VIEW MODE: Purely readable, single close action (✕ at top-right), no accidental edits
+      if (titleEl) titleEl.innerText = 'Note for ' + label;
+      if (viewTextEl) {
+        viewTextEl.innerText = rec.notes;
+        viewTextEl.classList.remove('empty-note');
+      }
+      if (viewContainer) viewContainer.style.display = 'block';
+      if (editContainer) editContainer.style.display = 'none';
+      if (txtEl) txtEl.value = rec.notes;
+    } else {
+      // Open directly in EDIT MODE: "+ Add note"
+      if (titleEl) titleEl.innerText = 'Add Note — ' + label;
+      if (viewContainer) viewContainer.style.display = 'none';
+      if (editContainer) editContainer.style.display = 'block';
+      if (backBtn) backBtn.style.display = 'none';
+      if (txtEl) {
+        txtEl.value = '';
+        setTimeout(function() { txtEl.focus(); }, 120);
+      }
+    }
+
+    if (backdrop) backdrop.classList.add('open');
+  }
+
+  function switchToEditNoteMode() {
+    var viewContainer = document.getElementById('note-view-container');
+    var editContainer = document.getElementById('note-edit-container');
+    var backBtn = document.getElementById('btn-note-view-back');
+    var txtEl = document.getElementById('note-modal-textarea');
+    var titleEl = document.getElementById('note-modal-title');
+
+    if (ACTIVE_NOTE_MONTH_ISO) {
+      var label = formatMonthLabel(ACTIVE_NOTE_MONTH_ISO);
+      if (titleEl) titleEl.innerText = 'Edit Note — ' + label;
+    }
+
+    if (viewContainer) viewContainer.style.display = 'none';
+    if (editContainer) editContainer.style.display = 'block';
+    if (backBtn) backBtn.style.display = NOTE_HAD_ORIGINAL_TEXT ? 'inline-flex' : 'none';
+    if (txtEl) {
+      setTimeout(function() { txtEl.focus(); }, 80);
+    }
+  }
+
+  function switchToViewNoteMode() {
+    var viewContainer = document.getElementById('note-view-container');
+    var editContainer = document.getElementById('note-edit-container');
+    var titleEl = document.getElementById('note-modal-title');
+
+    if (ACTIVE_NOTE_MONTH_ISO) {
+      var label = formatMonthLabel(ACTIVE_NOTE_MONTH_ISO);
+      if (titleEl) titleEl.innerText = 'Note for ' + label;
+    }
+
+    if (viewContainer) viewContainer.style.display = 'block';
+    if (editContainer) editContainer.style.display = 'none';
+  }
+
+  function closeNoteModal() {
+    ACTIVE_NOTE_MONTH_ISO = null;
+    NOTE_HAD_ORIGINAL_TEXT = false;
+    var backdrop = document.getElementById('note-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  function saveNoteFromModal() {
+    if (!ACTIVE_NOTE_MONTH_ISO || !APP_STATE) return;
+    var monthIso = ACTIVE_NOTE_MONTH_ISO;
+    var txt = document.getElementById('note-modal-textarea').value.trim();
+    var label = formatMonthLabel(monthIso);
+
+    var rec = APP_STATE.records.find(function(r) { return r.monthIso === monthIso; });
+    if (rec) {
+      rec.notes = txt;
+    }
+    if (APP_STATE.latest && APP_STATE.latest.monthIso === monthIso) {
+      APP_STATE.latest.notes = txt;
+      var inNotes = document.getElementById('in-notes');
+      if (inNotes) inNotes.value = txt;
+    }
+
+    closeNoteModal();
+    refreshActiveViewsAfterRecordChange();
+    showToast('Note updated for ' + label);
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(updatedData) {
+          loadStateData(updatedData);
+        })
+        .withFailureHandler(function(err) {
+          showToast('Failed to save note: ' + err);
+        })
+        .updateRecordNote(monthIso, txt);
+    }
+  }
+
+  function formatMonthLabel(iso) {
+    var d = new Date(iso);
+    var m = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return m[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Keyboard accessibility: dismiss open overlays with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      var noteBackdrop = document.getElementById('note-modal-backdrop');
+      if (noteBackdrop && noteBackdrop.classList.contains('open')) {
+        closeNoteModal();
+        return;
+      }
+      var drillBackdrop = document.getElementById('yearly-drilldown-backdrop');
+      if (drillBackdrop && drillBackdrop.classList.contains('open')) {
+        closeYearDrilldown();
+        return;
+      }
+      closeMonthPopover();
+    }
+  });
+
+  window.onload = initApp;
+</script>
