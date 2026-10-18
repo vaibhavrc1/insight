@@ -447,7 +447,7 @@
     z-index: 1;
   }
   .dock-glider-pill.stretching {
-    transform: scaleX(1.08) scaleY(0.95);
+    transform: scaleX(1.18) scaleY(0.90) !important;
   }
 
   .dock-btn {
@@ -475,9 +475,8 @@
     color: #FFFFFF;
   }
   .dock-btn.active svg {
-    color: #38BDF8;
-    transform: scale(1.05);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    color: #38BDF8 !important;
+    animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1) !important;
   }
 
   /* ==========================================================================
@@ -515,51 +514,89 @@
   }
 
   /* =========================================================================
-     VISIONOS SPATIAL DEPTH TAB TRANSITIONS (Fluid Lateral Slide & Depth)
+     VISIONOS SPATIAL DEPTH & ELEVATED AMBIENT TAB TRANSITIONS
      ========================================================================= */
   .view-section.vision-out-left {
     display: flex !important;
-    animation: visionOutLeft 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    animation: visionOutLeft 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     transform-origin: top center;
     z-index: 1;
     pointer-events: none;
   }
   .view-section.vision-in-right {
     display: flex !important;
-    animation: visionInRight 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    animation: visionInRight 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     transform-origin: top center;
     z-index: 2;
   }
   .view-section.vision-out-right {
     display: flex !important;
-    animation: visionOutRight 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    animation: visionOutRight 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     transform-origin: top center;
     z-index: 1;
     pointer-events: none;
   }
   .view-section.vision-in-left {
     display: flex !important;
-    animation: visionInLeft 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    animation: visionInLeft 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     transform-origin: top center;
     z-index: 2;
   }
 
+  /* Outgoing Screen: Recedes gracefully into depth with subtle optical blur */
   @keyframes visionOutLeft {
-    0% { transform: scale(1) translateX(0); opacity: 1; }
-    100% { transform: scale(0.96) translateX(-36px); opacity: 0; }
+    0% {
+      transform: scale(1) translateX(0);
+      opacity: 1;
+      filter: blur(0px);
+    }
+    100% {
+      transform: scale(0.93) translateX(-32px);
+      opacity: 0;
+      filter: blur(3px);
+    }
   }
   @keyframes visionOutRight {
-    0% { transform: scale(1) translateX(0); opacity: 1; }
-    100% { transform: scale(0.96) translateX(36px); opacity: 0; }
+    0% {
+      transform: scale(1) translateX(0);
+      opacity: 1;
+      filter: blur(0px);
+    }
+    100% {
+      transform: scale(0.93) translateX(32px);
+      opacity: 0;
+      filter: blur(3px);
+    }
   }
 
+  /* Incoming Screen: Floats in elevated from the direction of travel, settling seamlessly */
   @keyframes visionInRight {
-    0% { transform: scale(1.025) translateX(42px); opacity: 0; }
-    100% { transform: scale(1) translateX(0); opacity: 1; }
+    0% {
+      transform: scale(1.035) translateX(38px);
+      opacity: 0;
+      filter: blur(3px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+    }
+    100% {
+      transform: scale(1) translateX(0);
+      opacity: 1;
+      filter: blur(0px);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
   }
   @keyframes visionInLeft {
-    0% { transform: scale(1.025) translateX(-42px); opacity: 0; }
-    100% { transform: scale(1) translateX(0); opacity: 1; }
+    0% {
+      transform: scale(1.035) translateX(-38px);
+      opacity: 0;
+      filter: blur(3px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+    }
+    100% {
+      transform: scale(1) translateX(0);
+      opacity: 1;
+      filter: blur(0px);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
   }
 
   /* ==========================================================================
@@ -1849,24 +1886,6 @@
     width: 100%;
   }
 
-  /* Cool Liquid Input Shimmer on Load */
-  @keyframes liquidInputGlow {
-    0% {
-      background: rgba(56, 189, 248, 0.22);
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
-      border-color: rgba(56, 189, 248, 0.6);
-    }
-    100% {
-      background: var(--glass-well);
-      box-shadow: var(--ao-recessed-well);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-  }
-
-  .input-populating {
-    animation: liquidInputGlow 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
   /* ==========================================================================
      SINGLE MONTH BREAKDOWN MODAL SPECIALIZED LAYOUT & TOP-RIGHT CLOSE
      ========================================================================== */
@@ -2543,6 +2562,33 @@
     }
   }
 
+  /* Yearly Card Stats Horizontal Divider with Specular Pull/Sync Hologram (Matches History View Ruler) */
+  .yearly-card-stats {
+    position: relative !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+  .yearly-card-stats::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: var(--ptr-border-opacity, 0);
+    background: radial-gradient(
+      800px circle at var(--ptr-light-x, 50vw) var(--ptr-light-y, -100px),
+      #34D399 0%,
+      #38BDF8 25%,
+      #A855F7 50%,
+      rgba(255, 255, 255, 0.95) 65%,
+      transparent 82%
+    );
+    background-attachment: fixed;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+  }
+
   /* Live Form Wealth Preview Badge on Mobile (Zero Overflow) */
   .live-wealth-preview-card {
     display: flex;
@@ -2665,18 +2711,15 @@
   .liquid-drilldown-dialog,
   .glow-badge,
   .note-pill,
-  .eyebrow-tag,
   .slider-group,
-  .recessed-input-wrap,
-  .form-section-header,
-  .field-row,
   .modal-header,
   .modal-footer,
   .month-detail-header,
   .liquid-drilldown-header,
   hr,
   .horizontal-ruler,
-  .line-breaker {
+  .line-breaker,
+  .yearly-card-stats {
     position: relative;
   }
 
@@ -2700,9 +2743,7 @@
   .liquid-drilldown-dialog::before,
   .glow-badge::before,
   .note-pill::before,
-  .eyebrow-tag::before,
-  .slider-group::before,
-  .recessed-input-wrap::before {
+  .slider-group::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -2725,6 +2766,21 @@
     mask-composite: exclude;
     transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
     will-change: opacity, filter;
+  }
+
+  /* Never apply holographic reflection or outline border to eyebrow plain text labels, preview strips, or invisible wrappers */
+  .eyebrow-tag::before,
+  .eyebrow-tag::after,
+  .live-wealth-preview-card::before,
+  .live-wealth-preview-card::after,
+  .recessed-input-wrap::before,
+  .recessed-input-wrap::after,
+  .form-section-header::before,
+  .form-section-header::after,
+  .field-row::before,
+  .field-row::after {
+    display: none !important;
+    content: none !important;
   }
 
   .mobile-dock::before {
@@ -2773,26 +2829,6 @@
   .pillar-bar-fill[style*="width: 0%"]::before,
   .pillar-bar-fill[style*="width:0%"]::before {
     display: none !important;
-  }
-
-  /* Specular holographic effect on input boxes (where we enter values) & textareas */
-  .recessed-num-input,
-  .log-notes-textarea,
-  .modal-textarea,
-  select.recessed-num-input {
-    border: 1.5px solid transparent !important;
-    background: 
-      linear-gradient(rgba(8, 14, 28, 0.96), rgba(8, 14, 28, 0.96)) padding-box,
-      radial-gradient(
-        800px circle at var(--ptr-light-x, 50vw) var(--ptr-light-y, -100px),
-        rgba(52, 211, 153, var(--ptr-border-opacity, 0)) 0%,
-        rgba(56, 189, 248, var(--ptr-border-opacity, 0)) 25%,
-        rgba(168, 85, 247, var(--ptr-border-opacity, 0)) 50%,
-        rgba(255, 255, 255, calc(var(--ptr-border-opacity, 0) * 0.92)) 65%,
-        rgba(255, 255, 255, 0.09) 82%
-      ) border-box !important;
-    background-attachment: scroll, fixed !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
   }
 
   /* Specular holographic effect on simulator sliders (track and thumb) */
@@ -2847,7 +2883,6 @@
   hr::after,
   .horizontal-ruler::after,
   .line-breaker::after,
-  .form-section-header::after,
   .modal-header::after,
   .month-detail-header::after,
   .liquid-drilldown-header::after {
@@ -2910,12 +2945,11 @@
   body[data-ptr-armed="true"] .glow-badge::before,
   body[data-ptr-armed="true"] .note-pill::before,
   body[data-ptr-armed="true"] .slider-group::before,
-  body[data-ptr-armed="true"] .recessed-input-wrap::before,
   body[data-ptr-armed="true"] .history-actions-row::before,
+  body[data-ptr-armed="true"] .yearly-card-stats::before,
   body[data-ptr-armed="true"] hr::after,
   body[data-ptr-armed="true"] .horizontal-ruler::after,
   body[data-ptr-armed="true"] .line-breaker::after,
-  body[data-ptr-armed="true"] .form-section-header::after,
   body[data-ptr-armed="true"] .modal-header::after,
   body[data-ptr-armed="true"] .month-detail-header::after,
   body[data-ptr-armed="true"] .liquid-drilldown-header::after,
@@ -2954,13 +2988,6 @@
     filter: drop-shadow(0 0 10px #FFFFFF) drop-shadow(0 0 22px rgba(255, 255, 255, 0.95)) brightness(1.7) !important;
   }
 
-  body[data-ptr-armed="true"] .recessed-num-input,
-  body[data-ptr-armed="true"] .log-notes-textarea,
-  body[data-ptr-armed="true"] .modal-textarea,
-  body[data-ptr-armed="true"] select.recessed-num-input {
-    filter: drop-shadow(0 0 10px #FFFFFF) drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) brightness(1.4) !important;
-  }
-
   @keyframes ptrDiamondLockStrobe {
     0% {
       filter: drop-shadow(0 0 8px #FFFFFF) drop-shadow(0 0 18px rgba(255, 255, 255, 0.9)) brightness(1.5);
@@ -2986,34 +3013,56 @@
   }
 
   body[data-ptr-state="syncing"] .liquid-slab::before,
+  body[data-hologram-active="true"] .liquid-slab::before,
   body[data-ptr-state="syncing"] .pillar-card::before,
+  body[data-hologram-active="true"] .pillar-card::before,
   body[data-ptr-state="syncing"] .brand-orb::before,
+  body[data-hologram-active="true"] .brand-orb::before,
   body[data-ptr-state="syncing"] .pillar-icon::before,
+  body[data-hologram-active="true"] .pillar-icon::before,
   body[data-ptr-state="syncing"] .btn-emissive::before,
+  body[data-hologram-active="true"] .btn-emissive::before,
   body[data-ptr-state="syncing"] .btn-subtle::before,
+  body[data-hologram-active="true"] .btn-subtle::before,
   body[data-ptr-state="syncing"] .btn-action-icon::before,
+  body[data-hologram-active="true"] .btn-action-icon::before,
   body[data-ptr-state="syncing"] .pillar-bar-fill::before,
+  body[data-hologram-active="true"] .pillar-bar-fill::before,
   body[data-ptr-state="syncing"] .glow-badge::before,
+  body[data-hologram-active="true"] .glow-badge::before,
   body[data-ptr-state="syncing"] .note-pill::before,
+  body[data-hologram-active="true"] .note-pill::before,
   body[data-ptr-state="syncing"] .slider-group::before,
-  body[data-ptr-state="syncing"] .recessed-input-wrap::before,
+  body[data-hologram-active="true"] .slider-group::before,
   body[data-ptr-state="syncing"] .history-actions-row::before,
+  body[data-hologram-active="true"] .history-actions-row::before,
+  body[data-ptr-state="syncing"] .yearly-card-stats::before,
+  body[data-hologram-active="true"] .yearly-card-stats::before,
   body[data-ptr-state="syncing"] hr::after,
+  body[data-hologram-active="true"] hr::after,
   body[data-ptr-state="syncing"] .horizontal-ruler::after,
+  body[data-hologram-active="true"] .horizontal-ruler::after,
   body[data-ptr-state="syncing"] .line-breaker::after,
-  body[data-ptr-state="syncing"] .form-section-header::after,
+  body[data-hologram-active="true"] .line-breaker::after,
   body[data-ptr-state="syncing"] .modal-header::after,
+  body[data-hologram-active="true"] .modal-header::after,
   body[data-ptr-state="syncing"] .month-detail-header::after,
+  body[data-hologram-active="true"] .month-detail-header::after,
   body[data-ptr-state="syncing"] .liquid-drilldown-header::after,
-  body[data-ptr-state="syncing"] .modal-footer::before {
+  body[data-hologram-active="true"] .liquid-drilldown-header::after,
+  body[data-ptr-state="syncing"] .modal-footer::before,
+  body[data-hologram-active="true"] .modal-footer::before {
     opacity: 1 !important;
     animation: ptrBorderSyncGlint 1.1s ease-in-out infinite alternate !important;
   }
 
   /* Dedicated localized sweeping glint on the outer border of tab switcher (mobile dock, desktop nav well, segment wells) */
   body[data-ptr-state="syncing"] .mobile-dock::before,
+  body[data-hologram-active="true"] .mobile-dock::before,
   body[data-ptr-state="syncing"] .nav-well::before,
-  body[data-ptr-state="syncing"] .segment-well::before {
+  body[data-hologram-active="true"] .nav-well::before,
+  body[data-ptr-state="syncing"] .segment-well::before,
+  body[data-hologram-active="true"] .segment-well::before {
     opacity: 1 !important;
     background: linear-gradient(
       115deg,
@@ -3027,7 +3076,6 @@
     ) !important;
     background-size: 250% 100% !important;
     background-attachment: local !important;
-    animation: ptrTabSwitcherSyncSweep 2s linear infinite, ptrTabSwitcherGlow 1.2s ease-in-out infinite alternate !important;
   }
 
   @keyframes ptrTabSwitcherSyncSweep {
@@ -3066,16 +3114,65 @@
     }
   }
 
-  /* Settling completion flash */
+  /* =========================================================================
+     GRACEFUL DISSIPATION & SOFT OPTICAL SETTLING (Zero Abrupt Snapping)
+     ========================================================================= */
   body[data-ptr-state="settling"] .liquid-slab::before,
   body[data-ptr-state="settling"] .pillar-card::before,
   body[data-ptr-state="settling"] .brand-orb::before,
   body[data-ptr-state="settling"] .pillar-icon::before,
   body[data-ptr-state="settling"] .btn-emissive::before,
+  body[data-ptr-state="settling"] .btn-subtle::before,
+  body[data-ptr-state="settling"] .btn-action-icon::before,
   body[data-ptr-state="settling"] .pillar-bar-fill::before,
   body[data-ptr-state="settling"] .glow-badge::before,
-  body[data-ptr-state="settling"] .slider-group::before {
-    filter: drop-shadow(0 0 14px rgba(52, 211, 153, 1));
+  body[data-ptr-state="settling"] .note-pill::before,
+  body[data-ptr-state="settling"] .slider-group::before,
+  body[data-ptr-state="settling"] .history-actions-row::before,
+  body[data-ptr-state="settling"] .yearly-card-stats::before,
+  body[data-ptr-state="settling"] hr::after,
+  body[data-ptr-state="settling"] .horizontal-ruler::after,
+  body[data-ptr-state="settling"] .line-breaker::after,
+  body[data-ptr-state="settling"] .modal-header::after,
+  body[data-ptr-state="settling"] .month-detail-header::after,
+  body[data-ptr-state="settling"] .liquid-drilldown-header::after,
+  body[data-ptr-state="settling"] .modal-footer::before,
+  body[data-ptr-state="settling"] .mobile-dock::before,
+  body[data-ptr-state="settling"] .nav-well::before,
+  body[data-ptr-state="settling"] .segment-well::before,
+  body[data-hologram-fade="true"] .liquid-slab::before,
+  body[data-hologram-fade="true"] .pillar-card::before,
+  body[data-hologram-fade="true"] .brand-orb::before,
+  body[data-hologram-fade="true"] .pillar-icon::before,
+  body[data-hologram-fade="true"] .btn-emissive::before,
+  body[data-hologram-fade="true"] .btn-subtle::before,
+  body[data-hologram-fade="true"] .btn-action-icon::before,
+  body[data-hologram-fade="true"] .pillar-bar-fill::before,
+  body[data-hologram-fade="true"] .glow-badge::before,
+  body[data-hologram-fade="true"] .note-pill::before,
+  body[data-hologram-fade="true"] .slider-group::before,
+  body[data-hologram-fade="true"] .history-actions-row::before,
+  body[data-hologram-fade="true"] .yearly-card-stats::before,
+  body[data-hologram-fade="true"] hr::after,
+  body[data-hologram-fade="true"] .horizontal-ruler::after,
+  body[data-hologram-fade="true"] .line-breaker::after,
+  body[data-hologram-fade="true"] .modal-header::after,
+  body[data-hologram-fade="true"] .month-detail-header::after,
+  body[data-hologram-fade="true"] .liquid-drilldown-header::after,
+  body[data-hologram-fade="true"] .modal-footer::before,
+  body[data-hologram-fade="true"] .mobile-dock::before,
+  body[data-hologram-fade="true"] .nav-well::before,
+  body[data-hologram-fade="true"] .segment-well::before {
+    opacity: 0 !important;
+    filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.4)) !important;
+    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1), filter 0.48s ease !important;
+    animation: none !important;
+  }
+
+  body[data-ptr-state="settling"]::before,
+  body[data-hologram-fade="true"]::before {
+    opacity: 0 !important;
+    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   body[data-ptr-state="settling"] .hero-bento {

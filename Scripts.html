@@ -251,6 +251,7 @@
     // 2. Animate Liquid-Mercury Glider Pills
     if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
+    triggerTransientHologram(1000);
 
     // 3. Two-Screen Concurrent Spatial Tab Transition
     var prevView = document.getElementById('view-' + prevViewId);
@@ -278,7 +279,7 @@
       }
 
       nextView.addEventListener('animationend', finalize, { once: true });
-      setTimeout(finalize, 360);
+      setTimeout(finalize, 390);
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
       nextView.classList.add('active');
@@ -357,15 +358,18 @@
   function refreshAppData(onDone) {
     var syncDot = document.getElementById('sync-dot');
     if (syncDot) syncDot.classList.add('syncing');
+    startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(data) {
           if (syncDot) syncDot.classList.remove('syncing');
+          stopLoadingHologram();
           loadStateData(data);
           if (onDone) onDone(true);
         })
         .withFailureHandler(function(err) {
+          stopLoadingHologram();
           var syncStatus = document.getElementById('header-sync-status');
           if (syncStatus) syncStatus.innerText = 'Sync Error';
           if (syncDot) syncDot.classList.remove('syncing');
@@ -386,14 +390,10 @@
     } else {
       setTimeout(function() {
         if (syncDot) syncDot.classList.remove('syncing');
+        stopLoadingHologram();
         if (onDone) onDone(true);
       }, 700);
     }
-  }
-
-  function triggerManualSync() {
-    if (ptrState === 'syncing' || ptrState === 'settling') return;
-    startSyncPhase();
   }
 
   /* =========================================================================
@@ -403,7 +403,7 @@
   var PUSH_THRESHOLD_PX   = 220; // 4x length: 220px downward pull distance to trigger refresh
   var PUSH_DECAY_MS       = 4000; // 4 seconds before push count decays to 0
   var MIN_SYNC_FLOOR_MS   = 600; // Smooth visual display floor
-  var SETTLE_DURATION_MS  = 250; // Instant reset for back-to-back refresh
+  var SETTLE_DURATION_MS  = 480; // Smooth 0.48s graceful optical dissipation
 
   var rootStyle       = document.documentElement.style;
   var ptrState        = 'idle'; // 'idle' | 'pulling' | 'syncing' | 'settling'
@@ -555,7 +555,7 @@
       : (1.0 + 0.35 * Math.log(1 + (deltaY - PUSH_THRESHOLD_PX) / 35));
 
     var pullRatio = Math.min(1.0, deltaY / PUSH_THRESHOLD_PX);
-    var stageMult = pushCount === 1 ? 0.9 : pushCount === 2 ? 1.0 : 0.8;
+    var stageMult = 1.0;
 
     // Tactile & Visual Detent Trigger: fires exact millisecond threshold is reached!
     var isArmed = (deltaY >= PUSH_THRESHOLD_PX);
@@ -662,7 +662,7 @@
       : (1.0 + 0.35 * Math.log(1 + (deltaY - PUSH_THRESHOLD_PX) / 35));
 
     var pullRatio = Math.min(1.0, deltaY / PUSH_THRESHOLD_PX);
-    var stageMult = pushCount === 1 ? 0.9 : pushCount === 2 ? 1.0 : 0.8;
+    var stageMult = 1.0;
 
     // Tactile & Visual Detent Trigger: fires exact millisecond threshold is reached!
     var isArmed = (deltaY >= PUSH_THRESHOLD_PX);
@@ -777,6 +777,10 @@
     ]).then(function() {
       cancelAnimationFrame(ptrRafId);
       startSettlePhase();
+    }).catch(function(err) {
+      console.error('Sync phase error:', err);
+      cancelAnimationFrame(ptrRafId);
+      startSettlePhase();
     });
   }
 
@@ -809,6 +813,85 @@
       thumbX = window.innerWidth * 0.5;
       thumbY = -100;
     }, SETTLE_DURATION_MS);
+  }
+
+  /* =========================================================================
+     TRANSIENT & LOADING HOLOGRAM CONTROLLER (Tab Switch, Month Change, Operations)
+     ========================================================================= */
+  var hologramTimer = null;
+  var hologramFadeTimer = null;
+  var hologramRafId = null;
+
+  function triggerTransientHologram(durationMs) {
+    durationMs = durationMs || 1000;
+    if (ptrState === 'syncing' || ptrState === 'pulling') return;
+
+    if (hologramTimer) clearTimeout(hologramTimer);
+    if (hologramFadeTimer) clearTimeout(hologramFadeTimer);
+    cancelAnimationFrame(hologramRafId);
+
+    document.body.removeAttribute('data-hologram-fade');
+    document.body.setAttribute('data-hologram-active', 'true');
+    rootStyle.setProperty('--ptr-border-opacity', '1');
+
+    var start = performance.now();
+    function sweep(now) {
+      var elapsed = now - start;
+      var progress = Math.min(1.0, elapsed / durationMs);
+      var lightX = (window.innerWidth * 0.5) + Math.sin(progress * Math.PI * 2) * (window.innerWidth * 0.45);
+      var lightY = 60 + Math.cos(progress * Math.PI * 2) * 50;
+      rootStyle.setProperty('--ptr-light-x', lightX.toFixed(1) + 'px');
+      rootStyle.setProperty('--ptr-light-y', lightY.toFixed(1) + 'px');
+
+      if (elapsed < durationMs) {
+        hologramRafId = requestAnimationFrame(sweep);
+      }
+    }
+    hologramRafId = requestAnimationFrame(sweep);
+
+    hologramTimer = setTimeout(function() {
+      endHologramGracefully();
+    }, durationMs);
+  }
+
+  function startLoadingHologram() {
+    if (ptrState === 'syncing' || ptrState === 'pulling') return;
+    if (hologramTimer) clearTimeout(hologramTimer);
+    if (hologramFadeTimer) clearTimeout(hologramFadeTimer);
+    cancelAnimationFrame(hologramRafId);
+
+    document.body.removeAttribute('data-hologram-fade');
+    document.body.setAttribute('data-hologram-active', 'true');
+    rootStyle.setProperty('--ptr-border-opacity', '1');
+
+    var start = performance.now();
+    function loopSweep(now) {
+      if (!document.body.hasAttribute('data-hologram-active')) return;
+      var t = (now - start) * 0.003;
+      var lightX = (window.innerWidth * 0.5) + Math.sin(t) * (window.innerWidth * 0.45);
+      var lightY = 60 + Math.cos(t * 1.5) * 50;
+      rootStyle.setProperty('--ptr-light-x', lightX.toFixed(1) + 'px');
+      rootStyle.setProperty('--ptr-light-y', lightY.toFixed(1) + 'px');
+      hologramRafId = requestAnimationFrame(loopSweep);
+    }
+    hologramRafId = requestAnimationFrame(loopSweep);
+  }
+
+  function stopLoadingHologram() {
+    endHologramGracefully();
+  }
+
+  function endHologramGracefully() {
+    if (ptrState === 'syncing' || ptrState === 'pulling') return;
+    document.body.removeAttribute('data-hologram-active');
+    document.body.setAttribute('data-hologram-fade', 'true');
+    rootStyle.setProperty('--ptr-border-opacity', '0');
+
+    if (hologramFadeTimer) clearTimeout(hologramFadeTimer);
+    hologramFadeTimer = setTimeout(function() {
+      document.body.removeAttribute('data-hologram-fade');
+      cancelAnimationFrame(hologramRafId);
+    }, 480);
   }
 
   /* ==========================================================================
@@ -1678,7 +1761,7 @@
         '</div>' +
         '<div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Closing Wealth (' + y.monthsLogged + ' mos)</div>' +
         '<div class="mono-num" style="font-size:22px; font-weight:800; color:var(--cyan-core); margin:2px 0 10px 0;">' + formatIndian(y.closingWealth, false) + '</div>' +
-        '<div style="display:flex; flex-direction:column; gap:5px; font-size:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">' +
+        '<div class="yearly-card-stats" style="display:flex; flex-direction:column; gap:5px; font-size:12px; padding-top:10px; margin-top:8px;">' +
           '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Added in ' + y.year + ':</span><strong class="mono-num" style="color:var(--emerald-bright);">' + sign + formatIndian(y.totalAdded, false) + ' (' + growthPctSign + y.growthPct + '%)</strong></div>' +
           '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Avg Monthly Added:</span><strong class="mono-num">' + formatIndian(y.avgMonthlyAdded, false) + '/mo</strong></div>' +
           '<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Best Month:</span><strong class="mono-num" style="color:var(--cyan-core);">' + y.bestMonthLabel + ' (' + formatCompactLakhs(y.bestMonthGain) + ')</strong></div>' +
@@ -2520,13 +2603,6 @@
     document.getElementById('in-gold').value = rec.gold;
     document.getElementById('in-silver').value = rec.silver;
     document.getElementById('in-notes').value = rec.notes || '';
-
-    // Cool liquid pulse shimmer across input fields on figures load (no popup alert)
-    document.querySelectorAll('#view-entry .recessed-num-input').forEach(function(el) {
-      el.classList.remove('input-populating');
-      void el.offsetWidth; // Trigger reflow for smooth re-animation
-      el.classList.add('input-populating');
-    });
   }
 
   function onFormMonthChange() {
@@ -2541,6 +2617,7 @@
       document.getElementById('in-notes').value = '';
     }
     recalcFormLive();
+    triggerTransientHologram(1000);
   }
 
   function resetFormToDefaults() {
@@ -2631,6 +2708,7 @@
     var btn = document.getElementById('btn-save');
     btn.disabled = true;
     btn.innerText = 'Saving to Google Sheet...';
+    startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
@@ -2638,6 +2716,7 @@
           btn.disabled = false;
           btn.innerText = 'Save Monthly Snapshot';
           showToast('Saved ' + f.month.substring(0, 7) + ' to portfolio');
+          stopLoadingHologram();
           loadStateData(updatedData);
           switchView('dashboard');
         })
@@ -2645,6 +2724,7 @@
           btn.disabled = false;
           btn.innerText = 'Save Monthly Snapshot';
           showToast('Error saving snapshot: ' + err);
+          stopLoadingHologram();
         })
         .saveRecord(f);
     }
@@ -2918,13 +2998,16 @@
 
     var toast = document.getElementById('undo-toast');
     if (toast) toast.classList.remove('show');
+    startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(updatedData) {
+          stopLoadingHologram();
           loadStateData(updatedData);
         })
         .withFailureHandler(function(err) {
+          stopLoadingHologram();
           showToast('Error syncing delete: ' + err);
         })
         .deleteRecord(monthIso);
@@ -3075,13 +3158,16 @@
     closeNoteModal();
     refreshActiveViewsAfterRecordChange();
     showToast('Note updated for ' + label);
+    startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(updatedData) {
+          stopLoadingHologram();
           loadStateData(updatedData);
         })
         .withFailureHandler(function(err) {
+          stopLoadingHologram();
           showToast('Failed to save note: ' + err);
         })
         .updateRecordNote(monthIso, txt);
