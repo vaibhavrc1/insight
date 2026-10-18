@@ -499,6 +499,8 @@
     var currentRawY = 0;
     var DEAD_ZONE = 30; // 30px clutch before movement begins
     var isSyncing = false;
+    var foilPushCount = 0;
+    var foilDecayTimer = null;
 
     var concepts = {
       1: {
@@ -697,6 +699,36 @@
       var activeDelta = Math.max(0, rawDelta - DEAD_ZONE);
       var pullDistance = 140 * Math.log(1 + activeDelta / 120);
       var progress = pullDistance / 80;
+
+      if (ACTIVE_ID === 5) {
+        // Triple-Push Specular Border logic
+        if (progress >= 0.45) {
+          foilPushCount++;
+          clearTimeout(foilDecayTimer);
+          foilDecayTimer = setTimeout(function() {
+            foilPushCount = 0;
+            document.documentElement.style.setProperty('--border-glow', '0');
+          }, 3500);
+
+          if (foilPushCount === 1) {
+            document.documentElement.style.setProperty('--border-glow', '0.38');
+            stage.style.transform = 'translateY(0px)';
+          } else if (foilPushCount === 2) {
+            document.documentElement.style.setProperty('--border-glow', '0.72');
+            stage.style.transform = 'translateY(0px)';
+          } else if (foilPushCount >= 3) {
+            clearTimeout(foilDecayTimer);
+            document.documentElement.style.setProperty('--border-glow', '1');
+            triggerActiveConcept();
+          }
+        } else {
+          // Mid-pull release: immediately cancel without getting stuck!
+          var comm = foilPushCount === 1 ? '0.38' : foilPushCount === 2 ? '0.72' : '0';
+          document.documentElement.style.setProperty('--border-glow', comm);
+          stage.style.transform = 'translateY(0px)';
+        }
+        return;
+      }
 
       if (progress >= 1.0) {
         triggerActiveConcept();
@@ -912,8 +944,10 @@
 
       setTimeout(() => {
         resetStage();
-        isSyncing = false;
-      }, 650);
+        foilPushCount = 0;
+        document.documentElement.style.setProperty('--border-glow', '0');
+        isSyncing = false; // Immediately ready for next refresh back-to-back!
+      }, 250);
     }
   </script>
 </body>
