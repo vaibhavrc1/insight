@@ -593,7 +593,9 @@
   .view-section.tab-hologram-landing .horizontal-ruler::after,
   .view-section.tab-hologram-landing .line-breaker::after {
     opacity: 0;
-    animation: tabHologramDissolve 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 18px rgba(52, 211, 153, 0.6));
+    animation: tabHologramDissolve 2.2s both !important;
+    will-change: opacity;
   }
 
   /* Synchronized stagger delays matching each incoming card */
@@ -628,34 +630,22 @@
     animation-delay: 240ms !important;
   }
 
+  /* Single, continuous mathematical bezier curve (ZERO in-between steps) */
   @keyframes tabHologramDissolve {
     0% {
       opacity: 0;
-      filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.4));
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     }
-    18% {
+    16% {
       opacity: 1;
-      filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 22px rgba(52, 211, 153, 0.8));
+      animation-timing-function: linear;
     }
-    38% {
-      opacity: 0.95;
-      filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.85)) drop-shadow(0 0 18px rgba(56, 189, 248, 0.75));
-    }
-    55% {
-      opacity: 0.85;
-      filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.7)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.6));
-    }
-    75% {
-      opacity: 0.42;
-      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
-    }
-    90% {
-      opacity: 0.15;
-      filter: drop-shadow(0 0 3px rgba(52, 211, 153, 0.2));
+    34% {
+      opacity: 1;
+      animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
     }
     100% {
       opacity: 0;
-      filter: drop-shadow(0 0 0 transparent);
     }
   }
 
