@@ -442,10 +442,11 @@
   function triggerHaptic(type) {
     if (!navigator.vibrate) return;
     try {
-      if (type === 'detent') navigator.vibrate(18); // Crisp mechanical detent engagement tick!
-      else if (type === 'tick') navigator.vibrate(12);
-      else if (type === 'double') navigator.vibrate([12, 35, 12]);
-      else if (type === 'success') navigator.vibrate([15, 40, 25]);
+      if (type === 'detent') navigator.vibrate([40, 30, 55]); // Strong punchy mechanical detent lock!
+      else if (type === 'tick') navigator.vibrate(24);
+      else if (type === 'lock') navigator.vibrate([40]);
+      else if (type === 'double') navigator.vibrate([30, 40, 40]);
+      else if (type === 'success') navigator.vibrate([25, 45, 35]);
     } catch (e) {}
   }
 
@@ -772,11 +773,12 @@
     ptrState = 'syncing';
     document.body.setAttribute('data-ptr-state', 'syncing');
     document.body.classList.remove('ptr-dragging');
+    triggerHaptic('lock');
     rootStyle.setProperty('--ptr-border-opacity', '1');
-    rootStyle.setProperty('--ptr-bg-dim', '0.65');
-    rootStyle.setProperty('--ptr-stretch-y', '48px');
-    rootStyle.setProperty('--ptr-scale-x', '0.986');
-    rootStyle.setProperty('--ptr-scale-y', '1.038');
+    rootStyle.setProperty('--ptr-bg-dim', '0.72');
+    rootStyle.setProperty('--ptr-stretch-y', '0px');
+    rootStyle.setProperty('--ptr-scale-x', '1');
+    rootStyle.setProperty('--ptr-scale-y', '1');
 
     cancelAnimationFrame(ptrRafId);
     var syncStart = performance.now();

@@ -299,24 +299,38 @@
         ) border-box !important;
     }
 
-    /* Specular foil on horizontal ruler / divider */
-    .specular-foil-active .showcase-hr::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1.5px;
-      pointer-events: none;
-      z-index: 10;
+    /* Specular foil on horizontal ruler / line breaker (DIRECT ELEMENT RENDERING) */
+    .showcase-hr,
+    .horizontal-ruler,
+    .line-breaker {
+      display: block !important;
+      width: 100% !important;
+      height: 2px !important;
+      border: none !important;
+      margin: 10px 0 !important;
+      background: rgba(255, 255, 255, 0.14);
+      transition: background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    .specular-foil-active .showcase-hr,
+    .specular-foil-active .horizontal-ruler,
+    .specular-foil-active .line-breaker {
       background: radial-gradient(
         320px circle at 50% var(--light-y, -20%),
         rgba(52, 211, 153, 0.95),
         rgba(56, 189, 248, 0.9) 35%,
         rgba(168, 85, 247, 0.85) 55%,
         rgba(255, 255, 255, 0.95) 68%,
-        transparent 82%
-      );
+        rgba(255, 255, 255, 0.15) 82%
+      ) !important;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6) !important;
+    }
+
+    .specular-foil-active.armed .showcase-hr,
+    .specular-foil-active.armed .horizontal-ruler,
+    .specular-foil-active.armed .line-breaker {
+      background: #FFFFFF !important;
+      box-shadow: 0 0 10px #FFFFFF, 0 0 24px rgba(255, 255, 255, 0.95) !important;
     }
 
     /* Tension HUD */
@@ -445,7 +459,7 @@
               </div>
 
               <!-- Horizontal Ruler with Specular Foil -->
-              <hr class="showcase-hr my-2 border-t border-white/10 relative">
+              <div class="horizontal-ruler showcase-hr my-2.5"></div>
 
               <!-- Progress bar: Filled area ITSELF has the holographic effect -->
               <div class="w-full bg-slate-800/80 h-2 rounded-full flex gap-0.5 mt-2 relative p-0.5">
@@ -815,10 +829,12 @@
       }
 
       // HUD Feedback
-      if (progress >= 1.0) {
+      if (progress >= 0.7) {
+        glass.classList.add('armed');
         hud.classList.add('armed');
         hudText.innerText = 'ARMED (Release to Sync)';
       } else {
+        glass.classList.remove('armed');
         hud.classList.remove('armed');
         hudText.innerText = `Arming: ${Math.round(progress * 100)}%`;
       }
@@ -833,6 +849,7 @@
       var progress = pullDistance / 80;
 
       if (ACTIVE_ID === 5) {
+        glass.classList.remove('armed');
         // Triple-Push Specular Border logic
         if (progress >= 0.45) {
           foilPushCount++;
@@ -867,7 +884,7 @@
             clearTimeout(foilDecayTimer);
             document.documentElement.style.setProperty('--border-glow', '1');
             document.documentElement.style.setProperty('--bg-dim', '0.70');
-            stage.style.transform = 'translateY(40px) scale3d(0.985, 1.035, 1)';
+            stage.style.transform = 'translateY(0px) scale3d(1, 1, 1)';
             triggerActiveConcept();
           }
         } else {
