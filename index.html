@@ -391,8 +391,8 @@
             <p>Closing snapshot of every asset class at the end of each year</p>
           </div>
         </div>
-        <div style="overflow-x: auto; border-radius: 14px; background: var(--glass-well); box-shadow: var(--ao-recessed-well); padding: 4px;">
-          <table style="width: 100%; border-collapse: collapse; min-width: 680px; font-size: 12.5px;">
+        <div class="liquid-table-wrap" style="overflow-x: auto; border-radius: 14px; background: var(--glass-well); box-shadow: var(--ao-recessed-well); padding: 4px;">
+          <table style="width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 680px; font-size: 12.5px;">
             <thead>
               <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-align: center;">
                 <th style="padding: 12px 10px; text-align: center;">Year</th>
@@ -616,140 +616,149 @@
           <span id="live-form-diff" class="glow-badge neutral" style="flex-shrink: 0;">No change</span>
         </div>
 
-        <!-- 1. Bank Accounts & Deposits -->
-        <div class="liquid-slab">
-          <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
-            <span style="font-size: 13px; font-weight: 800; color: var(--amber-bright); text-transform: uppercase; letter-spacing: 0.6px;">Bank Accounts & Fixed Deposits</span>
-            <span class="glow-badge neutral mono-num" id="sub-bank">₹ 0</span>
-          </div>
-          <div class="horizontal-ruler"></div>
+        <!-- 2-Column Responsive Layout for Clean Desktop Alignment & Full-Width Harmony -->
+        <div class="entry-grid-2col">
+          <!-- Column 1: Bank Accounts & Fixed Deposits + EPF -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- 1. Bank Accounts & Deposits -->
+            <div class="liquid-slab">
+              <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
+                <span style="font-size: 13px; font-weight: 800; color: var(--amber-bright); text-transform: uppercase; letter-spacing: 0.6px;">Bank Accounts & Fixed Deposits</span>
+                <span class="glow-badge neutral mono-num" id="sub-bank">₹ 0</span>
+              </div>
+              <div class="horizontal-ruler"></div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">HDFC Savings</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-hdfcSav">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-hdfcSav" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">HDFC Savings</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-hdfcSav">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-hdfcSav" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">HDFC Deposits (FD/RD)</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-hdfcDep">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-hdfcDep" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">HDFC Deposits (FD/RD)</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-hdfcDep">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-hdfcDep" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">SBI Savings</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiSav">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-sbiSav" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">SBI Savings</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiSav">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-sbiSav" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">SBI Deposits (FD)</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiDep">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-sbiDep" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">SBI Deposits (FD)</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiDep">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-sbiDep" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">SBI PPF</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiPpf">No change</div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">SBI PPF</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-sbiPpf">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-sbiPpf" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
             </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-sbiPpf" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
-        </div>
 
-        <!-- 2. EPF -->
-        <div class="liquid-slab">
-          <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
-            <span style="font-size: 13px; font-weight: 800; color: var(--violet-bright); text-transform: uppercase; letter-spacing: 0.6px;">Employee Provident Fund (EPF)</span>
-            <span class="glow-badge neutral mono-num" id="sub-epf">₹ 0</span>
-          </div>
-          <div class="horizontal-ruler"></div>
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">EPF Total Balance</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-epf">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-epf" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Market Investments -->
-        <div class="liquid-slab">
-          <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
-            <span style="font-size: 13px; font-weight: 800; color: var(--emerald-bright); text-transform: uppercase; letter-spacing: 0.6px;">Market Investments</span>
-            <span class="glow-badge positive mono-num" id="sub-market">₹ 0</span>
-          </div>
-          <div class="horizontal-ruler"></div>
-
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">Mutual Funds</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-mf">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-mf" class="recessed-num-input" oninput="recalcFormLive()">
+            <!-- 2. EPF -->
+            <div class="liquid-slab">
+              <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
+                <span style="font-size: 13px; font-weight: 800; color: var(--violet-bright); text-transform: uppercase; letter-spacing: 0.6px;">Employee Provident Fund (EPF)</span>
+                <span class="glow-badge neutral mono-num" id="sub-epf">₹ 0</span>
+              </div>
+              <div class="horizontal-ruler"></div>
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">EPF Total Balance</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-epf">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-epf" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">Gold</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-gold">No change</div>
+          <!-- Column 2: Market Investments + Notes + Action Buttons -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- 3. Market Investments -->
+            <div class="liquid-slab">
+              <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
+                <span style="font-size: 13px; font-weight: 800; color: var(--emerald-bright); text-transform: uppercase; letter-spacing: 0.6px;">Market Investments</span>
+                <span class="glow-badge positive mono-num" id="sub-market">₹ 0</span>
+              </div>
+              <div class="horizontal-ruler"></div>
+
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">Mutual Funds</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-mf">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-mf" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">Gold</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-gold">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-gold" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">Silver</div>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="diff-silver">No change</div>
+                </div>
+                <div class="recessed-input-wrap">
+                  <span class="curr-prefix">₹</span>
+                  <input type="number" step="0.01" id="in-silver" class="recessed-num-input" oninput="recalcFormLive()">
+                </div>
+              </div>
             </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-gold" class="recessed-num-input" oninput="recalcFormLive()">
+
+            <!-- 4. Notes -->
+            <div class="liquid-slab">
+              <div style="margin-bottom: 8px; font-size: 12.5px; font-weight: 800; color: var(--cyan-core); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Notes (Optional)</div>
+              <textarea id="in-notes" class="log-notes-textarea" placeholder="Add context for this month (e.g., bonus invested, major purchase, market swing)..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: auto;">
+              <button type="button" class="btn-subtle" style="padding: 14px 22px;" onclick="resetFormToDefaults()">Reset to Previous Month</button>
+              <button type="button" class="btn-emissive" style="flex: 1; padding: 14px; font-size: 14px;" id="btn-save" onclick="submitMonthlyForm()">Save Monthly Snapshot</button>
             </div>
           </div>
-
-          <div class="field-row">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">Silver</div>
-              <div style="font-size: 11px; color: var(--text-muted);" id="diff-silver">No change</div>
-            </div>
-            <div class="recessed-input-wrap">
-              <span class="curr-prefix">₹</span>
-              <input type="number" step="0.01" id="in-silver" class="recessed-num-input" oninput="recalcFormLive()">
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Notes -->
-        <div class="liquid-slab">
-          <div style="margin-bottom: 8px; font-size: 12.5px; font-weight: 800; color: var(--cyan-core); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Notes (Optional)</div>
-          <textarea id="in-notes" class="log-notes-textarea" placeholder="Add context for this month (e.g., bonus invested, major purchase, market swing)..."></textarea>
-        </div>
-
-        <div style="display: flex; gap: 12px;">
-          <button type="button" class="btn-subtle" style="padding: 14px 22px;" onclick="resetFormToDefaults()">Reset to Previous Month</button>
-          <button type="button" class="btn-emissive" style="flex: 1; padding: 14px; font-size: 14px;" id="btn-save" onclick="submitMonthlyForm()">Save Monthly Snapshot</button>
         </div>
       </div>
     </main>
@@ -864,8 +873,8 @@
         </div>
 
         <!-- Monthly Breakdown Table with Center-Aligned Headers and Cells -->
-        <div style="overflow-x: auto; border-radius: 16px; background: var(--glass-well); box-shadow: var(--ao-recessed-well); border: 1px solid rgba(255,255,255,0.06); padding: 4px;">
-          <table style="width: 100%; border-collapse: collapse; min-width: 760px; font-size: 12.5px;">
+        <div class="liquid-table-wrap" style="overflow-x: auto; border-radius: 16px; background: var(--glass-well); box-shadow: var(--ao-recessed-well); border: 1px solid rgba(255,255,255,0.06); padding: 4px;">
+          <table style="width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 760px; font-size: 12.5px;">
             <thead>
               <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-align: center;">
                 <th style="padding: 12px 10px; text-align: center;">Month</th>

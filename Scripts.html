@@ -306,10 +306,10 @@
         setTimeout(finalize, 550);
       }
 
-      // After 2.4s continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
+      // After 1.35s continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 2600);
+      }, 1350);
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
       nextView.classList.add('active');
@@ -434,7 +434,7 @@
   var PUSH_THRESHOLD_PX   = 220; // 4x length: 220px downward pull distance to trigger refresh
   var PUSH_DECAY_MS       = 4000; // 4 seconds before push count decays to 0
   var MIN_SYNC_FLOOR_MS   = 600; // Smooth visual display floor
-  var SETTLE_DURATION_MS  = 480; // Smooth 0.48s graceful optical dissipation
+  var SETTLE_DURATION_MS  = 850; // Smooth 0.85s graceful optical dissipation
 
   var rootStyle       = document.documentElement.style;
   var ptrState        = 'idle'; // 'idle' | 'pulling' | 'syncing' | 'settling'
@@ -1808,9 +1808,7 @@
       var ppfOnly = lastRec ? lastRec.sbi_ppf : 0;
 
       var tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-      tr.style.textAlign = 'center';
-      tr.style.cursor = 'pointer';
+      tr.className = 'liquid-table-row';
       tr.onclick = function() { openYearDrilldown(y.year); };
       tr.innerHTML =
         '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + y.year + '</td>' +
@@ -2167,8 +2165,7 @@
     tBody.innerHTML = '';
     months.forEach(function(m) {
       var mRow = document.createElement('tr');
-      mRow.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-      mRow.style.textAlign = 'center';
+      mRow.className = 'liquid-table-row';
 
       var isPos = m.monthlyChange >= 0;
       var cSign = isPos ? '+' : '';
