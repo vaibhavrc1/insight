@@ -376,7 +376,211 @@
     }
   }
 
+  /* ==========================================================================
+     SECURITY PIN VAULT ENGINE (PIN: 258025)
+     ========================================================================== */
+  var VAULT_SECRET_PIN = "258025";
+  var currentEnteredPin = "";
+  var isPinAuthenticating = false;
+
+  function initSecurityVault() {
+    // Check if session is already authenticated
+    var isAuth = sessionStorage.getItem('insight_vault_pin_auth');
+    if (isAuth === 'true') {
+      unlockVault(true);
+      return;
+    }
+
+    // Ensure locked state
+    document.body.classList.add('vault-locked');
+    currentEnteredPin = "";
+    updatePinDotsUI();
+
+    // Listen for physical keyboard input
+    window.addEventListener('keydown', handleVaultKeydown);
+
+    // Auto-focus hidden input on tap/click inside card for mobile virtual keyboards if desired
+    var card = document.querySelector('.pin-vault-card');
+    if (card) {
+      card.addEventListener('click', function(e) {
+        if (!e.target.closest('button') && !e.target.closest('input')) {
+          var hiddenInput = document.getElementById('pin-hidden-input');
+          if (hiddenInput) hiddenInput.focus();
+        }
+      });
+    }
+
+    var hiddenInput = document.getElementById('pin-hidden-input');
+    if (hiddenInput) {
+      hiddenInput.addEventListener('input', function(e) {
+        var val = hiddenInput.value.replace(/\D/g, '').slice(0, 6);
+        currentEnteredPin = val;
+        updatePinDotsUI();
+        if (currentEnteredPin.length === 6) {
+          verifyEnteredPin();
+        }
+      });
+    }
+  }
+
+  function handleVaultKeydown(e) {
+    if (!document.body.classList.contains('vault-locked')) return;
+    if (isPinAuthenticating) return;
+
+    if (e.key >= '0' && e.key <= '9') {
+      handlePinInput(e.key);
+    } else if (e.key === 'Backspace') {
+      handlePinBackspace();
+    } else if (e.key === 'Escape' || e.key === 'Delete') {
+      handlePinClear();
+    }
+  }
+
+  function handlePinInput(digit) {
+    if (isPinAuthenticating) return;
+    if (currentEnteredPin.length >= 6) return;
+
+    currentEnteredPin += digit;
+    updatePinDotsUI();
+
+    if (currentEnteredPin.length === 6) {
+      verifyEnteredPin();
+    }
+  }
+
+  function handlePinBackspace() {
+    if (isPinAuthenticating) return;
+    if (currentEnteredPin.length > 0) {
+      currentEnteredPin = currentEnteredPin.slice(0, -1);
+      updatePinDotsUI();
+      var statusEl = document.getElementById('pin-vault-status');
+      if (statusEl) {
+        statusEl.innerText = "Vault Locked";
+        statusEl.className = "pin-vault-status";
+      }
+    }
+  }
+
+  function handlePinClear() {
+    if (isPinAuthenticating) return;
+    currentEnteredPin = "";
+    updatePinDotsUI();
+    var statusEl = document.getElementById('pin-vault-status');
+    if (statusEl) {
+      statusEl.innerText = "Vault Locked";
+      statusEl.className = "pin-vault-status";
+    }
+  }
+
+  function updatePinDotsUI() {
+    var dots = document.querySelectorAll('#pin-dots-container .pin-dot');
+    for (var i = 0; i < dots.length; i++) {
+      if (i < currentEnteredPin.length) {
+        dots[i].classList.add('filled');
+      } else {
+        dots[i].classList.remove('filled', 'error', 'success');
+      }
+    }
+    var hiddenInput = document.getElementById('pin-hidden-input');
+    if (hiddenInput && hiddenInput.value !== currentEnteredPin) {
+      hiddenInput.value = currentEnteredPin;
+    }
+  }
+
+  function verifyEnteredPin() {
+    isPinAuthenticating = true;
+    var statusEl = document.getElementById('pin-vault-status');
+    var dots = document.querySelectorAll('#pin-dots-container .pin-dot');
+    var container = document.getElementById('pin-dots-container');
+
+    if (currentEnteredPin === VAULT_SECRET_PIN) {
+      // SUCCESS!
+      if (statusEl) {
+        statusEl.innerText = "PIN Verified • Unlocking...";
+        statusEl.className = "pin-vault-status success";
+      }
+      dots.forEach(function(d) { d.classList.remove('error'); d.classList.add('success'); });
+      if (navigator.vibrate) try { navigator.vibrate(40); } catch (e) {}
+
+      var rememberChk = document.getElementById('pin-remember-session');
+      if (rememberChk && rememberChk.checked) {
+        sessionStorage.setItem('insight_vault_pin_auth', 'true');
+      }
+
+      setTimeout(function() {
+        unlockVault(false);
+      }, 350);
+
+    } else {
+      // INCORRECT PIN
+      if (statusEl) {
+        statusEl.innerText = "Incorrect PIN • Access Denied";
+        statusEl.className = "pin-vault-status error";
+      }
+      dots.forEach(function(d) { d.classList.add('error'); });
+      if (container) {
+        container.classList.remove('shake');
+        void container.offsetWidth; // trigger reflow
+        container.classList.add('shake');
+      }
+      if (navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch (e) {}
+
+      setTimeout(function() {
+        currentEnteredPin = "";
+        updatePinDotsUI();
+        if (statusEl) {
+          statusEl.innerText = "Vault Locked • Please try again";
+          statusEl.className = "pin-vault-status";
+        }
+        if (container) container.classList.remove('shake');
+        isPinAuthenticating = false;
+      }, 750);
+    }
+  }
+
+  function unlockVault(immediate) {
+    document.body.classList.remove('vault-locked');
+    var overlay = document.getElementById('pin-vault-screen');
+    if (overlay) {
+      if (immediate) {
+        overlay.style.display = 'none';
+      } else {
+        overlay.classList.add('unlocking');
+        setTimeout(function() {
+          overlay.style.display = 'none';
+        }, 460);
+      }
+    }
+    isPinAuthenticating = false;
+    currentEnteredPin = "";
+
+    // Sync layout & gliders now that DOM is visible
+    setTimeout(function() {
+      syncAllGliders(false);
+      syncAllSegmentGliders(false);
+    }, 120);
+  }
+
+  function lockVault() {
+    sessionStorage.removeItem('insight_vault_pin_auth');
+    document.body.classList.add('vault-locked');
+    var overlay = document.getElementById('pin-vault-screen');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      overlay.classList.remove('unlocking');
+    }
+    currentEnteredPin = "";
+    updatePinDotsUI();
+    var statusEl = document.getElementById('pin-vault-status');
+    if (statusEl) {
+      statusEl.innerText = "Vault Locked";
+      statusEl.className = "pin-vault-status";
+    }
+    showToast("Portfolio Vault Locked");
+  }
+
   function initApp() {
+    initSecurityVault();
     setupInteractivePhysics();
     initCustomMonthPicker();
     initPullToRefresh();
@@ -2745,14 +2949,16 @@
     var f = getFormValues();
     var btn = document.getElementById('btn-save');
     btn.disabled = true;
-    btn.innerText = 'Locking It In... ⚡';
+    btn.classList.add('is-saving');
+    btn.innerText = 'Saving Snapshot...';
     startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(updatedData) {
           btn.disabled = false;
-          btn.innerText = 'Lock It In 🚀';
+          btn.classList.remove('is-saving');
+          btn.innerText = 'Save Snapshot';
           showToast('Saved ' + f.month.substring(0, 7) + ' to portfolio');
           stopLoadingHologram();
           loadStateData(updatedData);
@@ -2760,7 +2966,8 @@
         })
         .withFailureHandler(function(err) {
           btn.disabled = false;
-          btn.innerText = 'Lock It In 🚀';
+          btn.classList.remove('is-saving');
+          btn.innerText = 'Save Snapshot';
           showToast('Error saving snapshot: ' + err);
           stopLoadingHologram();
         })

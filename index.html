@@ -22,9 +22,75 @@
 
   <?!= include('Styles'); ?>
 </head>
-<body>
+<body class="vault-locked">
   <!-- Realistic Ambient Lighting Stage -->
   <div class="lighting-stage"></div>
+
+  <!-- ======================================================================
+       SECURITY PIN VAULT OVERLAY (Password Protected: 258025)
+       ====================================================================== -->
+  <div id="pin-vault-screen" class="pin-vault-overlay">
+    <div class="pin-vault-card liquid-slab">
+      <!-- Vault Lock Header -->
+      <div class="pin-vault-icon-wrap">
+        <div class="pin-vault-orb">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+      </div>
+      
+      <div class="pin-vault-title">Insight Portfolio</div>
+      <div class="pin-vault-subtitle">Enter 6-digit Security PIN to access</div>
+
+      <!-- 6 PIN Slot Indicators -->
+      <div class="pin-dots-container" id="pin-dots-container">
+        <div class="pin-dot" data-index="0"></div>
+        <div class="pin-dot" data-index="1"></div>
+        <div class="pin-dot" data-index="2"></div>
+        <div class="pin-dot" data-index="3"></div>
+        <div class="pin-dot" data-index="4"></div>
+        <div class="pin-dot" data-index="5"></div>
+      </div>
+
+      <!-- Status / Feedback Message -->
+      <div class="pin-vault-status" id="pin-vault-status">Vault Locked</div>
+
+      <!-- Numeric Keypad Grid (3 x 4) -->
+      <div class="pin-keypad-grid">
+        <button type="button" class="pin-key" onclick="handlePinInput('1')">1</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('2')">2</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('3')">3</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('4')">4</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('5')">5</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('6')">6</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('7')">7</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('8')">8</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('9')">9</button>
+        <button type="button" class="pin-key pin-key-action" onclick="handlePinClear()" title="Clear PIN">C</button>
+        <button type="button" class="pin-key" onclick="handlePinInput('0')">0</button>
+        <button type="button" class="pin-key pin-key-action" onclick="handlePinBackspace()" title="Delete">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+            <line x1="18" y1="9" x2="12" y2="15"></line>
+            <line x1="12" y1="9" x2="18" y2="15"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Hidden input for mobile virtual keyboard and accessibility -->
+      <input type="password" id="pin-hidden-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" style="position: absolute; opacity: 0; pointer-events: none; height: 0; width: 0;">
+
+      <!-- Remember session option -->
+      <div class="pin-vault-options">
+        <label class="pin-vault-remember">
+          <input type="checkbox" id="pin-remember-session" checked>
+          <span>Stay unlocked for this session</span>
+        </label>
+      </div>
+    </div>
+  </div>
 
   <!-- Premium Frosted Liquid-Glass Loading Screen -->
   <div id="app-loading-screen" class="liquid-loading-screen">
@@ -105,12 +171,21 @@
         </div>
         <div class="brand-title">
           <h1>Insight</h1>
-          <div class="sync-pill" onclick="triggerManualSync()" title="Click to refresh data with Google Sheets" style="cursor:pointer;">
-            <span class="pulse-dot" id="sync-dot"></span>
-            <svg class="refresh-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px;">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-            <span id="header-sync-status">Click to refresh</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="sync-pill" onclick="triggerManualSync()" title="Click to refresh data with Google Sheets" style="cursor:pointer;">
+              <span class="pulse-dot" id="sync-dot"></span>
+              <svg class="refresh-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px;">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span id="header-sync-status">Click to refresh</span>
+            </div>
+            <button type="button" class="btn-lock-vault-header" onclick="lockVault()" title="Lock Portfolio Vault">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Lock</span>
+            </button>
           </div>
         </div>
       </div>
@@ -754,9 +829,9 @@
               <textarea id="in-notes" class="log-notes-textarea" placeholder="Add context for this month (e.g., bonus invested, major purchase, market swing)..."></textarea>
             </div>
 
-            <div style="display: flex; gap: 12px; margin-top: auto;">
-              <button type="button" class="btn-subtle" style="padding: 14px 20px;" onclick="resetFormToDefaults()">Rewind ↺</button>
-              <button type="button" class="btn-emissive" style="flex: 1; padding: 14px; font-size: 14px;" id="btn-save" onclick="submitMonthlyForm()">Lock It In 🚀</button>
+            <div class="log-actions-bar">
+              <button type="button" class="btn-subtle btn-log-action btn-log-reset" onclick="resetFormToDefaults()">Reset Form</button>
+              <button type="button" class="btn-emissive btn-log-action btn-log-save" id="btn-save" onclick="submitMonthlyForm()">Save Snapshot</button>
             </div>
           </div>
         </div>
