@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Insight — Cool Full-Screen Refresh Animations</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap');
+
+    :root {
+      --bg-dark: #030509;
+      --card-bg: rgba(13, 20, 36, 0.72);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --cyan: #38BDF8;
+      --emerald: #34D399;
+      --gold: #FACC15;
+      --coral: #FB7185;
+      --purple: #C084FC;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    body {
+      background: #020408;
+      color: #F8FAFC;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Ambient Spotlight Background */
+    .ambient-mesh {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: 
+        radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(52, 211, 153, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.04) 0%, transparent 60%);
+      z-index: 0;
+    }
+
+    /* Phone Device Frame */
+    .phone-wrapper {
+      perspective: 1200px;
+    }
+
+    .phone-screen {
+      position: relative;
+      width: 380px;
+      height: 690px;
+      border-radius: 44px;
+      background: #03060d;
+      border: 3.5px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 
+        0 25px 60px -15px rgba(0, 0, 0, 0.9),
+        0 0 50px rgba(56, 189, 248, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dynamic Island Notch */
+    .phone-notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 26px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .phone-camera {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #0c1424;
+      border: 1px solid rgba(56,189,248,0.4);
+    }
+
+    /* Scrollable Phone Viewport */
+    .viewport-content {
+      position: relative;
+      flex: 1;
+      overflow-y: hidden;
+      padding: 44px 14px 70px 14px;
+      touch-action: none;
+      cursor: grab;
+      will-change: transform;
+      transform-origin: top center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .viewport-content:active {
+      cursor: grabbing;
+    }
+
+    /* Bento Card Mockups */
+    .bento-card {
+      background: linear-gradient(168deg, rgba(22, 33, 58, 0.7) 0%, rgba(8, 14, 28, 0.85) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.5);
+      transition: border-color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    }
+
+    /* Option Selector Pills */
+    .mode-tab {
+      position: relative;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #94A3B8;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mode-tab:hover {
+      color: #FFFFFF;
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateY(-1px);
+    }
+    .mode-tab.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.08) 100%);
+      border-color: var(--cyan);
+      color: #FFFFFF;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+
+    /* =========================================================================
+       ANIMATION 1: QUANTUM DATA SHOCKWAVE (Cyber Terminal Laser Scan)
+       ========================================================================= */
+    .quantum-laser-scanner {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #38BDF8, #34D399, #38BDF8, transparent);
+      box-shadow: 
+        0 0 25px 8px rgba(56, 189, 248, 0.7),
+        0 0 60px 15px rgba(52, 211, 153, 0.5);
+      z-index: 80;
+      top: -20px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .quantum-laser-scanner.sweep {
+      animation: laserSweep 1.1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+    @keyframes laserSweep {
+      0% { top: 0%; opacity: 1; }
+      80% { opacity: 0.95; }
+      100% { top: 110%; opacity: 0; }
+    }
+
+    .matrix-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.06) 1px, transparent 1px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 30;
+    }
+
+    /* =========================================================================
+       ANIMATION 2: LIQUID MERCURY WAVE (Apple Liquid Physics & Frosted Lens)
+       ========================================================================= */
+    .liquid-mercury-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 85;
+    }
+    .frosted-liquid-blur {
+      transition: filter 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .frosted-liquid-blur.blurred {
+      filter: blur(10px) saturate(180%) contrast(110%);
+    }
+
+    /* =========================================================================
+       ANIMATION 3: AURORA BOREALIS & WEALTH CURTAIN
+       ========================================================================= */
+    .aurora-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 85;
+      mix-blend-mode: screen;
+    }
+
+    /* =========================================================================
+       ANIMATION 4: 3D MECHANICAL VAULT TRAMPOLINE
+       ========================================================================= */
+    .subterranean-vault-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 220px;
+      background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.25) 0%, rgba(5, 10, 22, 0.98) 75%);
+      border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .vault-gear {
+      width: 72px;
+      height: 72px;
+      border: 3px dashed rgba(56, 189, 248, 0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: gearSpin 6s linear infinite;
+    }
+    @keyframes gearSpin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Pull indicator badge */
+    .drag-tension-hud {
+      position: absolute;
+      top: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 16, 32, 0.88);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      backdrop-filter: blur(20px);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #94A3B8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 90;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drag-tension-hud.armed {
+      border-color: var(--emerald);
+      color: var(--emerald);
+      box-shadow: 0 0 25px rgba(52, 211, 153, 0.45);
+      transform: translateX(-50%) scale(1.06);
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center justify-center">
+
+  <div class="ambient-mesh"></div>
+
+  <!-- Header Banner -->
+  <div class="max-w-4xl w-full text-center mb-8 relative z-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-3">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+      Interactive Refresh Experience Laboratory
+    </div>
+    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
+      Full-Screen Cinematic Refresh Animations
+    </h1>
+    <p class="text-slate-400 text-sm md:text-base max-w-2xl mx-auto">
+      Each concept transforms your entire portfolio dashboard during refresh. Built with high-resistance tension gates (90px+) so casual scrolling <strong class="text-white">never triggers them accidentally</strong>.
+    </p>
+
+    <!-- Concept Selector Pills -->
+    <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6">
+      <button class="mode-tab active" onclick="switchConcept('quantum')" id="tab-quantum">
+        <span>⚡ 1. Quantum Shockwave</span>
+      </button>
+      <button class="mode-tab" onclick="switchConcept('mercury')" id="tab-mercury">
+        <span>💧 2. Liquid Mercury Ripple</span>
+      </button>
+      <button class="mode-tab" onclick="switchConcept('aurora')" id="tab-aurora">
+        <span>✨ 3. Aurora Wealth Shower</span>
+      </button>
+      <button class="mode-tab" onclick="switchConcept('vault')" id="tab-vault">
+        <span>⚙️ 4. 3D Vault Trampoline</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Showcase Container -->
+  <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+    
+    <!-- Left Column: Interactive Phone Screen Simulator -->
+    <div class="lg:col-span-6 flex flex-col items-center">
+      <div class="phone-wrapper">
+        <div class="phone-screen" id="phone-container">
+          
+          <!-- Dynamic Island / Top Hardware Notch -->
+          <div class="phone-notch">
+            <div class="phone-camera"></div>
+            <div class="w-2 h-2 rounded-full bg-emerald-400/80 animate-pulse"></div>
+          </div>
+
+          <!-- Tension HUD Indicator -->
+          <div id="tension-hud" class="drag-tension-hud opacity-0">
+            <svg id="hud-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+            <span id="hud-text">Pull 90px to sync</span>
+          </div>
+
+          <!-- Subterranean Vault (Concept 4 Layer) -->
+          <div id="vault-layer" class="subterranean-vault-layer">
+            <div class="vault-gear">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <span class="text-xs font-mono text-cyan-300 font-bold mt-2 tracking-wider">CONNECTING ENCRYPTED SHEET VAULT</span>
+          </div>
+
+          <!-- Laser Scanner (Concept 1) -->
+          <div id="quantum-laser" class="quantum-laser-scanner"></div>
+          <div id="matrix-overlay" class="matrix-grid-overlay"></div>
+
+          <!-- Canvases for Concepts 2 & 3 -->
+          <canvas id="mercury-canvas" class="liquid-mercury-canvas"></canvas>
+          <canvas id="aurora-canvas" class="aurora-canvas"></canvas>
+
+          <!-- Interactive Viewport Canvas -->
+          <div id="phone-viewport" class="viewport-content frosted-liquid-blur">
+            
+            <!-- Hero Bento Card -->
+            <div class="bento-card" id="card-hero">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Total Portfolio Net Worth</span>
+                  <div class="mono text-2xl font-black text-white mt-0.5" id="hero-num">₹45,52,336</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  +₹98,375 (+2.16%)
+                </span>
+              </div>
+              <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden flex gap-0.5 mt-3">
+                <div class="h-full bg-cyan-400 w-[67%]"></div>
+                <div class="h-full bg-amber-400 w-[24%]"></div>
+                <div class="h-full bg-purple-400 w-[9%]"></div>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-400 font-medium mt-2">
+                <span class="text-cyan-400">Market 67.4%</span>
+                <span class="text-amber-400">Bank 24.4%</span>
+                <span class="text-purple-400">EPF 8.2%</span>
+              </div>
+            </div>
+
+            <!-- Pillar Grid -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="bento-card" id="card-p1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Market Holdings</span>
+                <div class="mono text-base font-bold text-emerald-400 mt-1" id="p1-num">₹30,66,356</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Groww MF & Bullion</div>
+              </div>
+              <div class="bento-card" id="card-p2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Liquid Bank & FD</span>
+                <div class="mono text-base font-bold text-amber-400 mt-1" id="p2-num">₹11,11,097</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">HDFC + SBI Deposits</div>
+              </div>
+            </div>
+
+            <!-- Chart Simulation Card -->
+            <div class="bento-card" id="card-chart">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-white">Net Worth Trajectory</span>
+                <span class="text-[10px] text-cyan-400 font-mono">39 Months Tracked</span>
+              </div>
+              <!-- Mock SVG Sparkline Chart -->
+              <svg viewBox="0 0 320 85" class="w-full h-20 overflow-visible">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 0 75 Q 40 70 80 62 T 160 50 T 240 32 T 320 12 L 320 85 L 0 85 Z" fill="url(#chartGrad)"/>
+                <path d="M 0 75 Q 40 70 80 62 T 160 50 T 240 32 T 320 12" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="320" cy="12" r="4.5" fill="#38BDF8" stroke="#000" stroke-width="2" class="animate-ping"/>
+                <circle cx="320" cy="12" r="4" fill="#38BDF8"/>
+              </svg>
+            </div>
+
+            <!-- Recent Snapshot Card -->
+            <div class="bento-card" id="card-hist">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-white">October 2026 Snapshot</span>
+                <span class="font-bold text-emerald-400 font-mono">+₹98,375</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                <span>Annual bonus credited + gold bullion rally</span>
+              </div>
+            </div>
+
+            <!-- Hint footer -->
+            <div class="text-center text-[11px] text-slate-500 font-medium pt-2">
+              ↓ Drag down phone screen or click "Simulate Refresh" below ↓
+            </div>
+
+          </div>
+
+          <!-- Bottom Floating Dock -->
+          <div class="absolute bottom-3 left-4 right-4 h-12 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 flex items-center justify-around px-2 z-50">
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">●</div>
+            <div class="w-8 h-8 rounded-xl text-slate-500 flex items-center justify-center text-xs">📊</div>
+            <div class="w-8 h-8 rounded-xl text-slate-500 flex items-center justify-center text-xs">🎯</div>
+            <div class="w-8 h-8 rounded-xl text-slate-500 flex items-center justify-center text-xs">📝</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="flex gap-3 mt-5">
+        <button onclick="triggerActiveRefresh()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/30 flex items-center gap-2 transition-all transform active:scale-95">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Simulate Full-Screen Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Description & Architecture Breakdown -->
+    <div class="lg:col-span-6 space-y-5">
+      
+      <!-- Dynamic Concept Card -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-md">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest" id="concept-tag">CONCEPT 1 OF 4</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700" id="concept-trigger-label">Accidental Trigger Immunity: 95px Notch</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white mb-2" id="concept-title">Quantum Data Shockwave</h2>
+        <p class="text-sm text-slate-300 leading-relaxed mb-4" id="concept-desc">
+          When pulling down, the entire viewport tilts into 3D perspective while an encrypted laser grid illuminates. When released past 95px, a neon chromatic scanner sweeps top-to-bottom across the whole screen. As it touches each bento card, the monetary numbers scramble in real-time hexadecimal/matrix code before locking into crystal-sharp values with a subtle flash.
+        </p>
+
+        <!-- Feature List -->
+        <div class="space-y-2.5 border-t border-slate-800 pt-4">
+          <div class="flex items-start gap-2.5">
+            <div class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs mt-0.5">✓</div>
+            <div>
+              <strong class="text-xs text-white block" id="feature-1-title">Full-Screen Laser Sweep & Chromatic Flare</strong>
+              <span class="text-xs text-slate-400" id="feature-1-desc">Luminous emerald-cyan scanline travels across cards with dynamic card shadow warping.</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <div class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs mt-0.5">✓</div>
+            <div>
+              <strong class="text-xs text-white block" id="feature-2-title">Live Number Scramble Matrix</strong>
+              <span class="text-xs text-slate-400" id="feature-2-desc">Net worth and pillar balances scramble through dynamic digits during cloud sync.</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <div class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs mt-0.5">✓</div>
+            <div>
+              <strong class="text-xs text-white block" id="feature-3-title">Anti-Accident Tension Gate</strong>
+              <span class="text-xs text-slate-400" id="feature-3-desc">Requires 95px purposeful drag with exponential damping. Pulling 40px will rubber-band snap back without syncing.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Matrix -->
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">How All 4 Solve Your Needs</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="font-bold text-white mb-1">🚫 Zero Accidental Triggers</div>
+            <p class="text-slate-400">All 4 require a 90px+ deliberate swipe with progressive spring resistance. Quick thumb flings never engage.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="font-bold text-white mb-1">📱 Full Viewport Kinetic Depth</div>
+            <p class="text-slate-400">Cards, charts, background, and lighting all react concurrently instead of a tiny isolated spinning wheel.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="font-bold text-white mb-1">📳 Dual Haptic Feedback</div>
+            <p class="text-slate-400">Vibrates when crossing the threshold gate (primed), and pulses with satisfaction when sync completes.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="font-bold text-white mb-1">💎 Zero "AI Slop"</div>
+            <p class="text-slate-400">No cheap 3D spinning reactor gyroscopes; uses high-end physics, Apple liquid shaders, or cyber-terminal aesthetics.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center justify-between">
+        <span>Click the tabs above to test each animation, then tell me which one you like best!</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // State
+    var CURRENT_CONCEPT = 'quantum';
+    var isDragging = false;
+    var startY = 0;
+    var currentPull = 0;
+    var PULL_THRESHOLD = 95;
+    var isRefreshing = false;
+
+    var conceptsData = {
+      quantum: {
+        tag: 'CONCEPT 1 OF 4',
+        title: 'Quantum Data Shockwave',
+        trigger: 'Accidental Trigger Immunity: 95px Notch',
+        desc: 'When pulling down, the entire viewport tilts in 3D perspective while an encrypted laser grid illuminates. When released past 95px, a neon chromatic scanner sweeps top-to-bottom across the whole screen. As it passes each bento card, numbers scramble in real-time hexadecimal code before locking into crystal-sharp values with a subtle flash.',
+        f1Title: 'Full-Screen Laser Sweep & Chromatic Flare',
+        f1Desc: 'Luminous emerald-cyan scanline travels across cards with dynamic card shadow warping.',
+        f2Title: 'Live Number Scramble Matrix',
+        f2Desc: 'Net worth and pillar balances scramble through dynamic digits during cloud sync.',
+        f3Title: 'Anti-Accident Tension Gate',
+        f3Desc: 'Requires 95px purposeful drag with exponential damping. Pulling 40px will rubber-band snap back without syncing.'
+      },
+      mercury: {
+        tag: 'CONCEPT 2 OF 4',
+        title: 'Liquid Mercury Ripple & Frosted Lens',
+        trigger: 'Accidental Trigger Immunity: 100px Notch',
+        desc: 'Inspired by Apple iOS & VisionOS liquid physics. Pulling down stretches a viscous molten mercury bubble from the top notch while the entire screen blurs into a frosted glass lens. Upon release, a refractive radial liquid ripple wave propagates outward across all bento cards, clearing the blur with an organic watery sheen.',
+        f1Title: 'VisionOS Liquid Refraction & Frosted Glass',
+        f1Desc: 'Entire viewport blurs smoothly while pulling down and snaps back crystal-clear.',
+        f2Title: 'Physically Simulated Radial Ripple',
+        f2Desc: 'Radial wave expands from the top drop, creating specular sheen reflections on every card border.',
+        f3Title: 'High Viscosity Resistance',
+        f3Desc: 'Mimics heavy fluid drag; requires decisive thumb stroke so normal reading gestures cannot trigger it.'
+      },
+      aurora: {
+        tag: 'CONCEPT 3 OF 4',
+        title: 'Aurora Wealth Curtain & Particle Shower',
+        trigger: 'Accidental Trigger Immunity: 90px Notch',
+        desc: 'A luxurious fintech visual celebration. Pulling down causes micro-particles to pull upwards towards a magnetic singularity at the top notch. Releasing triggers a shimmering neon Aurora Borealis light curtain that cascades top-to-bottom, showering golden and emerald starlight across your net worth and portfolio metrics.',
+        f1Title: 'Ethereal Aurora Borealis Curtain',
+        f1Desc: 'Multi-hued silk-light wave rolls down the screen with smooth Gaussian lighting.',
+        f2Title: 'Micro-Particle Wealth Shower',
+        f2Desc: 'Over 60 luminous gold & emerald stars cascade gently across your cards as data arrives.',
+        f3Title: 'Magnetic Gravitational Tension',
+        f3Desc: 'Particles visibly swarm faster as you near the 90px trigger point, giving immediate visual feedback.'
+      },
+      vault: {
+        tag: 'CONCEPT 4 OF 4',
+        title: '3D Mechanical Vault Trampoline',
+        trigger: 'Accidental Trigger Immunity: 110px Heavy Gate',
+        desc: 'The ultimate tactile kinetic experience. Pulling down behaves like an elastic mechanical trampoline: the entire dashboard tilts backward in 3D perspective (rotateX 14deg), revealing a glowing subterranean security vault beneath with spinning encrypted cogs. Releasing catapults the screen back with a physics-damped spring recoil that makes each card bounce into place.',
+        f1Title: '3D Perspective Subterranean Reveal',
+        f1Desc: 'Screen pulls down like a physical hatch, showing the encrypted cloud vault spinning beneath.',
+        f2Title: 'Damped Mechanical Trampoline Recoil',
+        f2Desc: 'True physical spring oscillation (cubic-bezier recoil) that feels heavy, solid, and premium.',
+        f3Title: 'Highest Accidental Immunity (110px)',
+        f3Desc: 'Requires the most deliberate, firm downward pull of all concepts—virtually zero accidental triggers.'
+      }
+    };
+
+    function switchConcept(id) {
+      CURRENT_CONCEPT = id;
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + id).classList.add('active');
+
+      var data = conceptsData[id];
+      document.getElementById('concept-tag').innerText = data.tag;
+      document.getElementById('concept-title').innerText = data.title;
+      document.getElementById('concept-trigger-label').innerText = data.trigger;
+      document.getElementById('concept-desc').innerText = data.desc;
+      document.getElementById('feature-1-title').innerText = data.f1Title;
+      document.getElementById('feature-1-desc').innerText = data.f1Desc;
+      document.getElementById('feature-2-title').innerText = data.f2Title;
+      document.getElementById('feature-2-desc').innerText = data.f2Desc;
+      document.getElementById('feature-3-title').innerText = data.f3Title;
+      document.getElementById('feature-3-desc').innerText = data.f3Desc;
+
+      // Reset any active states
+      resetViewportStyles();
+    }
+
+    function resetViewportStyles() {
+      var vp = document.getElementById('phone-viewport');
+      vp.style.transform = '';
+      vp.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      vp.classList.remove('blurred');
+      document.getElementById('tension-hud').style.opacity = '0';
+      document.getElementById('tension-hud').classList.remove('armed');
+      document.getElementById('matrix-overlay').style.opacity = '0';
+      document.getElementById('vault-layer').style.opacity = '0';
+    }
+
+    // Interactive Drag on Phone Viewport
+    var vp = document.getElementById('phone-viewport');
+    var hud = document.getElementById('tension-hud');
+    var hudText = document.getElementById('hud-text');
+    var matrixOverlay = document.getElementById('matrix-overlay');
+    var vaultLayer = document.getElementById('vault-layer');
+
+    function onDragStart(y) {
+      if (isRefreshing) return;
+      isDragging = true;
+      startY = y;
+      currentPull = 0;
+      vp.style.transition = 'none';
+      hud.style.opacity = '1';
+    }
+
+    function onDragMove(y) {
+      if (!isDragging || isRefreshing) return;
+      var rawDelta = Math.max(0, y - startY);
+      // Non-linear spring resistance
+      currentPull = Math.pow(rawDelta, 0.82) * 1.8;
+      var effectiveThreshold = (CURRENT_CONCEPT === 'vault') ? 110 : (CURRENT_CONCEPT === 'mercury' ? 100 : 90);
+
+      // Visual response based on concept
+      if (CURRENT_CONCEPT === 'quantum') {
+        vp.style.transform = `translateY(${Math.min(currentPull, 120)}px) scale(${1 - currentPull * 0.0003}) perspective(800px) rotateX(${currentPull * 0.04}deg)`;
+        matrixOverlay.style.opacity = Math.min(0.6, currentPull / 100);
+      } else if (CURRENT_CONCEPT === 'mercury') {
+        vp.style.transform = `translateY(${Math.min(currentPull, 115)}px) scale(${1 - currentPull * 0.0002})`;
+        if (currentPull > 30) vp.classList.add('blurred');
+        drawMercuryDrop(currentPull);
+      } else if (CURRENT_CONCEPT === 'aurora') {
+        vp.style.transform = `translateY(${Math.min(currentPull, 110)}px)`;
+        drawAuroraCharge(currentPull);
+      } else if (CURRENT_CONCEPT === 'vault') {
+        vp.style.transform = `translateY(${Math.min(currentPull, 140)}px) perspective(900px) rotateX(${Math.min(currentPull * 0.12, 14)}deg) scale(${1 - currentPull * 0.0005})`;
+        vaultLayer.style.opacity = Math.min(1, currentPull / 70);
+      }
+
+      // HUD Feedback
+      if (currentPull >= effectiveThreshold) {
+        hud.classList.add('armed');
+        hudText.innerText = 'Release to Sync';
+      } else {
+        hud.classList.remove('armed');
+        hudText.innerText = `Pull ${Math.round(effectiveThreshold - currentPull)}px more`;
+      }
+    }
+
+    function onDragEnd() {
+      if (!isDragging || isRefreshing) return;
+      isDragging = false;
+      var effectiveThreshold = (CURRENT_CONCEPT === 'vault') ? 110 : (CURRENT_CONCEPT === 'mercury' ? 100 : 90);
+
+      if (currentPull >= effectiveThreshold) {
+        triggerActiveRefresh();
+      } else {
+        // Snap back without triggering
+        resetViewportStyles();
+      }
+    }
+
+    // Mouse Listeners
+    vp.addEventListener('mousedown', e => onDragStart(e.clientY));
+    window.addEventListener('mousemove', e => onDragMove(e.clientY));
+    window.addEventListener('mouseup', onDragEnd);
+
+    // Touch Listeners
+    vp.addEventListener('touchstart', e => onDragStart(e.touches[0].clientY), { passive: true });
+    window.addEventListener('touchmove', e => onDragMove(e.touches[0].clientY), { passive: true });
+    window.addEventListener('touchend', onDragEnd);
+
+    // Full Refresh Trigger Action
+    function triggerActiveRefresh() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+
+      hud.classList.add('armed');
+      hudText.innerText = 'Syncing Cloud State...';
+      hud.style.opacity = '1';
+
+      if (CURRENT_CONCEPT === 'quantum') {
+        runQuantumShockwave();
+      } else if (CURRENT_CONCEPT === 'mercury') {
+        runMercuryWave();
+      } else if (CURRENT_CONCEPT === 'aurora') {
+        runAuroraCurtain();
+      } else if (CURRENT_CONCEPT === 'vault') {
+        runVaultRecoil();
+      }
+    }
+
+    /* 1. Quantum Shockwave Runner */
+    function runQuantumShockwave() {
+      var laser = document.getElementById('quantum-laser');
+      laser.classList.remove('sweep');
+      void laser.offsetWidth; // Force reflow
+      laser.classList.add('sweep');
+
+      // Scramble numbers
+      scrambleNumber(document.getElementById('hero-num'), '₹45,52,336', 1000);
+      scrambleNumber(document.getElementById('p1-num'), '₹30,66,356', 900);
+      scrambleNumber(document.getElementById('p2-num'), '₹11,11,097', 850);
+
+      // Card shockwave stagger
+      var cards = [document.getElementById('card-hero'), document.getElementById('card-p1'), document.getElementById('card-p2'), document.getElementById('card-chart'), document.getElementById('card-hist')];
+      cards.forEach((c, idx) => {
+        setTimeout(() => {
+          c.style.borderColor = 'rgba(56, 189, 248, 0.7)';
+          c.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.35)';
+          c.style.transform = 'scale(1.02)';
+          setTimeout(() => {
+            c.style.borderColor = '';
+            c.style.boxShadow = '';
+            c.style.transform = '';
+          }, 320);
+        }, idx * 110);
+      });
+
+      setTimeout(() => {
+        finishRefresh();
+      }, 1200);
+    }
+
+    function scrambleNumber(el, finalStr, dur) {
+      var chars = '0123456789₹,';
+      var startTime = Date.now();
+      var timer = setInterval(() => {
+        var elapsed = Date.now() - startTime;
+        if (elapsed >= dur) {
+          clearInterval(timer);
+          el.innerText = finalStr;
+          el.style.color = '#FFF';
+        } else {
+          var scrambled = finalStr.split('').map(c => (c === '₹' || c === ',') ? c : Math.floor(Math.random() * 10)).join('');
+          el.innerText = scrambled;
+          el.style.color = '#38BDF8';
+        }
+      }, 40);
+    }
+
+    /* 2. Liquid Mercury Ripple Runner */
+    function runMercuryWave() {
+      var canvas = document.getElementById('mercury-canvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      var rippleRadius = 10;
+      var maxRadius = canvas.height * 1.2;
+      var startTime = Date.now();
+
+      vp.classList.remove('blurred');
+      vp.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.4, 0.64, 1)';
+      vp.style.transform = 'translateY(0)';
+
+      function animate() {
+        var elapsed = Date.now() - startTime;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        rippleRadius += 16;
+        var alpha = Math.max(0, 1 - (rippleRadius / maxRadius));
+
+        // Draw refractive liquid ring
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, 40, rippleRadius, 0, Math.PI * 2);
+        ctx.lineWidth = 14;
+        var grad = ctx.createRadialGradient(canvas.width/2, 40, rippleRadius - 10, canvas.width/2, 40, rippleRadius + 10);
+        grad.addColorStop(0, `rgba(56, 189, 248, 0)`);
+        grad.addColorStop(0.5, `rgba(255, 255, 255, ${alpha * 0.6})`);
+        grad.addColorStop(0.8, `rgba(56, 189, 248, ${alpha * 0.5})`);
+        grad.addColorStop(1, `rgba(56, 189, 248, 0)`);
+        ctx.strokeStyle = grad;
+        ctx.stroke();
+        ctx.restore();
+
+        if (rippleRadius < maxRadius) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          finishRefresh();
+        }
+      }
+      animate();
+    }
+
+    function drawMercuryDrop(pull) {
+      var canvas = document.getElementById('mercury-canvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      var dropY = Math.min(pull * 0.9, 80);
+      ctx.save();
+      ctx.fillStyle = '#38BDF8';
+      ctx.shadowColor = '#38BDF8';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, dropY + 20, Math.min(18, pull * 0.2), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /* 3. Aurora Wealth Shower Runner */
+    function runAuroraCurtain() {
+      var canvas = document.getElementById('aurora-canvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      var particles = [];
+      for (var i = 0; i < 65; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -60,
+          speed: 3 + Math.random() * 5,
+          radius: 1.5 + Math.random() * 2.5,
+          color: Math.random() > 0.4 ? '#FACC15' : '#34D399',
+          alpha: 1
+        });
+      }
+
+      var curtainY = 0;
+      var startTime = Date.now();
+
+      vp.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+      vp.style.transform = 'translateY(0)';
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Aurora Ribbon
+        curtainY += 9;
+        var aGrad = ctx.createLinearGradient(0, curtainY - 120, 0, curtainY);
+        aGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        aGrad.addColorStop(0.5, 'rgba(52, 211, 153, 0.28)');
+        aGrad.addColorStop(0.8, 'rgba(192, 132, 252, 0.22)');
+        aGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = aGrad;
+        ctx.fillRect(0, curtainY - 120, canvas.width, 120);
+
+        // Draw Particles
+        particles.forEach(p => {
+          p.y += p.speed;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.restore();
+        });
+
+        if (curtainY < canvas.height + 140) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          finishRefresh();
+        }
+      }
+      animate();
+    }
+
+    function drawAuroraCharge(pull) {
+      var canvas = document.getElementById('aurora-canvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      var grad = ctx.createRadialGradient(canvas.width / 2, 30, 0, canvas.width / 2, 30, pull * 0.9);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(0.7, 'rgba(52, 211, 153, 0.2)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, 120);
+      ctx.restore();
+    }
+
+    /* 4. Vault Trampoline Recoil Runner */
+    function runVaultRecoil() {
+      // Elastic physics spring recoil
+      vp.style.transition = 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      vp.style.transform = 'translateY(0) perspective(900px) rotateX(0deg) scale(1)';
+      vaultLayer.style.opacity = '0';
+
+      // Subtle card vibration impact
+      var cards = document.querySelectorAll('.bento-card');
+      cards.forEach((c, idx) => {
+        setTimeout(() => {
+          c.style.transition = 'transform 0.2s ease';
+          c.style.transform = 'translateY(3px)';
+          setTimeout(() => { c.style.transform = 'translateY(0)'; }, 140);
+        }, idx * 40 + 200);
+      });
+
+      setTimeout(() => {
+        finishRefresh();
+      }, 750);
+    }
+
+    function finishRefresh() {
+      hudText.innerText = 'Synced ✓';
+      hud.style.borderColor = '#34D399';
+      hud.style.color = '#34D399';
+
+      setTimeout(() => {
+        resetViewportStyles();
+        isRefreshing = false;
+      }, 650);
+    }
+  </script>
+</body>
+</html>
