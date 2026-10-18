@@ -104,6 +104,8 @@
   var CURRENT_VIEW = 'dashboard';
   var VIEW_ORDER = ['dashboard', 'yearly', 'simulator', 'entry', 'history'];
   var IS_VIEW_TRANSITIONING = false;
+  var TAB_HOLOGRAM_FADE_TIMER = null;
+  var TAB_HOLOGRAM_CLEANUP_TIMER = null;
 
   function repositionGliderPill(btn, gliderId, trackId, stretch) {
     var glider = document.getElementById(gliderId);
@@ -252,18 +254,42 @@
     if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
 
-    // 3. Two-Screen Concurrent Spatial Tab Transition
+    // 3. Two-Screen Concurrent Kinetic Card Stagger with Holographic Foil
     var prevView = document.getElementById('view-' + prevViewId);
     var nextView = document.getElementById('view-' + viewId);
+
+    // Reset any ongoing tab hologram timers and clear previous hologram attributes
+    if (TAB_HOLOGRAM_FADE_TIMER) { clearTimeout(TAB_HOLOGRAM_FADE_TIMER); TAB_HOLOGRAM_FADE_TIMER = null; }
+    if (TAB_HOLOGRAM_CLEANUP_TIMER) { clearTimeout(TAB_HOLOGRAM_CLEANUP_TIMER); TAB_HOLOGRAM_CLEANUP_TIMER = null; }
+    document.querySelectorAll('.view-section').forEach(function(el) {
+      el.removeAttribute('data-tab-hologram');
+    });
 
     if (prevView && nextView) {
       IS_VIEW_TRANSITIONING = true;
 
-      var outClass = isForward ? 'vision-out-left' : 'vision-out-right';
-      var inClass = isForward ? 'vision-in-right' : 'vision-in-left';
+      // Clear any previous child styles
+      Array.from(prevView.children).forEach(function(c) { c.style.animation = ''; });
+      Array.from(nextView.children).forEach(function(c) { c.style.animation = ''; });
+
+      var outClass = isForward ? 'stagger-out-left' : 'stagger-out-right';
+      var inClass = isForward ? 'stagger-in-right' : 'stagger-in-left';
 
       prevView.className = 'view-section active ' + outClass;
       nextView.className = 'view-section active ' + inClass;
+
+      // Activate specular hologram effect on the incoming view's cards as they cascade in
+      nextView.setAttribute('data-tab-hologram', 'active');
+
+      // Once cards finish their cascade settle (620ms), trigger graceful optical dissipation
+      TAB_HOLOGRAM_FADE_TIMER = setTimeout(function() {
+        if (nextView) nextView.setAttribute('data-tab-hologram', 'fading');
+      }, 620);
+
+      // Cleanly remove attribute after smooth 0.58s fade completes
+      TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
+        if (nextView) nextView.removeAttribute('data-tab-hologram');
+      }, 1250);
 
       var finished = false;
       function finalize() {
@@ -271,17 +297,25 @@
         finished = true;
         prevView.className = 'view-section'; // Unmount outgoing view
         nextView.className = 'view-section active'; // Keep target view active
-        prevView.classList.remove('vision-out-left', 'vision-out-right', 'active');
-        nextView.classList.remove('vision-in-right', 'vision-in-left');
+        prevView.classList.remove('stagger-out-left', 'stagger-out-right', 'active');
+        nextView.classList.remove('stagger-in-right', 'stagger-in-left');
+        Array.from(nextView.children).forEach(function(c) { c.style.animation = ''; });
         IS_VIEW_TRANSITIONING = false;
+        nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
         observeRevealItems();
       }
 
-      nextView.addEventListener('animationend', finalize, { once: true });
-      setTimeout(finalize, 390);
+      var lastChild = nextView.lastElementChild;
+      if (lastChild) {
+        lastChild.addEventListener('animationend', finalize, { once: true });
+        setTimeout(finalize, 650);
+      } else {
+        setTimeout(finalize, 550);
+      }
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
       nextView.classList.add('active');
+      nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
