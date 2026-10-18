@@ -106,6 +106,26 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    /* Pull-to-Refresh Background Dimming Veil */
+    .phone-glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 40px;
+      background: radial-gradient(circle at 50% 25%, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.96) 100%);
+      pointer-events: none;
+      z-index: 1;
+      opacity: var(--bg-dim, 0);
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #stage {
+      position: relative;
+      z-index: 2;
+      transform-origin: top center;
+      transition: transform 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+    }
+
     /* Top Hardware Notch */
     .hardware-notch {
       position: absolute;
@@ -202,13 +222,35 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
-    /* Concept 5: Specular Foil 1px Pseudo Mask */
-    .specular-foil-active .argon-bento::before {
+    /* Concept 5: Specular Foil Pseudo Mask on Bento Cards, Pills, Buttons, Icons, and Dock */
+    .specular-foil-active .argon-bento::before,
+    .specular-foil-active .phone-dock::before {
       content: "";
       position: absolute;
       inset: -1px;
-      border-radius: 21px;
+      border-radius: inherit;
       padding: 1px;
+      background: radial-gradient(
+        320px circle at 50% var(--light-y, -20%),
+        rgba(52, 211, 153, 0.95),
+        rgba(56, 189, 248, 0.8) 35%,
+        rgba(255, 255, 255, 0.2) 60%,
+        transparent 75%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Specular foil on outer side of colored progress bar */
+    .specular-foil-active .argon-bar-fill::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 999px;
+      padding: 1.5px;
       background: radial-gradient(
         320px circle at 50% var(--light-y, -20%),
         rgba(52, 211, 153, 0.95),
@@ -340,10 +382,10 @@
                   +₹98,375 (+2.16%)
                 </span>
               </div>
-              <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden flex gap-0.5 mt-3">
-                <div class="h-full bg-cyan-400 w-[67%]"></div>
-                <div class="h-full bg-amber-400 w-[24%]"></div>
-                <div class="h-full bg-purple-400 w-[9%]"></div>
+              <div class="w-full bg-slate-800/80 h-2 rounded-full flex gap-0.5 mt-3 relative p-0.5">
+                <div class="h-full bg-cyan-400 w-[67%] rounded-full relative argon-bar-fill"></div>
+                <div class="h-full bg-amber-400 w-[24%] rounded-full"></div>
+                <div class="h-full bg-purple-400 w-[9%] rounded-full"></div>
               </div>
               <div class="flex justify-between text-[10px] text-slate-400 font-bold mt-2">
                 <span class="text-cyan-400">Market 67.4%</span>
@@ -405,7 +447,7 @@
           </div>
 
           <!-- Floating Bottom Dock -->
-          <div class="absolute bottom-3 left-4 right-4 h-12 rounded-2xl bg-slate-900/85 backdrop-blur-xl border border-white/10 flex items-center justify-around px-2 z-50">
+          <div class="phone-dock absolute bottom-3 left-4 right-4 h-12 rounded-2xl bg-slate-900/85 backdrop-blur-xl border border-white/10 flex items-center justify-around px-2 z-50">
             <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">●</div>
             <div class="w-8 h-8 rounded-xl text-slate-500 flex items-center justify-center text-xs">📊</div>
             <div class="w-8 h-8 rounded-xl text-slate-500 flex items-center justify-center text-xs">🎯</div>
@@ -677,12 +719,21 @@
         auroraMesh.style.opacity = Math.min(0.85, progress * 0.85);
         auroraMesh.style.transform = `translateY(${pullDistance * 0.5}px)`;
       } else if (ACTIVE_ID === 5) {
-        // Concept 5: Specular Foil Matrix (Zero layout displacement)
-        stage.style.transform = `translateY(${Math.min(12, pullDistance * 0.15)}px)`;
+        // Concept 5: Specular Foil Matrix with Background Darkening & Elastic Tension Stretch
         document.documentElement.style.setProperty('--light-y', `${progress * 100}%`);
         var stageMult = foilPushCount === 1 ? 0.9 : foilPushCount === 2 ? 1.0 : 0.8;
         var dynGlow = Math.min(1.0, Math.pow(Math.min(1.0, progress), 0.75) * stageMult);
         document.documentElement.style.setProperty('--border-glow', dynGlow.toFixed(3));
+
+        // Background Darkening
+        var bgDim = Math.min(0.85, progress * 0.82);
+        document.documentElement.style.setProperty('--bg-dim', bgDim.toFixed(3));
+
+        // Elastic Tension Stretch
+        var stretchY = Math.min(22, progress * 16);
+        var scaleY = 1.0 + Math.min(0.048, progress * 0.040);
+        var scaleX = 1.0 - Math.min(0.018, progress * 0.014);
+        stage.style.transform = `translateY(${stretchY}px) scale3d(${scaleX}, ${scaleY}, 1)`;
       }
 
       // HUD Feedback
@@ -711,29 +762,40 @@
           foilDecayTimer = setTimeout(function() {
             foilPushCount = 0;
             document.documentElement.style.setProperty('--border-glow', '0');
+            document.documentElement.style.setProperty('--bg-dim', '0');
           }, 4000);
 
-          stage.style.transform = 'translateY(0px)';
+          stage.style.transform = 'translateY(0px) scale3d(1, 1, 1)';
 
           if (foilPushCount === 1) {
             document.documentElement.style.setProperty('--border-glow', '0.5');
+            document.documentElement.style.setProperty('--bg-dim', '0.35');
             setTimeout(function() {
-              if (!isDragging && !isSyncing) document.documentElement.style.setProperty('--border-glow', '0');
+              if (!isDragging && !isSyncing) {
+                document.documentElement.style.setProperty('--border-glow', '0');
+                document.documentElement.style.setProperty('--bg-dim', '0');
+              }
             }, 220);
           } else if (foilPushCount === 2) {
             document.documentElement.style.setProperty('--border-glow', '0.8');
+            document.documentElement.style.setProperty('--bg-dim', '0.55');
             setTimeout(function() {
-              if (!isDragging && !isSyncing) document.documentElement.style.setProperty('--border-glow', '0');
+              if (!isDragging && !isSyncing) {
+                document.documentElement.style.setProperty('--border-glow', '0');
+                document.documentElement.style.setProperty('--bg-dim', '0');
+              }
             }, 240);
           } else if (foilPushCount >= 3) {
             clearTimeout(foilDecayTimer);
             document.documentElement.style.setProperty('--border-glow', '1');
+            document.documentElement.style.setProperty('--bg-dim', '0.70');
             triggerActiveConcept();
           }
         } else {
           // Mid-pull release: immediately cancel to 0 without getting stuck!
           document.documentElement.style.setProperty('--border-glow', '0');
-          stage.style.transform = 'translateY(0px)';
+          document.documentElement.style.setProperty('--bg-dim', '0');
+          stage.style.transform = 'translateY(0px) scale3d(1, 1, 1)';
         }
         return;
       }
