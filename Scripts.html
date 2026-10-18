@@ -301,15 +301,15 @@
       var lastChild = nextView.lastElementChild;
       if (lastChild) {
         lastChild.addEventListener('animationend', finalize, { once: true });
-        setTimeout(finalize, 650);
+        setTimeout(finalize, 1600);
       } else {
-        setTimeout(finalize, 550);
+        setTimeout(finalize, 1200);
       }
 
-      // After 1.35s continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
+      // After continuous keyframe has reached 0% opacity, cleanly remove class with zero visual shift
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 1350);
+      }, 2600);
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
       nextView.classList.add('active');
@@ -1971,6 +1971,16 @@
     if (!backdrop) return;
     backdrop.classList.add('open');
 
+    var dialog = backdrop.querySelector('.liquid-drilldown-dialog');
+    if (dialog) {
+      dialog.classList.remove('tab-hologram-landing');
+      void dialog.offsetWidth;
+      dialog.classList.add('tab-hologram-landing');
+      setTimeout(function() {
+        if (dialog) dialog.classList.remove('tab-hologram-landing');
+      }, 2200);
+    }
+
     var bodyEl = backdrop.querySelector('.drilldown-dialog-body');
     if (bodyEl) bodyEl.scrollTop = 0;
 
@@ -2256,7 +2266,7 @@
       gainSeries.push(Math.round(cumulativeGain));
 
       var tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      tr.className = 'liquid-table-row';
       tr.style.textAlign = 'right';
       tr.innerHTML =
         '<td style="padding:10px 14px; text-align:left; font-weight:800; color:#FFF;">' + calYear + '</td>' +
@@ -2735,14 +2745,14 @@
     var f = getFormValues();
     var btn = document.getElementById('btn-save');
     btn.disabled = true;
-    btn.innerText = 'Saving to Google Sheet...';
+    btn.innerText = 'Locking It In... ⚡';
     startLoadingHologram();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(updatedData) {
           btn.disabled = false;
-          btn.innerText = 'Save Monthly Snapshot';
+          btn.innerText = 'Lock It In 🚀';
           showToast('Saved ' + f.month.substring(0, 7) + ' to portfolio');
           stopLoadingHologram();
           loadStateData(updatedData);
@@ -2750,7 +2760,7 @@
         })
         .withFailureHandler(function(err) {
           btn.disabled = false;
-          btn.innerText = 'Save Monthly Snapshot';
+          btn.innerText = 'Lock It In 🚀';
           showToast('Error saving snapshot: ' + err);
           stopLoadingHologram();
         })

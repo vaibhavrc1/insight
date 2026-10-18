@@ -519,13 +519,13 @@
   /* Outgoing View: Slides smoothly away */
   .view-section.stagger-out-left {
     display: flex !important;
-    animation: viewSlideOutLeft 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation: viewSlideOutLeft 0.64s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     pointer-events: none;
     z-index: 1;
   }
   .view-section.stagger-out-right {
     display: flex !important;
-    animation: viewSlideOutRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation: viewSlideOutRight 0.64s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     pointer-events: none;
     z-index: 1;
   }
@@ -549,17 +549,17 @@
     z-index: 2;
   }
 
-  .view-section.stagger-in-right > *:nth-child(1) { animation: cardStaggerInRight 0.54s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
-  .view-section.stagger-in-right > *:nth-child(2) { animation: cardStaggerInRight 0.54s cubic-bezier(0.16, 1, 0.3, 1) 60ms both; }
-  .view-section.stagger-in-right > *:nth-child(3) { animation: cardStaggerInRight 0.54s cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
-  .view-section.stagger-in-right > *:nth-child(4) { animation: cardStaggerInRight 0.54s cubic-bezier(0.16, 1, 0.3, 1) 180ms both; }
-  .view-section.stagger-in-right > *:nth-child(n+5) { animation: cardStaggerInRight 0.54s cubic-bezier(0.16, 1, 0.3, 1) 240ms both; }
+  .view-section.stagger-in-right > *:nth-child(1) { animation: cardStaggerInRight 1.08s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+  .view-section.stagger-in-right > *:nth-child(2) { animation: cardStaggerInRight 1.08s cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
+  .view-section.stagger-in-right > *:nth-child(3) { animation: cardStaggerInRight 1.08s cubic-bezier(0.16, 1, 0.3, 1) 240ms both; }
+  .view-section.stagger-in-right > *:nth-child(4) { animation: cardStaggerInRight 1.08s cubic-bezier(0.16, 1, 0.3, 1) 360ms both; }
+  .view-section.stagger-in-right > *:nth-child(n+5) { animation: cardStaggerInRight 1.08s cubic-bezier(0.16, 1, 0.3, 1) 480ms both; }
 
-  .view-section.stagger-in-left > *:nth-child(1) { animation: cardStaggerInLeft 0.54s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
-  .view-section.stagger-in-left > *:nth-child(2) { animation: cardStaggerInLeft 0.54s cubic-bezier(0.16, 1, 0.3, 1) 60ms both; }
-  .view-section.stagger-in-left > *:nth-child(3) { animation: cardStaggerInLeft 0.54s cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
-  .view-section.stagger-in-left > *:nth-child(4) { animation: cardStaggerInLeft 0.54s cubic-bezier(0.16, 1, 0.3, 1) 180ms both; }
-  .view-section.stagger-in-left > *:nth-child(n+5) { animation: cardStaggerInLeft 0.54s cubic-bezier(0.16, 1, 0.3, 1) 240ms both; }
+  .view-section.stagger-in-left > *:nth-child(1) { animation: cardStaggerInLeft 1.08s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+  .view-section.stagger-in-left > *:nth-child(2) { animation: cardStaggerInLeft 1.08s cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
+  .view-section.stagger-in-left > *:nth-child(3) { animation: cardStaggerInLeft 1.08s cubic-bezier(0.16, 1, 0.3, 1) 240ms both; }
+  .view-section.stagger-in-left > *:nth-child(4) { animation: cardStaggerInLeft 1.08s cubic-bezier(0.16, 1, 0.3, 1) 360ms both; }
+  .view-section.stagger-in-left > *:nth-child(n+5) { animation: cardStaggerInLeft 1.08s cubic-bezier(0.16, 1, 0.3, 1) 480ms both; }
 
   @keyframes cardStaggerInRight {
     0% { transform: translateX(40px); opacity: 0; }
@@ -577,6 +577,8 @@
      - 50% to 100%: Long, graceful optical dissipation down to zero (zero abrupt snap)
      ========================================================================= */
   .view-section.tab-hologram-landing .liquid-slab::before,
+  .view-section.tab-hologram-landing .sim-result-card::before,
+  .view-section.tab-hologram-landing .live-wealth-preview-card::before,
   .view-section.tab-hologram-landing .pillar-card::before,
   .view-section.tab-hologram-landing .brand-orb::before,
   .view-section.tab-hologram-landing .pillar-icon::before,
@@ -607,7 +609,7 @@
     background-size: 200% 100% !important;
     background-attachment: local !important;
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 18px rgba(52, 211, 153, 0.6));
-    animation: tabHologramDissolve 1.1s both !important;
+    animation: tabHologramDissolve 2.0s both !important;
     will-change: opacity;
   }
 
@@ -622,25 +624,25 @@
   .view-section.tab-hologram-landing > *:nth-child(2)::before,
   .view-section.tab-hologram-landing > *:nth-child(2) *::after,
   .view-section.tab-hologram-landing > *:nth-child(2)::after {
-    animation-delay: 60ms !important;
+    animation-delay: 120ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(3) *::before,
   .view-section.tab-hologram-landing > *:nth-child(3)::before,
   .view-section.tab-hologram-landing > *:nth-child(3) *::after,
   .view-section.tab-hologram-landing > *:nth-child(3)::after {
-    animation-delay: 120ms !important;
+    animation-delay: 240ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(4) *::before,
   .view-section.tab-hologram-landing > *:nth-child(4)::before,
   .view-section.tab-hologram-landing > *:nth-child(4) *::after,
   .view-section.tab-hologram-landing > *:nth-child(4)::after {
-    animation-delay: 180ms !important;
+    animation-delay: 360ms !important;
   }
   .view-section.tab-hologram-landing > *:nth-child(n+5) *::before,
   .view-section.tab-hologram-landing > *:nth-child(n+5)::before,
   .view-section.tab-hologram-landing > *:nth-child(n+5) *::after,
   .view-section.tab-hologram-landing > *:nth-child(n+5)::after {
-    animation-delay: 240ms !important;
+    animation-delay: 480ms !important;
   }
 
   /* Single, continuous mathematical bezier curve (ZERO in-between steps) */
@@ -1252,25 +1254,37 @@
   }
 
   /* Tab Landing Hologram on Table Rows */
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr td {
-    animation: tabRowHologramShimmer 1.1s cubic-bezier(0.25, 1, 0.5, 1) both !important;
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr td,
+  .liquid-table-row.tab-hologram-landing td {
+    animation: tabRowHologramShimmer 1.8s cubic-bezier(0.25, 1, 0.5, 1) both !important;
   }
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td { animation-delay: 50ms !important; }
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td { animation-delay: 100ms !important; }
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td { animation-delay: 150ms !important; }
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td { animation-delay: 200ms !important; }
-  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td { animation-delay: 250ms !important; }
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(1) td { animation-delay: 80ms !important; }
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(2) td { animation-delay: 160ms !important; }
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(3) td { animation-delay: 240ms !important; }
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(4) td { animation-delay: 320ms !important; }
+  .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td,
+  .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr:nth-child(n+5) td { animation-delay: 400ms !important; }
 
   @keyframes tabRowHologramShimmer {
     0% {
       border-color: rgba(255, 255, 255, 0.04);
     }
-    25% {
-      border-color: rgba(56, 189, 248, 0.7);
-      box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.25);
+    20% {
+      border-color: rgba(56, 189, 248, 0.85);
+      box-shadow: inset 0 0 14px rgba(56, 189, 248, 0.35), 0 0 10px rgba(56, 189, 248, 0.25);
     }
-    50% {
-      border-color: rgba(52, 211, 153, 0.6);
+    45% {
+      border-color: rgba(52, 211, 153, 0.75);
+      box-shadow: inset 0 0 12px rgba(52, 211, 153, 0.25), 0 0 8px rgba(52, 211, 153, 0.2);
+    }
+    70% {
+      border-color: rgba(192, 132, 252, 0.6);
+      box-shadow: inset 0 0 8px rgba(192, 132, 252, 0.15);
     }
     100% {
       border-color: rgba(255, 255, 255, 0.04);
@@ -1324,39 +1338,64 @@
 
   .kpi-quad-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  @media (max-width: 960px) {
+    .kpi-quad-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 520px) {
+    .kpi-quad-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
   }
 
   .drilldown-metric-card {
     background: var(--glass-well);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
     box-shadow: var(--ao-recessed-well);
+    min-width: 0;
+    overflow: hidden;
   }
 
   .drilldown-metric-title {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .drilldown-metric-val {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 800;
     color: #FFFFFF;
     font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .drilldown-metric-sub {
     font-size: 11px;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* ==========================================================================
@@ -2253,6 +2292,10 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2268,10 +2311,12 @@
     border: 1px solid rgba(56, 189, 248, 0.32);
     border-top: 1.5px solid rgba(255, 255, 255, 0.4);
     border-radius: 24px;
-    width: 100%;
-    max-width: 1140px;
+    width: min(1140px, calc(100vw - 32px)) !important;
+    max-width: 1140px !important;
     height: 92vh;
     max-height: 920px;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
     display: flex;
     flex-direction: column;
     box-shadow: 
@@ -2280,7 +2325,7 @@
       var(--liquid-refraction);
     transform: translateY(16px) scale(0.98) translateZ(0);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
+    overflow: hidden !important;
     will-change: transform;
   }
 
@@ -2290,34 +2335,74 @@
 
   .drilldown-dialog-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 18px 60px 18px 24px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 22px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: #0E1628;
     flex-shrink: 0;
     position: relative;
     z-index: 10;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .drilldown-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .drilldown-title-cluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .drilldown-title-cluster h3 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #FFF;
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .drilldown-header-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .drilldown-subtitle {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin: 0;
   }
 
   .drilldown-dialog-body {
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px 24px 28px 24px;
     flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     contain: paint layout;
     will-change: scroll-position;
     transform: translateZ(0);
   }
 
-  /* Sleek Liquid Close Button Pinned Top-Right */
+  /* Sleek Liquid Close Button */
   .btn-overlay-close {
-    position: absolute;
-    top: 16px;
-    right: 18px;
-    z-index: 25;
+    position: static;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2331,6 +2416,7 @@
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     padding: 0;
     line-height: 0;
+    flex-shrink: 0;
   }
 
   .btn-overlay-close svg {
@@ -2375,36 +2461,88 @@
     padding: 18px 20px;
     margin-bottom: 22px;
     box-shadow: var(--ao-recessed-well);
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden;
   }
 
   .drilldown-canvas-holder {
     position: relative;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     height: 380px;
     min-height: 360px;
+    box-sizing: border-box !important;
+  }
+
+  .drilldown-canvas-holder canvas {
+    max-width: 100% !important;
+  }
+
+  .drilldown-dialog-body .liquid-table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
   }
 
   @media (max-width: 640px) {
-    .drilldown-canvas-holder {
-      height: 300px;
-      min-height: 280px;
+    .liquid-drilldown-backdrop {
+      padding: 10px !important;
     }
     .liquid-drilldown-dialog {
-      height: 95vh;
-      border-radius: 20px;
+      width: calc(100vw - 20px) !important;
+      max-width: calc(100vw - 20px) !important;
+      height: 96vh !important;
+      border-radius: 18px !important;
+      margin: 0 !important;
     }
     .drilldown-dialog-header {
-      padding: 14px 58px 14px 16px !important;
-      position: relative;
+      padding: 14px 14px 12px 14px !important;
+      gap: 10px !important;
+    }
+    .drilldown-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .drilldown-title-cluster {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .drilldown-title-cluster h3 {
+      font-size: 16px;
+    }
+    .drilldown-header-bottom {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .drilldown-header-bottom .segment-well {
+      width: 100%;
+      overflow-x: auto;
+      justify-content: center;
     }
     .btn-overlay-close {
-      top: 14px !important;
-      right: 14px !important;
       width: 36px !important;
       height: 36px !important;
     }
     .drilldown-dialog-body {
-      padding: 14px 16px 20px 16px;
+      padding: 12px 12px 20px 12px !important;
+    }
+    .drilldown-canvas-holder {
+      height: 280px;
+      min-height: 260px;
+    }
+    .drilldown-chart-wrap {
+      padding: 14px 14px;
+      margin-bottom: 16px;
     }
   }
 
@@ -2903,6 +3041,8 @@
   .modal-footer,
   .month-detail-header,
   .liquid-drilldown-header,
+  .sim-result-card,
+  .live-wealth-preview-card,
   hr,
   .horizontal-ruler,
   .line-breaker,
@@ -2912,6 +3052,8 @@
 
   /* Specular holographic border reflection on cards, pills, buttons, icons, outside tab selectors, slider boxes (EXCLUDING plain text & gliders) */
   .liquid-slab::before,
+  .sim-result-card::before,
+  .live-wealth-preview-card::before,
   .pillar-card::before,
   .brand-orb::before,
   .pillar-icon::before,
@@ -3201,6 +3343,10 @@
 
   body[data-ptr-state="syncing"] .liquid-slab::before,
   body[data-hologram-active="true"] .liquid-slab::before,
+  body[data-ptr-state="syncing"] .sim-result-card::before,
+  body[data-hologram-active="true"] .sim-result-card::before,
+  body[data-ptr-state="syncing"] .live-wealth-preview-card::before,
+  body[data-hologram-active="true"] .live-wealth-preview-card::before,
   body[data-ptr-state="syncing"] .pillar-card::before,
   body[data-hologram-active="true"] .pillar-card::before,
   body[data-ptr-state="syncing"] .brand-orb::before,
@@ -3320,6 +3466,8 @@
      GRACEFUL DISSIPATION & SOFT OPTICAL SETTLING (Zero Abrupt Snapping)
      ========================================================================= */
   body[data-ptr-state="settling"] .liquid-slab::before,
+  body[data-ptr-state="settling"] .sim-result-card::before,
+  body[data-ptr-state="settling"] .live-wealth-preview-card::before,
   body[data-ptr-state="settling"] .pillar-card::before,
   body[data-ptr-state="settling"] .brand-orb::before,
   body[data-ptr-state="settling"] .pillar-icon::before,
@@ -3345,6 +3493,8 @@
   body[data-ptr-state="settling"] .nav-well::before,
   body[data-ptr-state="settling"] .segment-well::before,
   body[data-hologram-fade="true"] .liquid-slab::before,
+  body[data-hologram-fade="true"] .sim-result-card::before,
+  body[data-hologram-fade="true"] .live-wealth-preview-card::before,
   body[data-hologram-fade="true"] .pillar-card::before,
   body[data-hologram-fade="true"] .brand-orb::before,
   body[data-hologram-fade="true"] .pillar-icon::before,
