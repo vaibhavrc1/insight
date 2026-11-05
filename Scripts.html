@@ -3452,7 +3452,7 @@
   }
 
   /* ==========================================================================
-     FULL-VIEW CHART MODAL SYSTEM
+     FULL-VIEW CHART MODAL SYSTEM (MINIMALIST, GRAPH-FOCUSED)
      ========================================================================== */
   function openChartFullView(chartType, subFilter) {
     if (!APP_STATE) {
@@ -3469,12 +3469,8 @@
     var backdrop = document.getElementById('chart-fullview-backdrop');
     if (!backdrop) return;
 
-    var badge = document.getElementById('fullview-badge');
     var title = document.getElementById('fullview-title');
-    var subtitle = document.getElementById('fullview-subtitle');
     var controls = document.getElementById('fullview-header-controls');
-    var ribbon = document.getElementById('fullview-metrics-ribbon');
-    var legendChips = document.getElementById('fullview-legend-chips');
     var canvas = document.getElementById('chart-fullview-canvas');
 
     if (!canvas) return;
@@ -3486,31 +3482,16 @@
 
     switch (chartType) {
       case 'networth':
-        renderFullViewNetworth(badge, title, subtitle, controls, ribbon, legendChips, canvas);
-        break;
-      case 'allocation':
-        renderFullViewAllocation(badge, title, subtitle, controls, ribbon, legendChips, canvas);
+        renderFullViewNetworth(title, controls, canvas);
         break;
       case 'reaction':
-        renderFullViewReaction(badge, title, subtitle, controls, ribbon, legendChips, canvas);
+        renderFullViewReaction(title, controls, canvas);
         break;
       case 'monthlyChange':
-        renderFullViewMonthlyChange(badge, title, subtitle, controls, ribbon, legendChips, canvas);
-        break;
-      case 'yearlyPillars':
-        renderFullViewYearlyPillars(badge, title, subtitle, controls, ribbon, legendChips, canvas);
-        break;
-      case 'yearlyAdded':
-        renderFullViewYearlyAdded(badge, title, subtitle, controls, ribbon, legendChips, canvas);
-        break;
-      case 'simulator':
-        renderFullViewSimulator(badge, title, subtitle, controls, ribbon, legendChips, canvas);
-        break;
-      case 'drilldown':
-        renderFullViewDrilldown(badge, title, subtitle, controls, ribbon, legendChips, canvas);
+        renderFullViewMonthlyChange(title, controls, canvas);
         break;
       default:
-        renderFullViewNetworth(badge, title, subtitle, controls, ribbon, legendChips, canvas);
+        renderFullViewNetworth(title, controls, canvas);
     }
 
     if (CHART_FULLVIEW) {
@@ -3523,13 +3504,8 @@
 
   function getDefaultSubFilter(chartType) {
     if (chartType === 'networth') return TRAJECTORY_MODE || 'stacked';
-    if (chartType === 'allocation') return 'donut';
     if (chartType === 'reaction') return REACTION_FILTER || 'mf';
     if (chartType === 'monthlyChange') return 'curve';
-    if (chartType === 'yearlyPillars') return 'stacked';
-    if (chartType === 'yearlyAdded') return 'bars';
-    if (chartType === 'simulator') return (document.getElementById('sim-years') ? document.getElementById('sim-years').value : '5');
-    if (chartType === 'drilldown') return SELECTED_DRILLDOWN_YEAR || (APP_STATE.yearlySummary && APP_STATE.yearlySummary.length ? String(APP_STATE.yearlySummary[APP_STATE.yearlySummary.length - 1].year) : '2026');
     return 'default';
   }
 
@@ -3557,63 +3533,21 @@
     }
   }
 
-  function renderMetricCard(label, val, color) {
-    var style = color ? 'color:' + color + ';' : '';
-    return '<div class="fullview-metric-card">' +
-      '<div class="fullview-metric-label">' + label + '</div>' +
-      '<div class="fullview-metric-value mono-num" style="' + style + '">' + val + '</div>' +
-    '</div>';
-  }
-
-  function buildFullViewLegendChips(container, chart) {
-    if (!container || !chart || !chart.data || !chart.data.datasets) return;
-    container.innerHTML = '';
-    chart.data.datasets.forEach(function(ds, idx) {
-      var chip = document.createElement('div');
-      chip.className = 'fullview-legend-chip' + (chart.isDatasetVisible(idx) ? '' : ' disabled');
-      var dotColor = ds.borderColor || ds.backgroundColor;
-      if (Array.isArray(dotColor)) dotColor = dotColor[0];
-      chip.innerHTML = '<span class="fullview-legend-chip-dot" style="background:' + dotColor + ';"></span><span>' + (ds.label || ('Series ' + (idx + 1))) + '</span>';
-      chip.onclick = function() {
-        var isVisible = chart.isDatasetVisible(idx);
-        chart.setDatasetVisibility(idx, !isVisible);
-        chart.update();
-        chip.classList.toggle('disabled', isVisible);
-      };
-      container.appendChild(chip);
-    });
-  }
-
-  function renderFullViewNetworth(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'PORTFOLIO TRAJECTORY';
-    title.innerText = 'Wealth Growth & Asset Layers';
-    subtitle.innerText = 'Multi-layer historical asset accumulation across Bank, EPF, and Market Investments';
-
+  function renderFullViewNetworth(title, controls, canvas) {
+    if (title) title.innerText = 'Wealth Growth & Asset Layers';
     var isStacked = (FULLVIEW_SUB_FILTER !== 'total');
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'stacked\')"><span>Stacked Layers</span></button>' +
-        '<button type="button" class="segment-btn ' + (!isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'total\')"><span>Total Curve</span></button>' +
-      '</div>';
+    if (controls) {
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<button type="button" class="segment-btn ' + (isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'stacked\')"><span>Stacked Layers</span></button>' +
+          '<button type="button" class="segment-btn ' + (!isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'total\')"><span>Total Curve</span></button>' +
+        '</div>';
+    }
 
     var cd = APP_STATE.chartData;
-    var lat = APP_STATE.latest;
-    var nw = cd.netWorth;
-    var totalGain = nw.length > 1 ? (nw[nw.length - 1] - nw[0]) : 0;
-    var totalPct = nw.length > 1 && nw[0] > 0 ? ((totalGain / nw[0]) * 100).toFixed(1) : '0.0';
-    var maxVal = Math.max.apply(null, nw);
-    var maxIdx = nw.indexOf(maxVal);
-    var peakMonth = maxIdx !== -1 ? cd.labels[maxIdx] : '';
-    var avgPace = nw.length > 1 ? Math.round(totalGain / (nw.length - 1)) : 0;
-
-    ribbon.innerHTML =
-      renderMetricCard('Current Net Worth', formatIndian(lat.net_worth, false), 'var(--cyan-core)') +
-      renderMetricCard('Total Net Growth', (totalGain >= 0 ? '+' : '') + formatIndian(totalGain, false) + ' (' + (totalGain >= 0 ? '+' : '') + totalPct + '%)', 'var(--emerald-bright)') +
-      renderMetricCard('All-Time Peak', formatIndian(maxVal, false) + (peakMonth ? ' (' + peakMonth + ')' : ''), '#FFFFFF') +
-      renderMetricCard('Average Monthly Pace', (avgPace >= 0 ? '+' : '') + formatIndian(avgPace, false) + ' / mo', 'var(--amber-bright)');
-
     var ctx = canvas.getContext('2d');
     var datasets = [];
+
     if (isStacked) {
       datasets = [
         {
@@ -3651,7 +3585,7 @@
         }
       ];
     } else {
-      var grad = ctx.createLinearGradient(0, 0, 0, 400);
+      var grad = ctx.createLinearGradient(0, 0, 0, 500);
       grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
       grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
       datasets = [{
@@ -3673,9 +3607,17 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { left: 10, right: 20, top: 12, bottom: 22 }
+        },
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: isStacked,
+            position: 'top',
+            align: 'end',
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 14 }
+          },
           tooltip: {
             backgroundColor: 'rgba(8, 13, 25, 0.96)',
             borderColor: 'rgba(56, 189, 248, 0.4)',
@@ -3698,179 +3640,47 @@
         scales: {
           x: {
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 } }
+            ticks: {
+              color: '#CBD5E1',
+              font: { weight: '600', size: 11 },
+              padding: 8,
+              maxRotation: 0
+            }
           },
           y: {
             stacked: isStacked,
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11 }, callback: function(v) { return formatCompactLakhs(v); } }
+            ticks: {
+              color: '#94A3B8',
+              font: { family: 'JetBrains Mono', size: 11 },
+              padding: 8,
+              callback: function(v) { return formatCompactLakhs(v); }
+            }
           }
         }
       }
     });
-
-    buildFullViewLegendChips(legendChips, CHART_FULLVIEW);
   }
 
-  function renderFullViewAllocation(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'ASSET ALLOCATION';
-    title.innerText = 'Detailed Asset Split & Portfolio Weights';
-    subtitle.innerText = 'Current distribution and exact weight across all 7 asset classes';
-
-    var isDonut = (FULLVIEW_SUB_FILTER !== 'bars');
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (isDonut ? 'active' : '') + '" onclick="setFullViewFilter(\'donut\')"><span>Donut Split</span></button>' +
-        '<button type="button" class="segment-btn ' + (!isDonut ? 'active' : '') + '" onclick="setFullViewFilter(\'bars\')"><span>Ranked Bars</span></button>' +
-      '</div>';
-
-    var lat = APP_STATE.latest;
-    var items = [
-      { label: 'Mutual Funds', val: lat.mf, color: '#10B981' },
-      { label: 'Fixed Deposits', val: lat.hdfc_dep + lat.sbi_dep, color: '#F59E0B' },
-      { label: 'EPF Balance', val: lat.epf, color: '#A855F7' },
-      { label: 'SBI PPF', val: lat.sbi_ppf, color: '#38BDF8' },
-      { label: 'Gold Holdings', val: lat.gold, color: '#FACC15' },
-      { label: 'Silver Holdings', val: lat.silver, color: '#94A3B8' },
-      { label: 'Bank Savings', val: lat.hdfc_sav + lat.sbi_sav, color: '#EC4899' }
-    ].sort(function(a, b) { return b.val - a.val; });
-
-    var topItem = items[0];
-    var topPct = ((topItem.val / lat.net_worth) * 100).toFixed(1);
-    var bankPct = ((lat.total_bank / lat.net_worth) * 100).toFixed(1);
-    var marketPct = ((lat.total_market / lat.net_worth) * 100).toFixed(1);
-
-    ribbon.innerHTML =
-      renderMetricCard('Total Net Worth', formatIndian(lat.net_worth, false), 'var(--cyan-core)') +
-      renderMetricCard('Top Category', topItem.label + ' (' + topPct + '%)', 'var(--emerald-bright)') +
-      renderMetricCard('Bank & FDs Share', formatIndian(lat.total_bank, false) + ' (' + bankPct + '%)', 'var(--amber-bright)') +
-      renderMetricCard('Market & Precious', formatIndian(lat.total_market, false) + ' (' + marketPct + '%)', '#C084FC');
-
-    var ctx = canvas.getContext('2d');
-    if (isDonut) {
-      CHART_FULLVIEW = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: items.map(function(i) { return i.label; }),
-          datasets: [{
-            data: items.map(function(i) { return i.val; }),
-            backgroundColor: items.map(function(i) { return i.color; }),
-            borderColor: '#060A13',
-            borderWidth: 3,
-            hoverOffset: 12
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(8, 13, 25, 0.96)',
-              borderColor: 'rgba(56, 189, 248, 0.4)',
-              borderWidth: 1,
-              titleColor: '#FFFFFF',
-              bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-              callbacks: {
-                label: function(c) {
-                  var pct = ((c.raw / lat.net_worth) * 100).toFixed(1) + '%';
-                  return ' ' + formatIndian(c.raw, false) + ' (' + pct + ')';
-                }
-              }
-            }
-          }
-        }
-      });
-    } else {
-      CHART_FULLVIEW = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: items.map(function(i) { return i.label; }),
-          datasets: [{
-            label: 'Asset Value',
-            data: items.map(function(i) { return i.val; }),
-            backgroundColor: items.map(function(i) { return i.color; }),
-            borderColor: items.map(function(i) { return i.color; }),
-            borderWidth: 1,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(8, 13, 25, 0.96)',
-              borderColor: 'rgba(56, 189, 248, 0.4)',
-              borderWidth: 1,
-              titleColor: '#FFFFFF',
-              bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-              callbacks: {
-                label: function(c) {
-                  var pct = ((c.raw / lat.net_worth) * 100).toFixed(1) + '%';
-                  return ' ' + formatIndian(c.raw, false) + ' (' + pct + ' of portfolio)';
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94A3B8', callback: function(v) { return formatCompactLakhs(v); } }
-            },
-            y: {
-              grid: { display: false },
-              ticks: { color: '#CBD5E1', font: { weight: '600' } }
-            }
-          }
-        }
-      });
-    }
-
-    legendChips.innerHTML = '';
-    items.forEach(function(item) {
-      var chip = document.createElement('div');
-      chip.className = 'fullview-legend-chip';
-      var pct = ((item.val / lat.net_worth) * 100).toFixed(1) + '%';
-      chip.innerHTML = '<span class="fullview-legend-chip-dot" style="background:' + item.color + ';"></span><span>' + item.label + ' (' + pct + ')</span>';
-      legendChips.appendChild(chip);
-    });
-  }
-
-  function renderFullViewReaction(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'BENCHMARK PERFORMANCE';
-    title.innerText = 'Investment Trajectory vs Market Benchmarks';
-    subtitle.innerText = 'Historical performance of user investments vs Nifty 50, Gold (24K), and Silver market feeds';
-
+  function renderFullViewReaction(title, controls, canvas) {
+    if (title) title.innerText = 'Investment Trajectory vs Market Benchmarks';
     var mode = FULLVIEW_SUB_FILTER || 'mf';
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (mode === 'mf' ? 'active' : '') + '" onclick="setFullViewFilter(\'mf\')"><span>MF vs Nifty 50</span></button>' +
-        '<button type="button" class="segment-btn ' + (mode === 'gold' ? 'active' : '') + '" onclick="setFullViewFilter(\'gold\')"><span>Gold</span></button>' +
-        '<button type="button" class="segment-btn ' + (mode === 'silver' ? 'active' : '') + '" onclick="setFullViewFilter(\'silver\')"><span>Silver</span></button>' +
-        '<button type="button" class="segment-btn ' + (mode === 'all' ? 'active' : '') + '" onclick="setFullViewFilter(\'all\')"><span>All Combined</span></button>' +
-      '</div>';
-
-    var lat = APP_STATE.latest;
-    var niftyVal = lat.nifty_close ? Number(lat.nifty_close).toLocaleString('en-IN') : '24,537';
-    var goldVal = lat.gold_price ? '₹' + Number(lat.gold_price).toLocaleString('en-IN') : '₹1,48,255';
-    var silverVal = lat.silver_price ? '₹' + Number(lat.silver_price).toLocaleString('en-IN') : '₹1,89,957';
-
-    ribbon.innerHTML =
-      renderMetricCard('My Mutual Funds', formatIndian(lat.mf, false), 'var(--cyan-core)') +
-      renderMetricCard('Nifty 50 Index', niftyVal, 'var(--emerald-bright)') +
-      renderMetricCard('Gold 24K (10g)', goldVal, 'var(--amber-bright)') +
-      renderMetricCard('Silver (1kg)', silverVal, '#E2E8F0');
+    if (controls) {
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<button type="button" class="segment-btn ' + (mode === 'mf' ? 'active' : '') + '" onclick="setFullViewFilter(\'mf\')"><span>MF vs Nifty 50</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'gold' ? 'active' : '') + '" onclick="setFullViewFilter(\'gold\')"><span>Gold</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'silver' ? 'active' : '') + '" onclick="setFullViewFilter(\'silver\')"><span>Silver</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'all' ? 'active' : '') + '" onclick="setFullViewFilter(\'all\')"><span>All Combined</span></button>' +
+        '</div>';
+    }
 
     var rx = APP_STATE.chartData.reaction;
     var datasets = [];
     var scales = {
       x: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-        ticks: { color: '#CBD5E1', font: { weight: '600' } }
+        ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
       }
     };
 
@@ -3904,14 +3714,14 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 10.5 }, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Mutual Funds Value (₹)', color: '#38BDF8', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 10.5 } },
+        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 8 },
         title: { display: true, text: 'Nifty 50 Index', color: '#34D399', font: { weight: '700' } }
       };
     } else if (mode === 'gold') {
@@ -3944,14 +3754,14 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 10.5 }, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Gold Holdings (₹)', color: '#FACC15', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 10.5 }, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: '#FB923C', font: { weight: '700' } }
       };
     } else if (mode === 'silver') {
@@ -3984,14 +3794,14 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 10.5 }, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Silver Holdings (₹)', color: '#E2E8F0', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 10.5 }, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: '#60A5FA', font: { weight: '700' } }
       };
     } else {
@@ -4005,7 +3815,7 @@
       ];
       scales.y = {
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#94A3B8', callback: function(v) { return (v >= 0 ? '+' : '') + v + '%'; } },
+        ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return (v >= 0 ? '+' : '') + v + '%'; } },
         title: { display: true, text: 'Percentage Growth vs Inception (%)', color: '#CBD5E1', font: { weight: '700' } }
       };
     }
@@ -4017,9 +3827,17 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { left: 10, right: 20, top: 12, bottom: 22 }
+        },
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 14 }
+          },
           tooltip: {
             backgroundColor: 'rgba(8, 13, 25, 0.96)',
             borderColor: 'rgba(56, 189, 248, 0.4)',
@@ -4032,41 +3850,24 @@
         scales: scales
       }
     });
-
-    buildFullViewLegendChips(legendChips, CHART_FULLVIEW);
   }
 
-  function renderFullViewMonthlyChange(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'SAVINGS CADENCE';
-    title.innerText = 'Monthly Wealth Additions (₹)';
-    subtitle.innerText = 'Month-by-month net additions showing savings accumulation vs market swings';
-
+  function renderFullViewMonthlyChange(title, controls, canvas) {
+    if (title) title.innerText = 'Monthly Wealth Added (₹)';
     var isBars = (FULLVIEW_SUB_FILTER === 'bars');
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (!isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'curve\')"><span>Flow Curve</span></button>' +
-        '<button type="button" class="segment-btn ' + (isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'bars\')"><span>Bar Histogram</span></button>' +
-      '</div>';
+    if (controls) {
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<button type="button" class="segment-btn ' + (!isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'curve\')"><span>Flow Curve</span></button>' +
+          '<button type="button" class="segment-btn ' + (isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'bars\')"><span>Bar Histogram</span></button>' +
+        '</div>';
+    }
 
     var cd = APP_STATE.chartData;
     var changes = cd.monthlyChange;
-    var positiveCount = changes.filter(function(v) { return v >= 0; }).length;
-    var maxAdd = Math.max.apply(null, changes);
-    var maxIdx = changes.indexOf(maxAdd);
-    var bestMonth = maxIdx !== -1 ? cd.labels[maxIdx] : '';
-    var totalAdd = changes.reduce(function(a, b) { return a + b; }, 0);
-    var avgAdd = changes.length ? Math.round(totalAdd / changes.length) : 0;
-    var latestAdd = changes.length ? changes[changes.length - 1] : 0;
-
-    ribbon.innerHTML =
-      renderMetricCard('Latest Addition', (latestAdd >= 0 ? '+' : '') + formatIndian(latestAdd, false), latestAdd >= 0 ? 'var(--emerald-bright)' : '#FB7185') +
-      renderMetricCard('Best Month Add', (maxAdd >= 0 ? '+' : '') + formatIndian(maxAdd, false) + (bestMonth ? ' (' + bestMonth + ')' : ''), 'var(--cyan-core)') +
-      renderMetricCard('Average Addition', (avgAdd >= 0 ? '+' : '') + formatIndian(avgAdd, false) + ' / mo', '#FFFFFF') +
-      renderMetricCard('Positive Months', positiveCount + ' of ' + changes.length + ' (' + ((positiveCount / (changes.length || 1)) * 100).toFixed(0) + '%)', 'var(--amber-bright)');
-
     var ctx = canvas.getContext('2d');
     var colors = changes.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
-    var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.45)' : 'rgba(251, 113, 133, 0.45)'; });
+    var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
 
     if (isBars) {
       CHART_FULLVIEW = new Chart(ctx, {
@@ -4085,6 +3886,9 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { left: 10, right: 20, top: 12, bottom: 22 }
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -4102,11 +3906,11 @@
           scales: {
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600' } }
+              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
             },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return formatCompactLakhs(v); } }
             }
           }
         }
@@ -4134,6 +3938,9 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { left: 10, right: 20, top: 12, bottom: 22 }
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -4151,473 +3958,16 @@
           scales: {
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600' } }
+              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
             },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return formatCompactLakhs(v); } }
             }
           }
         }
       });
     }
-
-    legendChips.innerHTML =
-      '<div class="fullview-legend-chip"><span class="fullview-legend-chip-dot" style="background:#34D399;"></span><span>Positive Additions</span></div>' +
-      '<div class="fullview-legend-chip"><span class="fullview-legend-chip-dot" style="background:#FB7185;"></span><span>Net Dips / Corrections</span></div>';
-  }
-
-  function renderFullViewYearlyPillars(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'ANNUAL SUMMARY';
-    title.innerText = 'Year-End Asset Pillars';
-    subtitle.innerText = 'Closing category pillars across Market Investments, Bank & FDs, and EPF by calendar year';
-
-    var isTrend = (FULLVIEW_SUB_FILTER === 'trend');
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (!isTrend ? 'active' : '') + '" onclick="setFullViewFilter(\'stacked\')"><span>Stacked Columns</span></button>' +
-        '<button type="button" class="segment-btn ' + (isTrend ? 'active' : '') + '" onclick="setFullViewFilter(\'trend\')"><span>Trend Lines</span></button>' +
-      '</div>';
-
-    var ys = APP_STATE.yearlySummary || [];
-    var labels = ys.map(function(y) { return y.year; });
-    var latestY = ys.length ? ys[ys.length - 1] : { closingWealth: 0, totalAdded: 0, year: 2026 };
-    var baseY = ys.length ? ys[0] : { closingWealth: 1, year: 2023 };
-    var totalGrowthMult = baseY.closingWealth > 0 ? (latestY.closingWealth / baseY.closingWealth).toFixed(2) + 'x' : '1.0x';
-
-    ribbon.innerHTML =
-      renderMetricCard('Years Tracked', ys.length + ' Years (' + (labels[0] || '') + ' - ' + (labels[labels.length - 1] || '') + ')', 'var(--cyan-core)') +
-      renderMetricCard('Current Closing (' + latestY.year + ')', formatIndian(latestY.closingWealth, false), 'var(--emerald-bright)') +
-      renderMetricCard('Baseline (' + baseY.year + ')', formatIndian(baseY.closingWealth, false), '#FFFFFF') +
-      renderMetricCard('Portfolio Multiplier', totalGrowthMult + ' Expansion', 'var(--amber-bright)');
-
-    var ctx = canvas.getContext('2d');
-    var datasets = [
-      {
-        label: 'Market Investments',
-        data: ys.map(function(y) { return y.closingMarket; }),
-        backgroundColor: 'rgba(52, 211, 153, ' + (isTrend ? '0.14' : '0.85') + ')',
-        borderColor: '#34D399',
-        borderWidth: 2,
-        tension: 0,
-        fill: isTrend,
-        pointRadius: isTrend ? 4.5 : 0
-      },
-      {
-        label: 'Bank & Fixed Deposits',
-        data: ys.map(function(y) { return y.closingBank; }),
-        backgroundColor: 'rgba(251, 191, 36, ' + (isTrend ? '0.14' : '0.85') + ')',
-        borderColor: '#FBBF24',
-        borderWidth: 2,
-        tension: 0,
-        fill: isTrend,
-        pointRadius: isTrend ? 4.5 : 0
-      },
-      {
-        label: 'EPF Balance',
-        data: ys.map(function(y) { return y.closingEpf; }),
-        backgroundColor: 'rgba(192, 132, 252, ' + (isTrend ? '0.14' : '0.85') + ')',
-        borderColor: '#C084FC',
-        borderWidth: 2,
-        tension: 0,
-        fill: isTrend,
-        pointRadius: isTrend ? 4.5 : 0
-      }
-    ];
-
-    CHART_FULLVIEW = new Chart(ctx, {
-      type: isTrend ? 'line' : 'bar',
-      data: { labels: labels, datasets: datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) { return ' ' + c.dataset.label + ': ' + formatIndian(c.raw, false); },
-              afterBody: function(items) {
-                if (items && items.length) {
-                  var sum = items.reduce(function(a, b) { return a + (b.raw || 0); }, 0);
-                  return '\nTotal Year-End Wealth: ' + formatIndian(sum, false);
-                }
-                return '';
-              }
-            }
-          },
-          zoom: getChartZoomConfig(labels)
-        },
-        scales: {
-          x: {
-            stacked: !isTrend,
-            grid: { display: false },
-            ticks: { color: '#CBD5E1', font: { weight: '700', size: 12 } }
-          },
-          y: {
-            stacked: !isTrend,
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11 }, callback: function(v) { return formatCompactLakhs(v); } }
-          }
-        }
-      }
-    });
-
-    buildFullViewLegendChips(legendChips, CHART_FULLVIEW);
-  }
-
-  function renderFullViewYearlyAdded(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'ANNUAL WEALTH ADDED';
-    title.innerText = 'New Wealth Added Per Calendar Year';
-    subtitle.innerText = 'Total net wealth accumulation achieved in each calendar year';
-
-    var isGrowth = (FULLVIEW_SUB_FILTER === 'growth');
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (!isGrowth ? 'active' : '') + '" onclick="setFullViewFilter(\'bars\')"><span>Wealth Added (₹)</span></button>' +
-        '<button type="button" class="segment-btn ' + (isGrowth ? 'active' : '') + '" onclick="setFullViewFilter(\'growth\')"><span>Annual Growth (%)</span></button>' +
-      '</div>';
-
-    var ys = APP_STATE.yearlySummary || [];
-    var labels = ys.map(function(y) { return y.year; });
-    var sortedByAdd = ys.slice().sort(function(a, b) { return b.totalAdded - a.totalAdded; });
-    var bestYear = sortedByAdd[0] || { year: '2025', totalAdded: 0 };
-    var latestY = ys.length ? ys[ys.length - 1] : { totalAdded: 0, growthPct: 0, year: 2026 };
-
-    ribbon.innerHTML =
-      renderMetricCard('Latest Year (' + latestY.year + ')', (latestY.totalAdded >= 0 ? '+' : '') + formatIndian(latestY.totalAdded, false), 'var(--cyan-core)') +
-      renderMetricCard('Best Year', bestYear.year + ' (+' + formatIndian(bestYear.totalAdded, false) + ')', 'var(--emerald-bright)') +
-      renderMetricCard('Annual Growth Rate', (latestY.growthPct >= 0 ? '+' : '') + latestY.growthPct + '%', 'var(--amber-bright)') +
-      renderMetricCard('Total Tracked Years', ys.length + ' Recorded Years', '#FFFFFF');
-
-    var ctx = canvas.getContext('2d');
-    var chartData = isGrowth ? ys.map(function(y) { return y.growthPct; }) : ys.map(function(y) { return y.totalAdded; });
-    var colors = chartData.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.85)' : 'rgba(251, 113, 133, 0.85)'; });
-    var borders = chartData.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
-
-    CHART_FULLVIEW = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: isGrowth ? 'Annual Growth (%)' : 'Wealth Added in Year (₹)',
-          data: chartData,
-          backgroundColor: colors,
-          borderColor: borders,
-          borderWidth: 2,
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) {
-                if (isGrowth) {
-                  return ' Annual Return: ' + (c.raw >= 0 ? '+' : '') + c.raw + '%';
-                }
-                return ' Added in Year: ' + (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false);
-              }
-            }
-          },
-          zoom: getChartZoomConfig(labels)
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#CBD5E1', font: { weight: '700', size: 12 } }
-          },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            ticks: {
-              color: '#94A3B8',
-              font: { family: 'JetBrains Mono', size: 11 },
-              callback: function(v) { return isGrowth ? ((v >= 0 ? '+' : '') + v + '%') : formatCompactLakhs(v); }
-            }
-          }
-        }
-      }
-    });
-
-    legendChips.innerHTML =
-      '<div class="fullview-legend-chip"><span class="fullview-legend-chip-dot" style="background:#34D399;"></span><span>Positive Annual Growth</span></div>';
-  }
-
-  function renderFullViewSimulator(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'FUTURE SIMULATION';
-    title.innerText = 'Compound Wealth Growth Simulator';
-    subtitle.innerText = 'Projected compound wealth accumulation factoring regular savings and expected returns';
-
-    var curYears = document.getElementById('sim-years') ? document.getElementById('sim-years').value : '5';
-    controls.innerHTML =
-      '<div class="segment-well">' +
-        '<button type="button" class="segment-btn ' + (curYears === '3' ? 'active' : '') + '" onclick="setSimHorizonAndSync(3)"><span>3 Yrs</span></button>' +
-        '<button type="button" class="segment-btn ' + (curYears === '5' ? 'active' : '') + '" onclick="setSimHorizonAndSync(5)"><span>5 Yrs</span></button>' +
-        '<button type="button" class="segment-btn ' + (curYears === '10' ? 'active' : '') + '" onclick="setSimHorizonAndSync(10)"><span>10 Yrs</span></button>' +
-        '<button type="button" class="segment-btn ' + (curYears === '15' ? 'active' : '') + '" onclick="setSimHorizonAndSync(15)"><span>15 Yrs</span></button>' +
-      '</div>';
-
-    var finalWealth = document.getElementById('sim-final-wealth') ? document.getElementById('sim-final-wealth').innerText : '--';
-    var totalContrib = document.getElementById('sim-total-contrib') ? document.getElementById('sim-total-contrib').innerText : '--';
-    var totalGain = document.getElementById('sim-total-gain') ? document.getElementById('sim-total-gain').innerText : '--';
-    var rateReadout = document.getElementById('val-sim-rate') ? document.getElementById('val-sim-rate').innerText : '11.5% / yr';
-    var targetYearLabel = document.getElementById('sim-target-year-label') ? document.getElementById('sim-target-year-label').innerText : 'Horizon Wealth';
-
-    ribbon.innerHTML =
-      renderMetricCard(targetYearLabel, finalWealth, 'var(--cyan-core)') +
-      renderMetricCard('New Savings Added', totalContrib, '#FFFFFF') +
-      renderMetricCard('Compounded Growth', totalGain, 'var(--emerald-bright)') +
-      renderMetricCard('Expected Return', rateReadout, 'var(--amber-bright)');
-
-    var baseWealth = (APP_STATE && APP_STATE.latest) ? APP_STATE.latest.net_worth : 0;
-    var horizonYears = parseInt(curYears, 10) || 5;
-    var monthlySaving = document.getElementById('sim-monthly') ? parseFloat(document.getElementById('sim-monthly').value) : 75000;
-    var stepUpPct = document.getElementById('sim-stepup') ? parseFloat(document.getElementById('sim-stepup').value) : 8;
-    var returnRatePct = document.getElementById('sim-rate') ? parseFloat(document.getElementById('sim-rate').value) : 11.5;
-
-    var startYear = (APP_STATE && APP_STATE.latest) ? new Date(APP_STATE.latest.month_iso).getFullYear() : 2026;
-    var yearLabels = ['Today (' + startYear + ')'];
-    var baseSeries = [baseWealth];
-    var contribSeries = [0];
-    var gainSeries = [0];
-
-    var runningWealth = baseWealth;
-    var cumulativeContrib = 0;
-    var currentMonthlySaving = monthlySaving;
-
-    for (var i = 1; i <= horizonYears; i++) {
-      var yr = startYear + i;
-      yearLabels.push(String(yr));
-
-      var annualSaved = currentMonthlySaving * 12;
-      cumulativeContrib += annualSaved;
-
-      var openingWealth = runningWealth;
-      var investmentReturn = openingWealth * (returnRatePct / 100);
-      var midYearReturn = annualSaved * (returnRatePct / 100) * 0.5;
-      var totalYearGain = investmentReturn + midYearReturn;
-
-      runningWealth = openingWealth + annualSaved + totalYearGain;
-      var cumulativeGain = runningWealth - baseWealth - cumulativeContrib;
-
-      baseSeries.push(baseWealth);
-      contribSeries.push(Math.round(cumulativeContrib));
-      gainSeries.push(Math.round(cumulativeGain));
-
-      currentMonthlySaving = currentMonthlySaving * (1 + (stepUpPct / 100));
-    }
-
-    var ctx = canvas.getContext('2d');
-    CHART_FULLVIEW = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: yearLabels,
-        datasets: [
-          {
-            label: 'Starting Wealth',
-            data: baseSeries,
-            borderColor: '#0284C7',
-            backgroundColor: 'rgba(2, 132, 199, 0.28)',
-            borderWidth: 2.2,
-            tension: 0,
-            fill: true,
-            pointRadius: 4
-          },
-          {
-            label: 'Cumulative Savings Added',
-            data: contribSeries,
-            borderColor: '#38BDF8',
-            backgroundColor: 'rgba(56, 189, 248, 0.28)',
-            borderWidth: 2.2,
-            tension: 0,
-            fill: true,
-            pointRadius: 4
-          },
-          {
-            label: 'Compounded Returns',
-            data: gainSeries,
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.28)',
-            borderWidth: 2.2,
-            tension: 0,
-            fill: true,
-            pointRadius: 4
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) { return ' ' + c.dataset.label + ': ' + formatIndian(c.raw, false); },
-              afterBody: function(items) {
-                if (items && items.length) {
-                  var sum = items.reduce(function(a, b) { return a + (b.raw || 0); }, 0);
-                  return '\nProjected Total Wealth: ' + formatIndian(sum, false);
-                }
-                return '';
-              }
-            }
-          },
-          zoom: getChartZoomConfig(yearLabels)
-        },
-        scales: {
-          x: {
-            stacked: true,
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 } }
-          },
-          y: {
-            stacked: true,
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11 }, callback: function(v) { return formatCompactLakhs(v); } }
-          }
-        }
-      }
-    });
-
-    buildFullViewLegendChips(legendChips, CHART_FULLVIEW);
-  }
-
-  function setSimHorizonAndSync(years) {
-    var simYears = document.getElementById('sim-years');
-    if (simYears) {
-      simYears.value = years;
-      runYearSimulator();
-    }
-    openChartFullView('simulator', String(years));
-  }
-
-  function renderFullViewDrilldown(badge, title, subtitle, controls, ribbon, legendChips, canvas) {
-    badge.innerText = 'ANNUAL DRILLDOWN';
-    title.innerText = 'Monthly Investment Progression by Category';
-    subtitle.innerText = 'Continuous monthly curve tracking across Market Assets, Bank & FDs, and EPF';
-
-    var ys = APP_STATE.yearlySummary || [];
-    var curYear = FULLVIEW_SUB_FILTER || SELECTED_DRILLDOWN_YEAR || (ys.length ? String(ys[ys.length - 1].year) : '2026');
-
-    var btns = ys.map(function(y) {
-      return '<button type="button" class="segment-btn ' + (String(y.year) === String(curYear) ? 'active' : '') + '" onclick="setFullViewFilter(\'' + y.year + '\')"><span>' + y.year + '</span></button>';
-    }).join('');
-    controls.innerHTML = '<div class="segment-well">' + btns + '</div>';
-
-    var yData = ys.find(function(item) { return String(item.year) === String(curYear); });
-    if (!yData) {
-      yData = ys.length ? ys[ys.length - 1] : { year: curYear, closingWealth: 0, totalAdded: 0, growthPct: 0, monthlyRecords: [] };
-    }
-
-    ribbon.innerHTML =
-      renderMetricCard('Drilldown Year', String(yData.year), 'var(--cyan-core)') +
-      renderMetricCard('Closing Wealth', formatIndian(yData.closingWealth, false), '#FFFFFF') +
-      renderMetricCard('Net Added in ' + yData.year, (yData.totalAdded >= 0 ? '+' : '') + formatIndian(yData.totalAdded, false), 'var(--emerald-bright)') +
-      renderMetricCard('Annual Return', (yData.growthPct >= 0 ? '+' : '') + yData.growthPct + '%', 'var(--amber-bright)');
-
-    var months = yData.monthlyRecords || [];
-    var cLabels = months.map(function(m) { return m.label; });
-    var cMarket = months.map(function(m) { return m.total_market; });
-    var cBank = months.map(function(m) { return m.total_bank; });
-    var cEpf = months.map(function(m) { return m.epf; });
-
-    var ctx = canvas.getContext('2d');
-    CHART_FULLVIEW = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: cLabels,
-        datasets: [
-          {
-            label: 'Market Assets',
-            data: cMarket,
-            borderColor: '#34D399',
-            backgroundColor: 'rgba(52, 211, 153, 0.14)',
-            borderWidth: 3,
-            tension: 0,
-            fill: true,
-            pointRadius: 4.5,
-            pointHoverRadius: 7
-          },
-          {
-            label: 'Bank & Fixed Deposits',
-            data: cBank,
-            borderColor: '#FBBF24',
-            backgroundColor: 'rgba(251, 191, 36, 0.14)',
-            borderWidth: 3,
-            tension: 0,
-            fill: true,
-            pointRadius: 4.5,
-            pointHoverRadius: 7
-          },
-          {
-            label: 'EPF Balance',
-            data: cEpf,
-            borderColor: '#C084FC',
-            backgroundColor: 'rgba(192, 132, 252, 0.14)',
-            borderWidth: 3,
-            tension: 0,
-            fill: true,
-            pointRadius: 4.5,
-            pointHoverRadius: 7
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) { return ' ' + c.dataset.label + ': ' + formatIndian(c.raw, false); },
-              afterBody: function(items) {
-                if (!items || items.length === 0) return '';
-                var mIdx = items[0].dataIndex;
-                var rec = months[mIdx];
-                if (!rec) return '';
-                return '\nTotal Wealth: ' + formatIndian(rec.net_worth, false) + ' (' + (rec.monthlyChange >= 0 ? '+' : '') + formatIndian(rec.monthlyChange, false) + ')';
-              }
-            }
-          },
-          zoom: getChartZoomConfig(cLabels)
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 } }
-          },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11 }, callback: function(v) { return formatCompactLakhs(v); } }
-          }
-        }
-      }
-    });
-
-    buildFullViewLegendChips(legendChips, CHART_FULLVIEW);
   }
 
   // Keyboard accessibility: dismiss open overlays with Escape key
