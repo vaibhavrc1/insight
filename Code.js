@@ -51,46 +51,46 @@ var HISTORICAL_DATA = [
  * Used to compute smooth Base-100 Market Reaction curves without rigid return comparisons.
  */
 var MARKET_BENCHMARKS = {
-  "2023-08": { nifty: 19254, gold: 59010, silver: 76500 },
-  "2023-09": { nifty: 19638, gold: 59200, silver: 73800 },
-  "2023-10": { nifty: 19080, gold: 60910, silver: 72900 },
-  "2023-11": { nifty: 20133, gold: 62530, silver: 74600 },
-  "2023-12": { nifty: 21731, gold: 63820, silver: 75200 },
-  "2024-01": { nifty: 21726, gold: 59380, silver: 73200 },
-  "2024-02": { nifty: 21983, gold: 59290, silver: 71900 },
-  "2024-03": { nifty: 22327, gold: 63120, silver: 75600 },
-  "2024-04": { nifty: 22605, gold: 68230, silver: 81400 },
-  "2024-05": { nifty: 22489, gold: 70450, silver: 91200 },
-  "2024-06": { nifty: 23969, gold: 71250, silver: 89600 },
-  "2024-07": { nifty: 24951, gold: 71200, silver: 87300 },
-  "2024-08": { nifty: 25236, gold: 71890, silver: 86900 },
-  "2024-09": { nifty: 25811, gold: 72660, silver: 91500 },
-  "2024-10": { nifty: 24205, gold: 73850, silver: 97400 },
-  "2024-11": { nifty: 24131, gold: 74720, silver: 92800 },
-  "2024-12": { nifty: 23645, gold: 77560, silver: 89500 },
-  "2025-01": { nifty: 23757, gold: 74580, silver: 91500 },
-  "2025-02": { nifty: 22356, gold: 80630, silver: 93200 },
-  "2025-03": { nifty: 23765, gold: 87550, silver: 103900 },
-  "2025-04": { nifty: 24587, gold: 91190, silver: 95300 },
-  "2025-05": { nifty: 25008, gold: 95430, silver: 96000 },
-  "2025-06": { nifty: 25783, gold: 96210, silver: 105400 },
-  "2025-07": { nifty: 25027, gold: 98340, silver: 111000 },
-  "2025-08": { nifty: 24596, gold: 105170, silver: 114000 },
-  "2025-09": { nifty: 24782, gold: 117570, silver: 129300 },
-  "2025-10": { nifty: 25901, gold: 127820, silver: 155900 },
-  "2025-11": { nifty: 26386, gold: 130200, silver: 155000 },
-  "2025-12": { nifty: 26130, gold: 134890, silver: 198200 },
-  "2026-01": { nifty: 23005, gold: 145320, silver: 255600 },
-  "2026-02": { nifty: 22876, gold: 148600, silver: 240700 },
-  "2026-03": { nifty: 20290, gold: 147660, silver: 250000 },
-  "2026-04": { nifty: 21802, gold: 146180, silver: 248600 },
-  "2026-05": { nifty: 21395, gold: 148090, silver: 238200 },
-  "2026-06": { nifty: 21683, gold: 145990, silver: 233100 },
-  "2026-07": { nifty: 22154, gold: 144350, silver: 235000 },
-  "2026-08": { nifty: 21879, gold: 147650, silver: 236800 },
-  "2026-09": { nifty: 20554, gold: 147070, silver: 237000 },
-  "2026-10": { nifty: 22650, gold: 148200, silver: 212800 },
-  "2026-11": { nifty: 24537, gold: 148255, silver: 189957 }
+  "2023-08": { nifty: 19254, gold: 59010, silver: 76500, repo: 6.50 },
+  "2023-09": { nifty: 19638, gold: 59200, silver: 73800, repo: 6.50 },
+  "2023-10": { nifty: 19080, gold: 60910, silver: 72900, repo: 6.50 },
+  "2023-11": { nifty: 20133, gold: 62530, silver: 74600, repo: 6.50 },
+  "2023-12": { nifty: 21731, gold: 63820, silver: 75200, repo: 6.50 },
+  "2024-01": { nifty: 21726, gold: 59380, silver: 73200, repo: 6.50 },
+  "2024-02": { nifty: 21983, gold: 59290, silver: 71900, repo: 6.50 },
+  "2024-03": { nifty: 22327, gold: 63120, silver: 75600, repo: 6.50 },
+  "2024-04": { nifty: 22605, gold: 68230, silver: 81400, repo: 6.50 },
+  "2024-05": { nifty: 22489, gold: 70450, silver: 91200, repo: 6.50 },
+  "2024-06": { nifty: 23969, gold: 71250, silver: 89600, repo: 6.50 },
+  "2024-07": { nifty: 24951, gold: 71200, silver: 87300, repo: 6.50 },
+  "2024-08": { nifty: 25236, gold: 71890, silver: 86900, repo: 6.50 },
+  "2024-09": { nifty: 25811, gold: 72660, silver: 91500, repo: 6.50 },
+  "2024-10": { nifty: 24205, gold: 73850, silver: 97400, repo: 6.50 },
+  "2024-11": { nifty: 24131, gold: 74720, silver: 92800, repo: 6.50 },
+  "2024-12": { nifty: 23645, gold: 77560, silver: 89500, repo: 6.50 },
+  "2025-01": { nifty: 23757, gold: 74580, silver: 91500, repo: 6.50 },
+  "2025-02": { nifty: 22356, gold: 80630, silver: 93200, repo: 6.25 },
+  "2025-03": { nifty: 23765, gold: 87550, silver: 103900, repo: 6.25 },
+  "2025-04": { nifty: 24587, gold: 91190, silver: 95300, repo: 6.00 },
+  "2025-05": { nifty: 25008, gold: 95430, silver: 96000, repo: 6.00 },
+  "2025-06": { nifty: 25783, gold: 96210, silver: 105400, repo: 5.50 },
+  "2025-07": { nifty: 25027, gold: 98340, silver: 111000, repo: 5.50 },
+  "2025-08": { nifty: 24596, gold: 105170, silver: 114000, repo: 5.50 },
+  "2025-09": { nifty: 24782, gold: 117570, silver: 129300, repo: 5.50 },
+  "2025-10": { nifty: 25901, gold: 127820, silver: 155900, repo: 5.25 },
+  "2025-11": { nifty: 26386, gold: 130200, silver: 155000, repo: 5.25 },
+  "2025-12": { nifty: 26130, gold: 134890, silver: 198200, repo: 5.25 },
+  "2026-01": { nifty: 23005, gold: 145320, silver: 255600, repo: 5.25 },
+  "2026-02": { nifty: 22876, gold: 148600, silver: 240700, repo: 5.25 },
+  "2026-03": { nifty: 20290, gold: 147660, silver: 250000, repo: 5.25 },
+  "2026-04": { nifty: 21802, gold: 146180, silver: 248600, repo: 5.25 },
+  "2026-05": { nifty: 21395, gold: 148090, silver: 238200, repo: 5.25 },
+  "2026-06": { nifty: 21683, gold: 145990, silver: 233100, repo: 5.25 },
+  "2026-07": { nifty: 22154, gold: 144350, silver: 235000, repo: 5.25 },
+  "2026-08": { nifty: 21879, gold: 147650, silver: 236800, repo: 5.25 },
+  "2026-09": { nifty: 20554, gold: 147070, silver: 237000, repo: 5.25 },
+  "2026-10": { nifty: 22650, gold: 148200, silver: 212800, repo: 5.50 },
+  "2026-11": { nifty: 24537, gold: 148255, silver: 189957, repo: 5.50 }
 };
 
 var DEFAULT_MILESTONES = [
@@ -301,7 +301,10 @@ function getInitialData() {
 
   var repoRaw = [];
   for (var bIdx = 0; bIdx < records.length; bIdx++) {
-    repoRaw.push(6.50); // RBI Repo Rate Benchmark (6.50% steady baseline)
+    var ymKey = records[bIdx].monthIso.substring(0, 7);
+    var bm = benchmarksMap[ymKey] || MARKET_BENCHMARKS[ymKey];
+    var rRate = (bm && bm.repo != null) ? Number(bm.repo) : 6.50;
+    repoRaw.push(rRate);
   }
 
   var reactionData = {
@@ -820,7 +823,8 @@ function getMarketBenchmarksMap(ss) {
       map[k] = {
         nifty: MARKET_BENCHMARKS[k].nifty,
         gold: MARKET_BENCHMARKS[k].gold,
-        silver: MARKET_BENCHMARKS[k].silver
+        silver: MARKET_BENCHMARKS[k].silver,
+        repo: MARKET_BENCHMARKS[k].repo || 6.50
       };
     }
   }
@@ -867,6 +871,31 @@ function getMarketBenchmarksMap(ss) {
 /**
  * Fetches real-time closing figures for Nifty 50, Gold, and Silver using Google Finance formulas & live market feeds.
  */
+/**
+ * Fetches live RBI Repo Rate via central bank API with automatic carry-forward fallback
+ */
+function fetchLiveRepoRate() {
+  try {
+    var res = UrlFetchApp.fetch("https://api.api-ninjas.com/v1/interestrate?country=India", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      muteHttpExceptions: true
+    });
+    if (res.getResponseCode() === 200) {
+      var parsed = JSON.parse(res.getContentText());
+      if (Array.isArray(parsed) && parsed[0] && parsed[0].rate_pct) {
+        return Number(parsed[0].rate_pct);
+      }
+    }
+  } catch(e) {}
+
+  var months = Object.keys(MARKET_BENCHMARKS).sort();
+  if (months.length > 0) {
+    var lastMonth = months[months.length - 1];
+    return MARKET_BENCHMARKS[lastMonth].repo || 5.50;
+  }
+  return 5.50;
+}
+
 function fetchLiveMarketBenchmarks(sheet, targetRow) {
   var niftyPrice = null;
   var gold10g = null;
@@ -926,10 +955,12 @@ function fetchLiveMarketBenchmarks(sheet, targetRow) {
   }
 
   // 3. Absolute Fallback: Baseline rates for Nov 2026
+  var liveRepo = fetchLiveRepoRate();
   return {
     nifty: niftyPrice || 24537,
     gold: gold10g || 148255,
     silver: silver1kg || 189957,
+    repo: liveRepo,
     source: "Auto-Fetched (Live Market Feed)"
   };
 }
