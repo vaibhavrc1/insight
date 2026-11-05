@@ -3260,29 +3260,32 @@
     top: 8px;
     z-index: 1200;
     pointer-events: none;
+    /* Truly translucent optical liquid glass: allows chart lines, dots & grid to shine through */
     background:
       radial-gradient(
         180px circle at var(--glass-x, 50%) var(--glass-y, 0%),
-        rgba(255, 255, 255, 0.04) 0%,
-        rgba(56, 189, 248, 0.02) 40%,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(56, 189, 248, 0.05) 40%,
         transparent 80%
       ),
       linear-gradient(
-        165deg,
-        rgba(16, 25, 44, 0.85) 0%,
-        rgba(8, 13, 25, 0.92) 55%,
-        rgba(4, 7, 16, 0.96) 100%
+        135deg,
+        rgba(20, 32, 58, 0.38) 0%,
+        rgba(8, 14, 28, 0.26) 100%
       ) !important;
-    backdrop-filter: blur(var(--glass-blur, 32px)) saturate(var(--glass-saturate, 165%)) brightness(var(--glass-brightness, 1.0)) contrast(var(--glass-contrast, 1.02)) !important;
-    -webkit-backdrop-filter: blur(var(--glass-blur, 32px)) saturate(var(--glass-saturate, 165%)) brightness(var(--glass-brightness, 1.0)) contrast(var(--glass-contrast, 1.02)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-top: 1.2px solid rgba(255, 255, 255, 0.32) !important;
+    backdrop-filter: blur(14px) saturate(220%) contrast(1.06) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(220%) contrast(1.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
     border-radius: 14px !important;
     padding: 8px 13px !important;
     box-shadow: 
-      0 20px 48px -8px rgba(0, 0, 0, 0.82),
-      0 0 20px rgba(56, 189, 248, 0.10),
-      var(--liquid-refraction) !important;
+      0 16px 38px -6px rgba(0, 0, 0, 0.65),
+      0 0 18px -2px rgba(56, 189, 248, 0.14),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.40),
+      inset 1px 0 1px 0 rgba(56, 189, 248, 0.16),
+      inset -1px 0 1px 0 rgba(192, 132, 252, 0.14) !important;
     color: #FFFFFF;
     font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
     min-width: 140px;
@@ -3303,18 +3306,18 @@
     padding: 1.1px !important;
     background:
       radial-gradient(
-        160px circle at var(--glass-x, 50%) var(--glass-y, 0%),
-        rgba(255, 255, 255, 0.22) 0%,
-        rgba(56, 189, 248, 0.12) 35%,
-        rgba(255, 255, 255, 0.03) 60%,
+        140px circle at var(--glass-x, 50%) var(--glass-y, 0%),
+        rgba(255, 255, 255, 0.42) 0%,
+        rgba(56, 189, 248, 0.22) 35%,
+        rgba(255, 255, 255, 0.05) 65%,
         transparent 100%
       ),
       linear-gradient(
         142deg,
-        rgba(255, 255, 255, 0.18) 0%,
-        rgba(255, 255, 255, 0.05) 32%,
-        rgba(56, 189, 248, 0.05) 68%,
-        rgba(192, 132, 252, 0.12) 100%
+        rgba(255, 255, 255, 0.32) 0%,
+        rgba(255, 255, 255, 0.08) 32%,
+        rgba(56, 189, 248, 0.10) 68%,
+        rgba(192, 132, 252, 0.20) 100%
       ) !important;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -3327,10 +3330,11 @@
     font-weight: 800;
     letter-spacing: 0.3px;
     text-transform: uppercase;
-    color: #94A3B8;
+    color: #CBD5E1;
     margin-bottom: 6px;
     padding-bottom: 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
   }
 
   .apple-liquid-glass-tooltip .alg-body {
@@ -3371,6 +3375,7 @@
     font-size: 11.5px;
     white-space: nowrap;
     letter-spacing: -0.2px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.8);
   }
 
   .apple-liquid-glass-tooltip .alg-divider {
@@ -4727,8 +4732,7 @@
   .liquid-chart-fullview-dialog,
   .liquid-month-popover,
   .liquid-toast,
-  .liquid-undo-toast,
-  .apple-liquid-glass-tooltip {
+  .liquid-undo-toast {
     background:
       radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 38%, transparent 72%),
       linear-gradient(165deg, rgba(16, 25, 44, 0.85) 0%, rgba(8, 13, 25, 0.92) 55%, rgba(4, 7, 16, 0.96) 100%) !important;
