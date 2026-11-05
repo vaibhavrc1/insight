@@ -115,11 +115,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #030509;
+    background: #03060F;
     background-image: 
-      radial-gradient(circle at 50% 12%, rgba(14, 165, 233, 0.18), transparent 50%),
-      radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.12), transparent 45%),
-      radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.1), transparent 45%);
+      radial-gradient(circle at 50% 12%, rgba(14, 165, 233, 0.30), transparent 55%),
+      radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.22), transparent 50%),
+      radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.18), transparent 50%);
     padding: 18px;
     overflow-y: auto;
     user-select: none;
@@ -386,9 +386,10 @@
     z-index: 0;
     overflow: hidden;
     background: 
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(14, 165, 233, 0.16) 0%, transparent 65%),
-      radial-gradient(circle 550px at 88% 22%, rgba(16, 185, 129, 0.08) 0%, transparent 65%),
-      radial-gradient(circle 500px at 12% 75%, rgba(168, 85, 247, 0.08) 0%, transparent 65%);
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(14, 165, 233, 0.22) 0%, transparent 65%),
+      radial-gradient(circle 650px at 90% 30%, rgba(16, 185, 129, 0.14) 0%, transparent 65%),
+      radial-gradient(circle 600px at 10% 75%, rgba(168, 85, 247, 0.15) 0%, transparent 65%),
+      #03060F;
   }
 
   /* Subtle architectural dot matrix for depth perception */
@@ -396,10 +397,11 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
-    background-size: 28px 28px;
-    mask-image: radial-gradient(ellipse 90% 80% at 50% 35%, #000 30%, transparent 90%);
-    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 35%, #000 30%, transparent 90%);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.7;
+    mask-image: radial-gradient(ellipse 95% 85% at 50% 40%, #000 35%, transparent 95%);
+    -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 40%, #000 35%, transparent 95%);
   }
 
   /* ==========================================================================
@@ -4582,7 +4584,7 @@
       0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
-  /* Living Caustic Light Orbs Behind the Glass Stage (Softened Opacity) */
+  /* Living Caustic Light Orbs Behind the Glass Stage (visionOS Deep Aurora) */
   .lighting-stage .caustic-orb {
     position: absolute;
     border-radius: 50%;
@@ -4590,43 +4592,43 @@
     pointer-events: none;
     will-change: transform, opacity;
     mix-blend-mode: screen;
-    opacity: 0.42;
+    opacity: 0.85;
   }
 
   .lighting-stage .orb-cyan {
-    width: 560px;
-    height: 560px;
-    top: -12%;
+    width: 720px;
+    height: 720px;
+    top: -15%;
     left: 8%;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.11) 0%, rgba(14, 165, 233, 0.03) 55%, transparent 75%);
-    animation: causticFloat1 22s ease-in-out infinite alternate;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.32) 0%, rgba(2, 132, 199, 0.12) 50%, transparent 75%);
+    animation: causticFloat1 24s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-emerald {
-    width: 500px;
-    height: 500px;
-    top: 18%;
-    right: -6%;
-    background: radial-gradient(circle, rgba(52, 211, 153, 0.08) 0%, rgba(16, 185, 129, 0.02) 55%, transparent 75%);
+    width: 550px;
+    height: 550px;
+    top: 28%;
+    right: -4%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.08) 50%, transparent 75%);
     animation: causticFloat2 26s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-violet {
-    width: 540px;
-    height: 540px;
-    bottom: 6%;
-    left: -8%;
-    background: radial-gradient(circle, rgba(192, 132, 252, 0.08) 0%, rgba(139, 92, 246, 0.02) 55%, transparent 75%);
+    width: 680px;
+    height: 680px;
+    bottom: -8%;
+    left: -6%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(124, 58, 237, 0.10) 55%, transparent 75%);
     animation: causticFloat3 28s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-amber {
-    width: 420px;
-    height: 420px;
+    width: 480px;
+    height: 480px;
     bottom: 18%;
-    right: 14%;
-    background: radial-gradient(circle, rgba(251, 191, 36, 0.06) 0%, rgba(245, 158, 11, 0.01) 55%, transparent 75%);
-    animation: causticFloat1 30s ease-in-out infinite alternate-reverse;
+    right: 12%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.05) 50%, transparent 75%);
+    animation: causticFloat1 32s ease-in-out infinite alternate-reverse;
   }
 
   @keyframes causticFloat1 {
@@ -4647,28 +4649,28 @@
     100% { transform: translate3d(-40px, 30px, 0) scale(1.12); }
   }
 
-  /* True Apple Liquid Glass Card Slab (Subtle pointer light, rich obsidian depth) */
+  /* True Apple Liquid Glass Card Slab (Balanced Translucency + Deep Aurora Refraction) */
   .liquid-slab {
     background:
       radial-gradient(
-        320px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.035) 0%,
-        rgba(56, 189, 248, 0.018) 35%,
+        380px circle at var(--glass-x, 28%) var(--glass-y, 12%),
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(56, 189, 248, 0.025) 35%,
         transparent 70%
       ),
       linear-gradient(
         165deg,
-        rgba(18, 28, 48, 0.65) 0%,
-        rgba(9, 14, 26, 0.75) 48%,
-        rgba(4, 7, 15, 0.88) 100%
+        rgba(18, 30, 54, 0.45) 0%,
+        rgba(9, 15, 28, 0.55) 48%,
+        rgba(4, 7, 16, 0.70) 100%
       ) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow:
-      0 20px 48px -12px rgba(0, 0, 0, 0.78),
-      0 4px 14px -2px rgba(0, 0, 0, 0.65),
-      0 0 20px -8px rgba(56, 189, 248, 0.08),
+      0 24px 56px -12px rgba(0, 0, 0, 0.75),
+      0 4px 14px -2px rgba(0, 0, 0, 0.55),
+      0 0 24px -6px rgba(56, 189, 248, 0.10),
       var(--liquid-refraction) !important;
   }
 
@@ -4703,18 +4705,18 @@
       inset 0 -2px 4px 0 rgba(0, 0, 0, 0.75) !important;
   }
 
-  /* Hero Bento Subsurface Caustic Glow */
+  /* Hero Bento Subsurface Caustic Glow (Deep Aurora Refraction) */
   .hero-bento {
     background:
       radial-gradient(
-        340px circle at var(--glass-x, 22%) var(--glass-y, 15%),
-        rgba(255, 255, 255, 0.04) 0%,
-        rgba(56, 189, 248, 0.03) 36%,
+        360px circle at var(--glass-x, 22%) var(--glass-y, 15%),
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(56, 189, 248, 0.035) 36%,
         transparent 72%
       ),
-      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.10) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 65%),
-      linear-gradient(165deg, rgba(16, 26, 46, 0.68) 0%, rgba(7, 12, 24, 0.82) 100%) !important;
+      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.16) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.12) 0%, transparent 65%),
+      linear-gradient(165deg, rgba(18, 30, 54, 0.45) 0%, rgba(7, 12, 24, 0.68) 100%) !important;
   }
 
   /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
@@ -4775,12 +4777,12 @@
   .liquid-toast,
   .liquid-undo-toast {
     background:
-      radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 38%, transparent 72%),
-      linear-gradient(165deg, rgba(16, 25, 44, 0.85) 0%, rgba(8, 13, 25, 0.92) 55%, rgba(4, 7, 16, 0.96) 100%) !important;
-    backdrop-filter: blur(36px) saturate(170%) brightness(1.0) !important;
-    -webkit-backdrop-filter: blur(36px) saturate(170%) brightness(1.0) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-top: 1.2px solid rgba(255, 255, 255, 0.32) !important;
+      radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.05) 0%, rgba(56, 189, 248, 0.03) 38%, transparent 72%),
+      linear-gradient(165deg, rgba(18, 28, 52, 0.65) 0%, rgba(9, 14, 28, 0.78) 55%, rgba(5, 8, 18, 0.88) 100%) !important;
+    backdrop-filter: blur(32px) saturate(180%) brightness(1.0) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(180%) brightness(1.0) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.38) !important;
     box-shadow:
       0 28px 72px -12px rgba(0, 0, 0, 0.88),
       0 0 24px rgba(56, 189, 248, 0.10),
