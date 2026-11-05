@@ -3,6 +3,8 @@
   var TRAJECTORY_MODE = 'stacked';
   var REACTION_FILTER = 'mf';
   var CURRENT_YEAR_FILTER = 'all';
+  var SELECTED_DRILLDOWN_YEAR = null;
+  var CHART_DRILLDOWN_YEAR = null;
   var MILESTONES_VISIBLE = true;
 
   var CHART_NETWORTH = null;
@@ -224,7 +226,7 @@
     if (/silver.*rate|silver.*bullion|silver spot/i.test(raw)) return 'Silver Spot';
     if (/silver/i.test(raw)) return 'Silver Holdings';
     if (/compounding/i.test(raw)) return 'Compounding Trend';
-    if (/3m rolling|rolling pace/i.test(raw)) return '3M Rolling Pace';
+    if (/1y rolling|3m rolling|rolling pace|rolling/i.test(raw)) return '1Y Rolling Avg';
     if (/monthly net|monthly wealth|monthly.*change/i.test(raw)) return 'Wealth Added';
     if (/pace|average added/i.test(raw)) return 'Average Pace';
     if (/trend/i.test(raw)) return 'Average Trend';
@@ -332,24 +334,42 @@
     html += '</div>';
     tooltipEl.innerHTML = html;
 
-    // Anchor HUD at top margin of container so it glides horizontally and never overlaps data points or X-axis
+    // Dynamic cursor-adjacent positioning: position above/below or left/right so it never blocks data points
     var parentRect = parent.getBoundingClientRect();
     var canvasRect = canvas.getBoundingClientRect();
     var offsetLeft = canvasRect.left - parentRect.left;
+    var offsetTop = canvasRect.top - parentRect.top;
 
-        var posX = offsetLeft + tooltip.caretX;
+    var posX = offsetLeft + tooltip.caretX;
+    var posY = offsetTop + tooltip.caretY;
     var wrapW = parent.clientWidth || 300;
+    var wrapH = parent.clientHeight || 260;
+    var tooltipW = tooltipEl.offsetWidth || 170;
+    var tooltipH = tooltipEl.offsetHeight || 75;
 
-    // Pin tooltip either at top-right or top-left opposite to cursor location so it never covers data points
-    var isRightSide = posX > (wrapW / 2);
-    tooltipEl.style.top = '10px';
-    if (isRightSide) {
-      tooltipEl.style.left = '14px';
-      tooltipEl.style.right = 'auto';
-    } else {
-      tooltipEl.style.right = '14px';
-      tooltipEl.style.left = 'auto';
+    // Center horizontally on caret, clamped within container margins
+    var left = posX - (tooltipW / 2);
+    left = Math.max(8, Math.min(wrapW - tooltipW - 8, left));
+
+    // Prefer placing ABOVE the caret with 14px cushion
+    var top = posY - tooltipH - 14;
+    // If placing above would overflow top margin, flip BELOW the caret
+    if (top < 6) {
+      top = posY + 16;
     }
+    // If also overflowing bottom, push to side of pointer
+    if (top + tooltipH > wrapH - 6) {
+      top = Math.max(6, wrapH - tooltipH - 6);
+      if (posX + 16 + tooltipW <= wrapW - 6) {
+        left = posX + 16;
+      } else if (posX - 16 - tooltipW >= 6) {
+        left = posX - 16 - tooltipW;
+      }
+    }
+
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.right = 'auto';
     tooltipEl.style.transform = 'none';
     tooltipEl.style.opacity = '1';
     tooltipEl.style.pointerEvents = 'none';
@@ -572,6 +592,12 @@
         IS_VIEW_TRANSITIONING = false;
         nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
         observeRevealItems();
+        if (viewId === 'yearly' && APP_STATE) {
+          try { renderYearlyView(APP_STATE); } catch(e) { console.error(e); }
+        }
+        if (viewId === 'history' && APP_STATE) {
+          try { renderHistory(APP_STATE); } catch(e) { console.error(e); }
+        }
       }
 
       CURRENT_FINALIZE_TIMER = setTimeout(finalize, 950);
@@ -1550,12 +1576,12 @@
       var simSlider = document.getElementById('sim-monthly');
       if (simSlider) simSlider.value = Math.min(300000, Math.max(10000, Math.round(data.summary.avgRecentMonthly / 5000) * 5000));
     }
-    renderDashboard(data);
-    renderYearlyView(data);
-    runYearSimulator();
-    renderMilestones();
-    initFormDefaults(data);
-    renderHistory(data);
+    try { renderDashboard(data); } catch (e) { console.error('Error in renderDashboard:', e); }
+    try { renderYearlyView(data); } catch (e) { console.error('Error in renderYearlyView:', e); }
+    try { runYearSimulator(); } catch (e) { console.error('Error in runYearSimulator:', e); }
+    try { renderMilestones(); } catch (e) { console.error('Error in renderMilestones:', e); }
+    try { initFormDefaults(data); } catch (e) { console.error('Error in initFormDefaults:', e); }
+    try { renderHistory(data); } catch (e) { console.error('Error in renderHistory:', e); }
     scrollTimelineChartsToLatest();
     setTimeout(function() {
       syncAllGliders(false);
@@ -1705,8 +1731,7 @@
         {
           label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.45)',
-          borderDash: [5, 4],
+          borderColor: 'rgba(56, 189, 248, 0.40)',
           borderWidth: 1.8,
           fill: false,
           tension: 0,
@@ -1734,8 +1759,7 @@
         {
           label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.45)',
-          borderDash: [5, 4],
+          borderColor: 'rgba(56, 189, 248, 0.40)',
           borderWidth: 1.8,
           fill: false,
           tension: 0,
@@ -1885,14 +1909,13 @@
           id: 'nifty',
           label: 'Nifty 50 Benchmark',
           data: rx.niftyRaw,
-          borderColor: '#34D399',
+          borderColor: 'rgba(56, 189, 248, 0.40)',
           backgroundColor: 'transparent',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#34D399',
+          pointBackgroundColor: 'rgba(56, 189, 248, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -1951,14 +1974,13 @@
           id: 'goldRate',
           label: 'Gold Rate (₹ / 10g)',
           data: rx.goldBenchRaw,
-          borderColor: '#FB923C',
+          borderColor: 'rgba(250, 204, 21, 0.40)',
           backgroundColor: 'transparent',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#FB923C',
+          pointBackgroundColor: 'rgba(250, 204, 21, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -2017,14 +2039,13 @@
           id: 'silverRate',
           label: 'Silver Rate (₹ / 1kg)',
           data: rx.silverBenchRaw,
-          borderColor: '#60A5FA',
+          borderColor: 'rgba(226, 232, 240, 0.40)',
           backgroundColor: 'transparent',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#60A5FA',
+          pointBackgroundColor: 'rgba(226, 232, 240, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -2086,14 +2107,13 @@
           id: 'repoRate',
           label: 'RBI Repo Rate Benchmark',
           data: repoData,
-          borderColor: '#EC4899',
+          borderColor: 'rgba(245, 158, 11, 0.40)',
           backgroundColor: 'transparent',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#EC4899',
+          pointBackgroundColor: 'rgba(245, 158, 11, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -2167,7 +2187,7 @@
     if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.destroy();
 
     var colors = cd.monthlyChange.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
-    var rollingPace = calculateRollingAverage(cd.monthlyChange, 3);
+    var rollingPace = calculateRollingAverage(cd.monthlyChange, 12);
 
     var isMobile = window.innerWidth <= 768;
     var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
@@ -2193,10 +2213,9 @@
             pointBorderWidth: 1.5
           },
           {
-            label: '3M Rolling Pace',
+            label: '1Y Rolling Average',
             data: rollingPace,
-            borderColor: 'rgba(251, 191, 36, 0.75)',
-            borderDash: [5, 4],
+            borderColor: 'rgba(56, 189, 248, 0.40)',
             borderWidth: 1.8,
             fill: false,
             tension: 0.35,
@@ -2240,6 +2259,7 @@
     cardsContainer.innerHTML = '';
     tbody.innerHTML = '';
 
+    if (!cardsContainer || !tbody) return;
     ys.slice().reverse().forEach(function(y) {
       var card = document.createElement('div');
       card.className = 'liquid-slab interactive-lift yearly-card' + (SELECTED_DRILLDOWN_YEAR === String(y.year) ? ' active-year' : '');
@@ -2266,9 +2286,10 @@
       };
       cardsContainer.appendChild(card);
 
-      var lastRec = y.monthlyRecords[y.monthlyRecords.length - 1];
-      var bankFdOnly = lastRec ? (lastRec.total_bank - lastRec.sbi_ppf) : 0;
-      var ppfOnly = lastRec ? lastRec.sbi_ppf : 0;
+      var mRecs = y.monthlyRecords || [];
+      var lastRec = mRecs.length ? mRecs[mRecs.length - 1] : null;
+      var bankFdOnly = lastRec ? ((lastRec.total_bank || 0) - (lastRec.sbi_ppf || 0)) : (y.closingBank || 0);
+      var ppfOnly = lastRec ? (lastRec.sbi_ppf || 0) : 0;
 
       var tr = document.createElement('tr');
       tr.className = 'liquid-table-row';
@@ -3861,8 +3882,7 @@
         {
           label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.45)',
-          borderDash: [5, 4],
+          borderColor: 'rgba(56, 189, 248, 0.40)',
           borderWidth: 1.8,
           fill: false,
           tension: 0,
@@ -3890,8 +3910,7 @@
         {
           label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.45)',
-          borderDash: [5, 4],
+          borderColor: 'rgba(56, 189, 248, 0.40)',
           borderWidth: 1.8,
           fill: false,
           tension: 0,
@@ -3981,13 +4000,12 @@
         {
           label: 'Nifty 50 Benchmark',
           data: rx.niftyRaw,
-          borderColor: '#34D399',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderColor: 'rgba(56, 189, 248, 0.40)',
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#34D399',
+          pointBackgroundColor: 'rgba(56, 189, 248, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -4002,8 +4020,8 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Nifty 50 Index', color: '#34D399', font: { weight: '700' } }
+        ticks: { color: 'rgba(56, 189, 248, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Nifty 50 Index', color: 'rgba(56, 189, 248, 0.70)', font: { weight: '700' } }
       };
     } else if (mode === 'gold') {
       datasets = [
@@ -4023,13 +4041,12 @@
         {
           label: 'Gold Rate (₹ / 10g)',
           data: rx.goldBenchRaw,
-          borderColor: '#FB923C',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderColor: 'rgba(250, 204, 21, 0.40)',
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#FB923C',
+          pointBackgroundColor: 'rgba(250, 204, 21, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -4044,8 +4061,8 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: '#FB923C', font: { weight: '700' } }
+        ticks: { color: 'rgba(250, 204, 21, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: 'rgba(250, 204, 21, 0.70)', font: { weight: '700' } }
       };
     } else if (mode === 'silver') {
       datasets = [
@@ -4065,13 +4082,12 @@
         {
           label: 'Silver Rate (₹ / 1kg)',
           data: rx.silverBenchRaw,
-          borderColor: '#60A5FA',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderColor: 'rgba(226, 232, 240, 0.40)',
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#60A5FA',
+          pointBackgroundColor: 'rgba(226, 232, 240, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -4086,8 +4102,8 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: '#60A5FA', font: { weight: '700' } }
+        ticks: { color: 'rgba(226, 232, 240, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: 'rgba(226, 232, 240, 0.70)', font: { weight: '700' } }
       };
     } else {
       // 'bank' Mode: Bank & Fixed Deposits vs RBI Repo Rate Benchmark
@@ -4110,13 +4126,12 @@
         {
           label: 'RBI Repo Rate Benchmark',
           data: repoData,
-          borderColor: '#EC4899',
-          borderWidth: 2.2,
-          borderDash: [5, 4],
+          borderColor: 'rgba(245, 158, 11, 0.40)',
+          borderWidth: 2.0,
           tension: 0,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#EC4899',
+          pointBackgroundColor: 'rgba(245, 158, 11, 0.40)',
           yAxisID: 'yRight'
         }
       ];
@@ -4171,7 +4186,7 @@
     var ctx = canvas.getContext('2d');
     var colors = changes.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
     var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
-    var rollingPace = calculateRollingAverage(changes, 3);
+    var rollingPace = calculateRollingAverage(changes, 12);
 
     if (isBars) {
       CHART_FULLVIEW = new Chart(ctx, {
@@ -4189,10 +4204,9 @@
             },
             {
               type: 'line',
-              label: '3M Rolling Pace',
+              label: '1Y Rolling Average',
               data: rollingPace,
-              borderColor: 'rgba(251, 191, 36, 0.75)',
-              borderDash: [5, 4],
+              borderColor: 'rgba(56, 189, 248, 0.40)',
               borderWidth: 1.8,
               fill: false,
               tension: 0.35,
@@ -4245,10 +4259,9 @@
               pointBorderWidth: 1.5
             },
             {
-              label: '3M Rolling Pace',
+              label: '1Y Rolling Average',
               data: rollingPace,
-              borderColor: 'rgba(251, 191, 36, 0.75)',
-              borderDash: [5, 4],
+              borderColor: 'rgba(56, 189, 248, 0.40)',
               borderWidth: 1.8,
               fill: false,
               tension: 0.35,

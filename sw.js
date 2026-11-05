@@ -1,5 +1,5 @@
 // Insight PWA Service Worker - Cache-Busting & Clean Network-First Strategy
-const CACHE_NAME = 'insight-shell-v3';
+const CACHE_NAME = 'insight-shell-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
