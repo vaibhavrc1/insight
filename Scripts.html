@@ -4384,14 +4384,10 @@ function observeRevealItems() {
   window.onload = initApp;
 
   /* ==========================================================================
-     DUAL UNDULATION FLOW ENGINE — APPLE LIQUID GLASS LIVE BACKGROUND
-     Config: 1% Brightness, 100% Fill Opacity, 2.5px Line Thickness,
-             16px Grid Cell Size, 0.4x Speed, 6px Glass Blur,
-             Continuous Smooth Gradient Fill:
-             Deep Emerald -> Royal Sapphire -> Legendary Purple -> Deep Ruby Wine
-             Grid lines stay calm, steady & subtle (NO brightening with wave)
+     SILKY SMOOTH DARK LIQUID WAVES ENGINE (NO GRIDS — 60FPS LOCKED)
+     Continuous Sinusoidal Fluid Sheets in Deep Stealth Dark Jewel Tones
      ========================================================================== */
-  function initDualUndulationCanvas() {
+  function initContinuousWaveCanvas() {
     var canvas = document.getElementById('live-bg-canvas');
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
@@ -4401,50 +4397,18 @@ function observeRevealItems() {
 
     var PARAMS = {
       blur: 6,
-      lightness: 1,       // 1% brightness
-      fillOpacity: 1.0,   // 100% fill opacity
-      thickness: 2.5,     // 2.5px line thickness
-      gridSize: 16,       // 16px grid cell size
-      speed: 0.4,         // 0.4x speed
-      saturation: 90      // 90% gemstone saturation
+      darkness: 7,        // 7% stealth darkness (velvety dark, non-glaring)
+      amplitude: 48,      // 48px wave amplitude
+      speed: 0.4          // 0.4x calm, effortless speed
     };
 
-    var GRADIENT_STOPS = [
-      { pos: 0.00, h: 160, s: 90 }, // Deep Gemstone Emerald
-      { pos: 0.25, h: 218, s: 90 }, // Royal Sapphire Blue
-      { pos: 0.50, h: 275, s: 90 }, // Legendary Imperial Purple
-      { pos: 0.75, h: 344, s: 88 }, // Deep Ruby Wine
-      { pos: 1.00, h: 160, s: 90 }  // Wrap to Emerald
+    // Deep Stealth Dark Gemstone Palette
+    var PALETTE = [
+      { name: 'Emerald', h: 158, s: 80 },
+      { name: 'Sapphire', h: 218, s: 85 },
+      { name: 'Imperial Plum', h: 275, s: 80 },
+      { name: 'Ruby Wine', h: 344, s: 75 }
     ];
-
-    function getSmoothGradientColor(tNorm, fillIntensity) {
-      var p = ((tNorm % 1.0) + 1.0) % 1.0;
-
-      var i = 0;
-      while (i < GRADIENT_STOPS.length - 1 && p > GRADIENT_STOPS[i + 1].pos) {
-        i++;
-      }
-      var s1 = GRADIENT_STOPS[i];
-      var s2 = GRADIENT_STOPS[i + 1];
-
-      var localT = (p - s1.pos) / (s2.pos - s1.pos);
-      var easedT = (1 - Math.cos(localT * Math.PI)) * 0.5;
-
-      var h1 = s1.h;
-      var h2 = s2.h;
-      if (h2 < h1) h2 += 360;
-      var finalHue = (h1 + (h2 - h1) * easedT) % 360;
-
-      // Rich, visible majestic dark gemstone fill:
-      // Base 17% + subtle crest luster up to 22% (clearly visible color fill while maintaining dark majesty)
-      var targetL = 17 + (PARAMS.lightness - 1) * 0.3 + (fillIntensity * 5);
-
-      return {
-        h: finalHue,
-        s: PARAMS.saturation,
-        l: targetL
-      };
-    }
 
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -4458,117 +4422,71 @@ function observeRevealItems() {
     window.addEventListener('resize', resize);
     resize();
 
-    function render(time) {
+    function render(now) {
       if (document.hidden) {
         requestAnimationFrame(render);
         return;
       }
 
-      ctx.fillStyle = '#02050E';
+      // Midnight Void Canvas
+      ctx.fillStyle = '#01040A';
       ctx.fillRect(0, 0, width, height);
 
-      var t = time * 0.0008 * PARAMS.speed;
-      var step = PARAMS.gridSize; // 16px
-      var cols = Math.ceil(width / step) + 2;
-      var rows = Math.ceil(height / step) + 2;
-
-      var grid = [];
-      for (var r = 0; r < rows; r++) {
-        grid[r] = [];
-        for (var c = 0; c < cols; c++) {
-          var bx = (c - 0.5) * step;
-          var by = (r - 0.5) * step;
-
-          var w1 = Math.sin(bx * 0.006 + t * 2.2 + r * 0.20) * 16;
-          var w2 = Math.cos(by * 0.008 - t * 1.8 + c * 0.16) * 12;
-          var finalZ = w1 + w2;
-
-          // Dual Undulation Sinusoidal Flow:
-          var wavePhase = (bx * 0.003 - by * 0.004) - t * 1.6;
-          var rawWave = Math.sin(wavePhase);
-
-          var fillIntensity = rawWave > 0 ? Math.pow(rawWave, 1.3) : 0;
-          var gradientProgress = (wavePhase * 0.18 + bx * 0.0008 + by * 0.0006);
-
-          grid[r][c] = {
-            x: bx,
-            y: by + finalZ,
-            z: finalZ,
-            fillIntensity: fillIntensity,
-            gradProgress: gradientProgress
-          };
-        }
-      }
+      var t = now * 0.0006 * PARAMS.speed;
+      var layers = 6;
+      var baseSpacing = height / (layers + 1);
 
       ctx.save();
 
-      // ========================================================================
-      // STEP 1: FILL THE EMPTY CELL AREA WITH 100% OPACITY MAJESTIC GEM COLOR
-      // As the wave rolls across, empty cells flood with solid, opulent jewel tones
-      // ========================================================================
-      for (var r = 0; r < rows - 1; r++) {
-        for (var c = 0; c < cols - 1; c++) {
-          var p1 = grid[r][c];
-          var p2 = grid[r][c + 1];
-          var p4 = grid[r + 1][c + 1];
-          var p3 = grid[r + 1][c];
+      for (var i = 0; i < layers; i++) {
+        var pCol = PALETTE[i % PALETTE.length];
+        var layerOffset = i * 1.35;
+        var baseY = baseSpacing * (i + 0.8) + Math.sin(t * 0.8 + layerOffset) * 20;
 
-          var cellIntensity = (p1.fillIntensity + p2.fillIntensity + p3.fillIntensity + p4.fillIntensity) * 0.25;
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        ctx.lineTo(0, baseY);
 
-          if (cellIntensity > 0.02) {
-            var avgProgress = (p1.gradProgress + p2.gradProgress + p3.gradProgress + p4.gradProgress) * 0.25;
-            var col = getSmoothGradientColor(avgProgress, cellIntensity);
-            var fillAlpha = Math.min(1.0, cellIntensity * PARAMS.fillOpacity);
+        var segs = 32;
+        var dx = width / segs;
 
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.lineTo(p4.x, p4.y);
-            ctx.lineTo(p3.x, p3.y);
-            ctx.closePath();
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          // Dual harmonic sinusoidal wave for organic fluidity:
+          var w1 = Math.sin(x * 0.0035 + t * 1.5 + layerOffset) * PARAMS.amplitude;
+          var w2 = Math.cos(x * 0.0018 - t * 1.1 + layerOffset * 0.8) * (PARAMS.amplitude * 0.6);
+          var w3 = Math.sin((x + baseY) * 0.001 + t * 0.7) * (PARAMS.amplitude * 0.35);
+          var y = baseY + w1 + w2 + w3;
 
-            ctx.fillStyle = 'hsla(' + col.h + ', ' + col.s + '%, ' + col.l + '%, ' + fillAlpha + ')';
-            ctx.fill();
+          if (s === 0) {
+            ctx.lineTo(x, y);
+          } else {
+            var prevX = (s - 1) * dx;
+            var cpx = (prevX + x) * 0.5;
+            ctx.quadraticCurveTo(prevX, ctx.lastY || y, cpx, (ctx.lastY + y) * 0.5);
           }
+          ctx.lastY = y;
         }
-      }
 
-      // ========================================================================
-      // STEP 2: RENDER STEADY 2.5PX GRID LINES (DO NOT GET BRIGHTER WITH WAVE)
-      // The wave fills the AREA with color; the lines remain calm, steady & subtle.
-      // ========================================================================
-      ctx.lineWidth = PARAMS.thickness;
+        ctx.lineTo(width, height);
+        ctx.closePath();
 
-      // Horizontal Lines
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols - 1; c++) {
-          var p1 = grid[r][c];
-          var p2 = grid[r][c + 1];
+        // Deep stealth dark jewel fill with soft gradient:
+        var fillL = PARAMS.darkness + (i % 2 === 0 ? 2 : 0);
+        var strokeL = fillL + 6;
 
-          var col = getSmoothGradientColor(p1.gradProgress, 0);
-          ctx.strokeStyle = 'hsla(' + col.h + ', 65%, 15%, 0.38)';
+        var grad = ctx.createLinearGradient(0, baseY - PARAMS.amplitude, 0, height);
+        grad.addColorStop(0, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL + 4) + '%, 0.40)');
+        grad.addColorStop(0.35, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + fillL + '%, 0.26)');
+        grad.addColorStop(1, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL - 2) + '%, 0.04)');
 
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-      }
+        ctx.fillStyle = grad;
+        ctx.fill();
 
-      // Vertical Lines
-      for (var c = 0; c < cols; c++) {
-        for (var r = 0; r < rows - 1; r++) {
-          var p1 = grid[r][c];
-          var p2 = grid[r + 1][c];
-
-          var col = getSmoothGradientColor(p1.gradProgress, 0);
-          ctx.strokeStyle = 'hsla(' + col.h + ', 65%, 15%, 0.38)';
-
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
+        // Silky crest highlight line (calm, dark, no bright glare):
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + strokeL + '%, 0.50)';
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -4580,9 +4498,9 @@ function observeRevealItems() {
 
   // Auto initialize on DOM ready or immediately
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDualUndulationCanvas);
+    document.addEventListener('DOMContentLoaded', initContinuousWaveCanvas);
   } else {
-    initDualUndulationCanvas();
+    initContinuousWaveCanvas();
   }
 
 </script>
