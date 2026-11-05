@@ -50,10 +50,57 @@
     });
 
     // 3. Scroll-Reveal Observer
+    // 2. True Apple Liquid Glass 60fps Specular & Meniscus Refraction Physics
+    initAppleLiquidGlassPhysics();
+
+    // 3. Scroll-Reveal Observer
     observeRevealItems();
   }
 
-  function observeRevealItems() {
+    var GLASS_RAF_ID = null;
+  var LAST_POINTER_X = window.innerWidth * 0.5;
+  var LAST_POINTER_Y = window.innerHeight * 0.3;
+
+  function updateGlassRefractionCoords(clientX, clientY) {
+    LAST_POINTER_X = clientX;
+    LAST_POINTER_Y = clientY;
+    if (GLASS_RAF_ID) return;
+    GLASS_RAF_ID = requestAnimationFrame(function() {
+      GLASS_RAF_ID = null;
+      var root = document.documentElement.style;
+      root.setProperty('--global-glass-x', clientX.toFixed(1) + 'px');
+      root.setProperty('--global-glass-y', clientY.toFixed(1) + 'px');
+
+      var surfaces = document.querySelectorAll('.liquid-slab, .pin-vault-card, .loading-glass-card, .mobile-dock, .nav-well, .segment-well, .liquid-modal-dialog, .liquid-drilldown-dialog, .liquid-chart-fullview-dialog, .liquid-month-popover');
+      for (var i = 0; i < surfaces.length; i++) {
+        var el = surfaces[i];
+        var rect = el.getBoundingClientRect();
+        if (rect.bottom < -40 || rect.top > window.innerHeight + 40 || rect.width === 0) continue;
+        var relX = ((clientX - rect.left) / rect.width) * 100;
+        var relY = ((clientY - rect.top) / rect.height) * 100;
+        el.style.setProperty('--glass-x', relX.toFixed(1) + '%');
+        el.style.setProperty('--glass-y', relY.toFixed(1) + '%');
+      }
+    });
+  }
+
+  function initAppleLiquidGlassPhysics() {
+    window.addEventListener('pointermove', function(e) {
+      updateGlassRefractionCoords(e.clientX, e.clientY);
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function(e) {
+      if (e.touches && e.touches.length > 0) {
+        updateGlassRefractionCoords(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('scroll', function() {
+      updateGlassRefractionCoords(LAST_POINTER_X, LAST_POINTER_Y);
+    }, { passive: true });
+  }
+
+function observeRevealItems() {
     var items = document.querySelectorAll('.reveal-item');
     if (!('IntersectionObserver' in window)) {
       items.forEach(function(el) { el.classList.add('is-visible'); });
@@ -3154,6 +3201,17 @@
     if (!APP_STATE || !APP_STATE.latest) return;
     var f = getFormValues();
     var prev = APP_STATE.latest;
+    if (APP_STATE.records && APP_STATE.records.length > 0 && f.month) {
+      var targetYm = f.month.substring(0, 7);
+      var matchIdx = APP_STATE.records.findIndex(function(r) {
+        return r.monthIso && r.monthIso.substring(0, 7) === targetYm;
+      });
+      if (matchIdx > 0) {
+        prev = APP_STATE.records[matchIdx - 1];
+      } else if (matchIdx === 0) {
+        prev = APP_STATE.records[0];
+      }
+    }
 
     updateDiffLabel('diff-hdfcSav', f.hdfc_sav, prev.hdfc_sav);
     updateDiffLabel('diff-hdfcDep', f.hdfc_dep, prev.hdfc_dep);

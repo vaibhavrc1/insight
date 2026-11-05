@@ -4462,4 +4462,287 @@
     40%  { transform: scale3d(1.012, 1.012, 1); }
     100% { transform: scale3d(1, 1, 1); }
   }
+
+/* ==========================================================================
+     TRUE APPLE LIQUID GLASS ENGINE (visionOS / iOS 26 Optical Physics)
+     - High-Index Backdrop Translucency + Chromatic Meniscus Refraction
+     - Living Caustic Backlight Stage
+     - Pointer-Reactive Fresnel Specular Rim (--glass-x, --glass-y)
+     - Convex Liquid-Mercury Glider Lenses
+     ========================================================================== */
+  :root {
+    --glass-blur: 42px;
+    --glass-saturate: 225%;
+    --glass-brightness: 1.14;
+    --glass-contrast: 1.06;
+    --glass-x: 28%;
+    --glass-y: 12%;
+    --global-glass-x: 50vw;
+    --global-glass-y: 25vh;
+
+    /* 5-Layer Optical Meniscus Inner Bevel + Specular Rim */
+    --liquid-refraction:
+      inset 0 1.75px 1.5px 0 rgba(255, 255, 255, 0.52),
+      inset 0 6px 18px -4px rgba(255, 255, 255, 0.14),
+      inset 1.25px 0 1.5px 0 rgba(56, 189, 248, 0.22),
+      inset -1.25px 0 1.5px 0 rgba(192, 132, 252, 0.18),
+      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.72);
+
+    /* Deep Carved Smoked-Crystal Recessed Trench */
+    --ao-recessed-well:
+      inset 0 3px 8px rgba(0, 0, 0, 0.88),
+      inset 0 1px 2px rgba(0, 0, 0, 0.95),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.08),
+      0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Living Caustic Light Orbs Behind the Glass Stage */
+  .lighting-stage .caustic-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(85px);
+    pointer-events: none;
+    will-change: transform, opacity;
+    mix-blend-mode: screen;
+  }
+
+  .lighting-stage .orb-cyan {
+    width: 560px;
+    height: 560px;
+    top: -12%;
+    left: 8%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.26) 0%, rgba(14, 165, 233, 0.08) 55%, transparent 75%);
+    animation: causticFloat1 22s ease-in-out infinite alternate;
+  }
+
+  .lighting-stage .orb-emerald {
+    width: 500px;
+    height: 500px;
+    top: 18%;
+    right: -6%;
+    background: radial-gradient(circle, rgba(52, 211, 153, 0.20) 0%, rgba(16, 185, 129, 0.06) 55%, transparent 75%);
+    animation: causticFloat2 26s ease-in-out infinite alternate;
+  }
+
+  .lighting-stage .orb-violet {
+    width: 540px;
+    height: 540px;
+    bottom: 6%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.20) 0%, rgba(139, 92, 246, 0.06) 55%, transparent 75%);
+    animation: causticFloat3 28s ease-in-out infinite alternate;
+  }
+
+  .lighting-stage .orb-amber {
+    width: 420px;
+    height: 420px;
+    bottom: 18%;
+    right: 14%;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.14) 0%, rgba(245, 158, 11, 0.04) 55%, transparent 75%);
+    animation: causticFloat1 30s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes causticFloat1 {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(55px, 35px, 0) scale(1.08); }
+    100% { transform: translate3d(-35px, 65px, 0) scale(0.95); }
+  }
+
+  @keyframes causticFloat2 {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-60px, 45px, 0) scale(1.1); }
+    100% { transform: translate3d(30px, -40px, 0) scale(0.94); }
+  }
+
+  @keyframes causticFloat3 {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(45px, -50px, 0) scale(1.06); }
+    100% { transform: translate3d(-40px, 30px, 0) scale(1.12); }
+  }
+
+  /* True Apple Liquid Glass Card Slab */
+  .liquid-slab {
+    background:
+      radial-gradient(
+        560px circle at var(--glass-x, 28%) var(--glass-y, 12%),
+        rgba(255, 255, 255, 0.135) 0%,
+        rgba(56, 189, 248, 0.055) 34%,
+        transparent 70%
+      ),
+      linear-gradient(
+        165deg,
+        rgba(38, 56, 94, 0.42) 0%,
+        rgba(15, 24, 44, 0.34) 48%,
+        rgba(7, 12, 24, 0.48) 100%
+      ) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow:
+      0 20px 48px -12px rgba(0, 0, 0, 0.72),
+      0 4px 14px -2px rgba(0, 0, 0, 0.55),
+      0 0 28px -8px rgba(56, 189, 248, 0.12),
+      var(--liquid-refraction) !important;
+  }
+
+  /* Interactive Fresnel Specular Rim Border on .liquid-slab::after */
+  .liquid-slab::after {
+    padding: 1.35px !important;
+    background:
+      radial-gradient(
+        380px circle at var(--glass-x, 28%) var(--glass-y, 12%),
+        rgba(255, 255, 255, 0.85) 0%,
+        rgba(56, 189, 248, 0.52) 32%,
+        rgba(255, 255, 255, 0.14) 62%,
+        transparent 100%
+      ),
+      linear-gradient(
+        142deg,
+        rgba(255, 255, 255, 0.52) 0%,
+        rgba(255, 255, 255, 0.12) 32%,
+        rgba(56, 189, 248, 0.10) 68%,
+        rgba(192, 132, 252, 0.34) 100%
+      ) !important;
+  }
+
+  .liquid-slab.interactive-lift:hover {
+    transform: translateY(-3.5px) scale(1.004);
+    box-shadow:
+      0 26px 58px -10px rgba(0, 0, 0, 0.78),
+      0 8px 20px -4px rgba(0, 0, 0, 0.62),
+      0 0 34px -6px rgba(56, 189, 248, 0.24),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.68),
+      inset 0 8px 22px -4px rgba(255, 255, 255, 0.18),
+      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.72) !important;
+  }
+
+  /* Hero Bento Subsurface Caustic Glow */
+  .hero-bento {
+    background:
+      radial-gradient(
+        650px circle at var(--glass-x, 22%) var(--glass-y, 15%),
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(56, 189, 248, 0.12) 36%,
+        transparent 72%
+      ),
+      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.22) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.16) 0%, transparent 65%),
+      linear-gradient(165deg, rgba(28, 44, 78, 0.46) 0%, rgba(10, 17, 34, 0.42) 100%) !important;
+  }
+
+  /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
+  .nav-glider-pill,
+  .dock-glider-pill,
+  .segment-glider-pill {
+    background:
+      radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.12) 48%, transparent 75%),
+      linear-gradient(180deg, rgba(56, 189, 248, 0.38) 0%, rgba(14, 165, 233, 0.18) 55%, rgba(52, 211, 153, 0.24) 100%) !important;
+    backdrop-filter: blur(20px) saturate(250%) brightness(1.24) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(250%) brightness(1.24) !important;
+    border: 1px solid rgba(255, 255, 255, 0.58) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.88) !important;
+    box-shadow:
+      0 6px 20px -2px rgba(14, 165, 233, 0.42),
+      0 0 24px rgba(56, 189, 248, 0.38),
+      inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.88),
+      inset 0 -2px 3px 0 rgba(14, 165, 233, 0.45) !important;
+  }
+
+  /* Carved Crystal Navigation & Segment Wells */
+  .nav-well,
+  .segment-well,
+  .month-stepper-control {
+    background:
+      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(8, 14, 28, 0.52) 0%, rgba(4, 8, 18, 0.68) 100%) !important;
+    backdrop-filter: blur(32px) saturate(210%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.65) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.24) !important;
+    box-shadow: var(--ao-recessed-well) !important;
+  }
+
+  /* Floating Optical Liquid-Glass Mobile Dock */
+  .mobile-dock {
+    background:
+      radial-gradient(320px circle at var(--glass-x, 50%) var(--glass-y, 20%), rgba(255, 255, 255, 0.18) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(28, 44, 78, 0.46) 0%, rgba(10, 17, 34, 0.56) 100%) !important;
+    backdrop-filter: blur(44px) saturate(235%) brightness(1.18) !important;
+    -webkit-backdrop-filter: blur(44px) saturate(235%) brightness(1.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.62) !important;
+    box-shadow:
+      0 22px 50px -8px rgba(0, 0, 0, 0.78),
+      0 0 28px rgba(56, 189, 248, 0.20),
+      var(--liquid-refraction) !important;
+  }
+
+  /* Modals, Popovers, Drilldowns & Security Vault in True Liquid Glass */
+  .pin-vault-card,
+  .loading-glass-card,
+  .liquid-modal-dialog,
+  .liquid-drilldown-dialog,
+  .liquid-chart-fullview-dialog,
+  .liquid-month-popover,
+  .liquid-toast,
+  .liquid-undo-toast {
+    background:
+      radial-gradient(520px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.14) 0%, rgba(56, 189, 248, 0.06) 38%, transparent 72%),
+      linear-gradient(165deg, rgba(24, 38, 68, 0.58) 0%, rgba(10, 16, 32, 0.66) 55%, rgba(5, 9, 20, 0.74) 100%) !important;
+    backdrop-filter: blur(48px) saturate(230%) brightness(1.14) contrast(1.06) !important;
+    -webkit-backdrop-filter: blur(48px) saturate(230%) brightness(1.14) contrast(1.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.56) !important;
+    box-shadow:
+      0 28px 72px -12px rgba(0, 0, 0, 0.85),
+      0 0 42px rgba(56, 189, 248, 0.22),
+      var(--liquid-refraction) !important;
+  }
+
+  .drilldown-dialog-header,
+  .month-detail-header,
+  .note-modal-header,
+  .fullview-dialog-header {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(14, 22, 40, 0.28) 100%) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  }
+
+  /* Liquid Glass Buttons & Keycaps */
+  .pin-key,
+  .btn-subtle,
+  .btn-action-icon,
+  .btn-overlay-close,
+  .btn-fullview-close,
+  .btn-chart-expand {
+    background:
+      linear-gradient(165deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+    backdrop-filter: blur(18px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(190%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.48) !important;
+    box-shadow:
+      0 6px 16px -4px rgba(0, 0, 0, 0.55),
+      inset 0 1.2px 1px rgba(255, 255, 255, 0.42),
+      inset 0 -1px 1.5px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .btn-emissive {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.45) 0%, transparent 60%),
+      linear-gradient(135deg, rgba(14, 165, 233, 0.88) 0%, rgba(2, 132, 199, 0.82) 55%, rgba(16, 185, 129, 0.78) 100%) !important;
+    backdrop-filter: blur(20px) saturate(220%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(220%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.82) !important;
+    box-shadow:
+      0 8px 22px -4px rgba(14, 165, 233, 0.55),
+      0 0 24px rgba(56, 189, 248, 0.42),
+      inset 0 2px 2px rgba(255, 255, 255, 0.72),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.45) !important;
+  }
+
+
 </style>
