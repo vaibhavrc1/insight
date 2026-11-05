@@ -379,6 +379,22 @@
     line-height: 1.45;
   }
 
+  /* Seamless Optical Backdrop - Zero Opacity Box Overlays Behind Glass Slabs */
+  .app-shell,
+  .views-stage,
+  #views-stage,
+  .view-section,
+  #view-dashboard,
+  #view-yearly,
+  #view-sim,
+  #view-entry,
+  #view-history,
+  .pillar-grid,
+  .bento-two-col {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
   .lighting-stage {
     position: fixed;
     inset: 0;
@@ -386,9 +402,10 @@
     z-index: 0;
     overflow: hidden;
     background: 
-      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(14, 165, 233, 0.22) 0%, transparent 65%),
-      radial-gradient(circle 650px at 90% 30%, rgba(16, 185, 129, 0.14) 0%, transparent 65%),
-      radial-gradient(circle 600px at 10% 75%, rgba(168, 85, 247, 0.15) 0%, transparent 65%),
+      radial-gradient(ellipse 100% 75% at 50% -5%, rgba(14, 165, 233, 0.28) 0%, rgba(2, 132, 199, 0.10) 45%, transparent 75%),
+      radial-gradient(circle 850px at 80% 35%, rgba(16, 185, 129, 0.20) 0%, rgba(5, 150, 105, 0.06) 50%, transparent 75%),
+      radial-gradient(circle 900px at 18% 65%, rgba(168, 85, 247, 0.22) 0%, rgba(124, 58, 237, 0.06) 50%, transparent 75%),
+      radial-gradient(circle 780px at 50% 48%, rgba(56, 189, 248, 0.16) 0%, rgba(168, 85, 247, 0.08) 45%, transparent 75%),
       #03060F;
   }
 
@@ -821,12 +838,14 @@
   .view-section.stagger-in-right {
     display: flex !important;
     z-index: 2;
-    background: var(--bg-obsidian);
+    background: transparent !important;
+    background-color: transparent !important;
   }
   .view-section.stagger-in-left {
     display: flex !important;
     z-index: 2;
-    background: var(--bg-obsidian);
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   .view-section.stagger-in-right > *:nth-child(1) { animation: cardStaggerInRight 0.88s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
@@ -4596,39 +4615,48 @@
   }
 
   .lighting-stage .orb-cyan {
-    width: 720px;
-    height: 720px;
-    top: -15%;
-    left: 8%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.32) 0%, rgba(2, 132, 199, 0.12) 50%, transparent 75%);
+    width: 820px;
+    height: 820px;
+    top: -8%;
+    left: 14%;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.36) 0%, rgba(56, 189, 248, 0.14) 45%, transparent 75%);
     animation: causticFloat1 24s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-emerald {
-    width: 550px;
-    height: 550px;
-    top: 28%;
-    right: -4%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.08) 50%, transparent 75%);
+    width: 760px;
+    height: 760px;
+    top: 20%;
+    right: 6%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.26) 0%, rgba(52, 211, 153, 0.10) 45%, transparent 75%);
     animation: causticFloat2 26s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-violet {
-    width: 680px;
-    height: 680px;
-    bottom: -8%;
-    left: -6%;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(124, 58, 237, 0.10) 55%, transparent 75%);
+    width: 840px;
+    height: 840px;
+    bottom: 2%;
+    left: 8%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.30) 0%, rgba(124, 58, 237, 0.10) 45%, transparent 75%);
     animation: causticFloat3 28s ease-in-out infinite alternate;
   }
 
   .lighting-stage .orb-amber {
-    width: 480px;
-    height: 480px;
-    bottom: 18%;
-    right: 12%;
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.05) 50%, transparent 75%);
+    width: 680px;
+    height: 680px;
+    bottom: 12%;
+    right: 16%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, rgba(251, 191, 36, 0.08) 45%, transparent 75%);
     animation: causticFloat1 32s ease-in-out infinite alternate-reverse;
+  }
+
+  .lighting-stage .orb-azure {
+    width: 720px;
+    height: 720px;
+    top: 34%;
+    left: 30%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.24) 0%, rgba(99, 102, 241, 0.12) 50%, transparent 75%);
+    animation: causticFloat2 30s ease-in-out infinite alternate-reverse;
   }
 
   @keyframes causticFloat1 {
@@ -4654,22 +4682,22 @@
     background:
       radial-gradient(
         380px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.05) 0%,
-        rgba(56, 189, 248, 0.025) 35%,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(56, 189, 248, 0.03) 35%,
         transparent 70%
       ),
       linear-gradient(
         165deg,
-        rgba(18, 30, 54, 0.45) 0%,
-        rgba(9, 15, 28, 0.55) 48%,
-        rgba(4, 7, 16, 0.70) 100%
+        rgba(22, 36, 68, 0.30) 0%,
+        rgba(11, 18, 36, 0.38) 48%,
+        rgba(5, 9, 20, 0.50) 100%
       ) !important;
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
+    backdrop-filter: blur(28px) saturate(210%) brightness(1.10) contrast(1.04) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.10) contrast(1.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow:
-      0 24px 56px -12px rgba(0, 0, 0, 0.75),
-      0 4px 14px -2px rgba(0, 0, 0, 0.55),
+      0 20px 50px -12px rgba(0, 0, 0, 0.70),
+      0 4px 14px -2px rgba(0, 0, 0, 0.45),
       0 0 24px -6px rgba(56, 189, 248, 0.10),
       var(--liquid-refraction) !important;
   }
@@ -4710,13 +4738,13 @@
     background:
       radial-gradient(
         360px circle at var(--glass-x, 22%) var(--glass-y, 15%),
-        rgba(255, 255, 255, 0.05) 0%,
-        rgba(56, 189, 248, 0.035) 36%,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(56, 189, 248, 0.04) 36%,
         transparent 72%
       ),
-      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.16) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.12) 0%, transparent 65%),
-      linear-gradient(165deg, rgba(18, 30, 54, 0.45) 0%, rgba(7, 12, 24, 0.68) 100%) !important;
+      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.18) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.14) 0%, transparent 65%),
+      linear-gradient(165deg, rgba(22, 36, 68, 0.32) 0%, rgba(7, 12, 24, 0.46) 100%) !important;
   }
 
   /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
