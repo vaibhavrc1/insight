@@ -337,15 +337,20 @@
     var canvasRect = canvas.getBoundingClientRect();
     var offsetLeft = canvasRect.left - parentRect.left;
 
-    var posX = offsetLeft + tooltip.caretX;
+        var posX = offsetLeft + tooltip.caretX;
     var wrapW = parent.clientWidth || 300;
-    var tooltipW = tooltipEl.offsetWidth || 180;
-    var halfW = tooltipW / 2;
-    var clampedX = Math.max(halfW + 8, Math.min(wrapW - halfW - 8, posX));
 
-    tooltipEl.style.left = clampedX + 'px';
-    tooltipEl.style.top = '8px';
-    tooltipEl.style.transform = 'translateX(-50%) scale(1)';
+    // Pin tooltip either at top-right or top-left opposite to cursor location so it never covers data points
+    var isRightSide = posX > (wrapW / 2);
+    tooltipEl.style.top = '10px';
+    if (isRightSide) {
+      tooltipEl.style.left = '14px';
+      tooltipEl.style.right = 'auto';
+    } else {
+      tooltipEl.style.right = '14px';
+      tooltipEl.style.left = 'auto';
+    }
+    tooltipEl.style.transform = 'none';
     tooltipEl.style.opacity = '1';
     tooltipEl.style.pointerEvents = 'none';
   }
