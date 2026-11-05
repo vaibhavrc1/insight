@@ -102,6 +102,232 @@
   }
 
   /* ==========================================================================
+     PWA INSTALL PROMPT CONTROLLER (NON-BLOCKING & TRANSIENT)
+     ========================================================================== */
+  var DEFERRED_INSTALL_PROMPT = null;
+  var INSTALL_BANNER_TIMER = null;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    // Intercept Chrome default install prompt so it never blocks the user's viewport
+    e.preventDefault();
+    DEFERRED_INSTALL_PROMPT = e;
+
+    // Show transient notification only when opening website, then auto-hide
+    if (!sessionStorage.getItem('pwa_prompt_dismissed')) {
+      showPwaInstallBanner();
+    }
+  });
+
+  function showPwaInstallBanner() {
+    var banner = document.getElementById('pwa-install-banner');
+    if (!banner) return;
+    banner.classList.add('show');
+
+    if (INSTALL_BANNER_TIMER) clearTimeout(INSTALL_BANNER_TIMER);
+    // Auto-hide after 5 seconds so it never blocks the view
+    INSTALL_BANNER_TIMER = setTimeout(function() {
+      dismissPwaInstall();
+    }, 5000);
+  }
+
+  function dismissPwaInstall() {
+    var banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.classList.remove('show');
+    sessionStorage.setItem('pwa_prompt_dismissed', '1');
+    if (INSTALL_BANNER_TIMER) {
+      clearTimeout(INSTALL_BANNER_TIMER);
+      INSTALL_BANNER_TIMER = null;
+    }
+  }
+
+  function triggerPwaInstall() {
+    dismissPwaInstall();
+    if (DEFERRED_INSTALL_PROMPT) {
+      DEFERRED_INSTALL_PROMPT.prompt();
+      DEFERRED_INSTALL_PROMPT.userChoice.then(function() {
+        DEFERRED_INSTALL_PROMPT = null;
+      });
+    }
+  }
+
+  /* ==========================================================================
+     STATISTICAL TRENDLINE & APPLE LIQUID GLASS CHART TOOLTIP SYSTEM
+     ========================================================================== */
+  // Calculates linear regression best-fit trendline between points to visualize trajectory
+  function calculateTrendline(values) {
+    if (!values || values.length <= 1) return (values || []).slice();
+    var n = values.length;
+    var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    for (var i = 0; i < n; i++) {
+      var y = Number(values[i]) || 0;
+      sumX += i;
+      sumY += y;
+      sumXY += i * y;
+      sumX2 += i * i;
+    }
+    var denom = (n * sumX2 - sumX * sumX);
+    if (denom === 0) return values.slice();
+    var slope = (n * sumXY - sumX * sumY) / denom;
+    var intercept = (sumY - slope * sumX) / n;
+    var trend = [];
+    for (var j = 0; j < n; j++) {
+      trend.push(Math.round(slope * j + intercept));
+    }
+    return trend;
+  }
+
+  // Converts verbose internal dataset labels into clean, stylish HUD labels
+  function cleanChartLabel(raw) {
+    if (!raw) return '';
+    if (/market investments/i.test(raw)) return 'Market Assets';
+    if (/bank & fixed deposits/i.test(raw)) return 'Bank & FD';
+    if (/epf balance/i.test(raw)) return 'EPF Balance';
+    if (/mutual fund/i.test(raw) || raw === 'My Mutual Funds (₹)') return 'MF Holdings';
+    if (/nifty/i.test(raw)) return 'Nifty 50';
+    if (/gold.*rate|gold.*bullion|gold spot/i.test(raw)) return 'Gold Spot';
+    if (/gold/i.test(raw)) return 'Gold Holdings';
+    if (/silver.*rate|silver.*bullion|silver spot/i.test(raw)) return 'Silver Spot';
+    if (/silver/i.test(raw)) return 'Silver Holdings';
+    if (/monthly net|monthly wealth|monthly.*change/i.test(raw)) return 'Wealth Added';
+    if (/pace|average added/i.test(raw)) return 'Average Pace';
+    if (/trend/i.test(raw)) return 'Average Trend';
+    if (/total net worth|total wealth/i.test(raw)) return 'Total Wealth';
+    return raw;
+  }
+
+  // Universal Apple Liquid Glass HTML Tooltip Renderer
+  function renderLiquidGlassTooltip(context) {
+    var chart = context.chart;
+    var tooltip = context.tooltip;
+    var canvas = chart.canvas;
+    var parent = canvas.parentNode;
+    if (!parent) return;
+
+    var tooltipEl = parent.querySelector('.apple-liquid-glass-tooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.className = 'apple-liquid-glass-tooltip';
+      parent.appendChild(tooltipEl);
+    }
+
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = '0';
+      tooltipEl.style.pointerEvents = 'none';
+      return;
+    }
+
+    var title = (tooltip.title && tooltip.title.length) ? tooltip.title[0] : '';
+    var points = tooltip.dataPoints || [];
+    if (!points.length) return;
+
+    var html = '';
+    if (title) {
+      html += '<div class="alg-title">' + title + '</div>';
+    }
+    html += '<div class="alg-body">';
+
+    var isStackedNetworth = false;
+    var stackedSum = 0;
+    var hasTotalAlready = false;
+
+    // Check if points contain Total Wealth directly
+    points.forEach(function(p) {
+      if (/total wealth|total net worth/i.test(p.dataset.label || '')) {
+        hasTotalAlready = true;
+      }
+    });
+
+    points.forEach(function(p) {
+      var rawLabel = p.dataset.label || '';
+      var label = cleanChartLabel(rawLabel);
+      var val = p.raw;
+      var formattedVal = '';
+
+      if (typeof val === 'number') {
+        if (p.dataset.yAxisID === 'yRight') {
+          if (/nifty/i.test(rawLabel)) {
+            formattedVal = Math.round(val).toLocaleString('en-IN') + ' pts';
+          } else if (/gold/i.test(rawLabel)) {
+            formattedVal = '₹' + Math.round(val).toLocaleString('en-IN') + ' / 10g';
+          } else if (/silver/i.test(rawLabel)) {
+            formattedVal = '₹' + Math.round(val).toLocaleString('en-IN') + ' / kg';
+          } else {
+            formattedVal = (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
+          }
+        } else if (/%/i.test(p.dataset.label) || (val > -100 && val < 500 && !/added|net|holding|invest|bank|epf|market|trend/i.test(label))) {
+          formattedVal = (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
+        } else if (/added/i.test(label) || /change/i.test(rawLabel)) {
+          formattedVal = (val >= 0 ? '+' : '') + formatIndian(val, false);
+        } else {
+          formattedVal = formatIndian(val, false);
+        }
+      } else {
+        formattedVal = String(val);
+      }
+
+      if (/market assets|bank & fd|epf balance/i.test(label)) {
+        isStackedNetworth = true;
+        stackedSum += (Number(val) || 0);
+      }
+
+      var color = p.dataset.borderColor || p.dataset.backgroundColor || '#38BDF8';
+      if (Array.isArray(color)) color = color[p.dataIndex] || color[0] || '#38BDF8';
+
+      html += '<div class="alg-row">' +
+        '<div class="alg-label">' +
+          '<span class="alg-dot" style="background:' + color + '; box-shadow:0 0 6px ' + color + ';"></span>' +
+          '<span>' + label + '</span>' +
+        '</div>' +
+        '<span class="alg-val">' + formattedVal + '</span>' +
+      '</div>';
+    });
+
+    if (isStackedNetworth && points.length > 1 && !hasTotalAlready) {
+      html += '<div class="alg-divider"></div>' +
+        '<div class="alg-row alg-total-row">' +
+          '<span class="alg-total-label">Total Net Worth</span>' +
+          '<span class="alg-total-val">' + formatIndian(stackedSum, false) + '</span>' +
+        '</div>';
+    }
+
+    html += '</div>';
+    tooltipEl.innerHTML = html;
+
+    // Position relative to parent container
+    var parentRect = parent.getBoundingClientRect();
+    var canvasRect = canvas.getBoundingClientRect();
+    var offsetLeft = canvasRect.left - parentRect.left;
+    var offsetTop = canvasRect.top - parentRect.top;
+
+    var posX = offsetLeft + tooltip.caretX;
+    var posY = offsetTop + tooltip.caretY;
+
+    var wrapW = parent.clientWidth || 300;
+    var halfW = 85;
+    var clampedX = Math.max(halfW + 6, Math.min(wrapW - halfW - 6, posX));
+
+    tooltipEl.style.left = clampedX + 'px';
+
+    if (posY < 95) {
+      tooltipEl.style.top = (posY + 14) + 'px';
+      tooltipEl.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+    } else {
+      tooltipEl.style.top = (posY - 12) + 'px';
+      tooltipEl.style.transform = 'translateX(-50%) translateY(-100%) scale(1)';
+    }
+
+    tooltipEl.style.opacity = '1';
+    tooltipEl.style.pointerEvents = 'none';
+  }
+
+  function getLiquidGlassTooltipConfig() {
+    return {
+      enabled: false,
+      external: renderLiquidGlassTooltip
+    };
+  }
+
+  /* ==========================================================================
      LIQUID-MERCURY GLIDER & KINETIC CARD STAGGER NAVIGATION
      ========================================================================== */
   var CURRENT_VIEW = 'dashboard';
@@ -1406,6 +1632,7 @@
 
     var datasets = [];
     var isStacked = TRAJECTORY_MODE === 'stacked';
+    var trendData = calculateTrendline(cd.netWorth);
 
     if (isStacked) {
       datasets = [
@@ -1438,23 +1665,48 @@
           tension: 0,
           borderWidth: 2,
           pointRadius: 0
+        },
+        {
+          label: 'Average Trend',
+          data: trendData,
+          borderColor: 'rgba(255, 255, 255, 0.40)',
+          borderDash: [5, 4],
+          borderWidth: 1.8,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          stack: 'trend'
         }
       ];
     } else {
       var grad = ctx.createLinearGradient(0, 0, 0, 260);
       grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
       grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
-      datasets = [{
-        label: 'Total Wealth',
-        data: cd.netWorth,
-        borderColor: '#38BDF8',
-        backgroundColor: grad,
-        fill: true,
-        tension: 0,
-        borderWidth: 2.8,
-        pointRadius: 0,
-        pointHoverRadius: 5
-      }];
+      datasets = [
+        {
+          label: 'Total Wealth',
+          data: cd.netWorth,
+          borderColor: '#38BDF8',
+          backgroundColor: grad,
+          fill: true,
+          tension: 0,
+          borderWidth: 2.8,
+          pointRadius: 0,
+          pointHoverRadius: 5
+        },
+        {
+          label: 'Average Trend',
+          data: trendData,
+          borderColor: 'rgba(255, 255, 255, 0.45)',
+          borderDash: [5, 4],
+          borderWidth: 1.8,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0
+        }
+      ];
     }
 
     var isMobile = window.innerWidth <= 768;
@@ -1471,19 +1723,14 @@
         plugins: {
           legend: {
             display: isStacked,
-            labels: { color: '#CBD5E1', font: { size: 11, weight: '600' }, boxWidth: 12 }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            titleColor: '#94A3B8',
-            bodyColor: '#FFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            borderColor: 'rgba(56, 189, 248, 0.35)',
-            borderWidth: 1,
-            callbacks: {
-              label: function(c) { return ' ' + formatIndian(c.raw, false); }
+            labels: {
+              color: '#CBD5E1',
+              font: { size: 11, weight: '600' },
+              boxWidth: 12,
+              filter: function(item) { return item.text !== 'Average Trend'; }
             }
           },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(cd.labels)
         },
         scales: {
@@ -1541,16 +1788,7 @@
             position: 'bottom',
             labels: { color: '#CBD5E1', font: { size: 10.5, weight: '600' }, boxWidth: 10, padding: 10 }
           },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) {
-                var pct = ((c.raw / lat.net_worth) * 100).toFixed(1) + '%';
-                return ' ' + formatIndian(c.raw, false) + ' (' + pct + ')';
-              }
-            }
-          }
+          tooltip: getLiquidGlassTooltipConfig()
         }
       }
     });
@@ -1876,51 +2114,7 @@
             position: 'top',
             labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 12 }
           },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            borderColor: 'rgba(255, 255, 255, 0.12)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            padding: 12,
-            boxPadding: 6,
-            callbacks: {
-              label: function(c) {
-                var val = c.raw;
-                var idx = c.dataIndex;
-                if (c.dataset.yAxisID === 'yLeft') {
-                  return ' ' + formatIndian(val, false);
-                } else if (c.dataset.yAxisID === 'yRight') {
-                  if (REACTION_FILTER === 'mf') {
-                    return ' ' + Number(val).toLocaleString('en-IN') + ' pts';
-                  } else if (REACTION_FILTER === 'gold') {
-                    return ' ₹' + Number(val).toLocaleString('en-IN') + ' / 10g';
-                  } else if (REACTION_FILTER === 'silver') {
-                    return ' ₹' + Number(val).toLocaleString('en-IN') + ' / kg';
-                  }
-                  return ' ' + Number(val).toLocaleString('en-IN');
-                } else {
-                  var diff = (val - 100).toFixed(1);
-                  var sign = diff >= 0 ? '+' : '';
-                  var extra = '';
-                  if (c.dataset.id === 'mf' && rx.mfRaw) {
-                    extra = ' (' + formatIndian(rx.mfRaw[idx], false) + ')';
-                  } else if (c.dataset.id === 'nifty' && rx.niftyRaw) {
-                    extra = ' (' + Number(rx.niftyRaw[idx]).toLocaleString('en-IN') + ' pts)';
-                  } else if (c.dataset.id === 'goldHolding' && rx.goldHoldingRaw) {
-                    extra = ' (' + formatIndian(rx.goldHoldingRaw[idx], false) + ')';
-                  } else if (c.dataset.id === 'goldRate' && rx.goldBenchRaw) {
-                    extra = ' (₹' + Number(rx.goldBenchRaw[idx]).toLocaleString('en-IN') + '/10g)';
-                  } else if (c.dataset.id === 'silverHolding' && rx.silverHoldingRaw) {
-                    extra = ' (' + formatIndian(rx.silverHoldingRaw[idx], false) + ')';
-                  } else if (c.dataset.id === 'silverRate' && rx.silverBenchRaw) {
-                    extra = ' (₹' + Number(rx.silverBenchRaw[idx]).toLocaleString('en-IN') + '/kg)';
-                  }
-                  return ' ' + sign + diff + '%' + extra;
-                }
-              }
-            }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(rx.labels)
         },
         scales: scales
@@ -1936,6 +2130,9 @@
     if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.destroy();
 
     var colors = cd.monthlyChange.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
+    var avgPace = Math.round(cd.monthlyChange.reduce(function(a, b) { return a + b; }, 0) / (cd.monthlyChange.length || 1));
+    var avgPaceLine = cd.monthlyChange.map(function() { return avgPace; });
+
     var isMobile = window.innerWidth <= 768;
     var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
     var xMax = (isMobile && cd.labels.length > 8) ? cd.labels[cd.labels.length - 1] : undefined;
@@ -1944,33 +2141,40 @@
       type: 'line',
       data: {
         labels: cd.labels,
-        datasets: [{
-          label: 'Monthly Net Wealth Change',
-          data: cd.monthlyChange,
-          borderColor: '#38BDF8',
-          borderWidth: 2.5,
-          tension: 0,
-          fill: true,
-          backgroundColor: 'rgba(56, 189, 248, 0.12)',
-          pointRadius: 3.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: colors,
-          pointBorderColor: '#070B14',
-          pointBorderWidth: 1.5
-        }]
+        datasets: [
+          {
+            label: 'Monthly Net Wealth Change',
+            data: cd.monthlyChange,
+            borderColor: '#38BDF8',
+            borderWidth: 2.5,
+            tension: 0,
+            fill: true,
+            backgroundColor: 'rgba(56, 189, 248, 0.12)',
+            pointRadius: 3.5,
+            pointHoverRadius: 6,
+            pointBackgroundColor: colors,
+            pointBorderColor: '#070B14',
+            pointBorderWidth: 1.5
+          },
+          {
+            label: 'Average Pace',
+            data: avgPaceLine,
+            borderColor: 'rgba(251, 191, 36, 0.45)',
+            borderDash: [5, 4],
+            borderWidth: 1.6,
+            fill: false,
+            tension: 0,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) { return (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
-            }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(cd.labels)
         },
         scales: {
@@ -2100,10 +2304,7 @@
         maintainAspectRatio: false,
         plugins: {
           legend: { labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 12 } },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            callbacks: { label: function(c) { return ' ' + formatIndian(c.raw, false); } }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(labels)
         },
         scales: {
@@ -2140,15 +2341,7 @@
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            padding: 10,
-            callbacks: {
-              label: function(c) { return ' ' + (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
-            }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(labels)
         },
         scales: {
@@ -2353,26 +2546,7 @@
             display: true,
             labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
           },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            borderColor: 'rgba(56, 189, 248, 0.3)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyColor: '#CBD5E1',
-            padding: 12,
-            boxPadding: 6,
-            callbacks: {
-              label: function(c) {
-                return ' ' + formatIndian(c.raw, false);
-              },
-              afterBody: function(items) {
-                if (!items || items.length === 0) return '';
-                var mIdx = items[0].dataIndex;
-                var rec = months[mIdx];
-                return '\nTotal: ' + formatIndian(rec.net_worth, false) + ' (' + (rec.monthlyChange >= 0 ? '+' : '') + formatIndian(rec.monthlyChange, false) + ')';
-              }
-            }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(cLabels)
         },
         scales: {
@@ -2554,10 +2728,7 @@
         maintainAspectRatio: false,
         plugins: {
           legend: { labels: { color: '#CBD5E1', font: { size: 10.5, weight: '700' }, boxWidth: 12, padding: 10 } },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.95)',
-            callbacks: { label: function(c) { return ' ' + formatIndian(c.raw, false); } }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(yearLabels)
         },
         scales: {
@@ -3452,7 +3623,7 @@
   }
 
   /* ==========================================================================
-     FULL-VIEW CHART MODAL SYSTEM (MINIMALIST, GRAPH-FOCUSED)
+     PREMIUM MINIMALIST FULL-SCREEN CHART SYSTEM (MAX SCREEN AREA + FLUID GLIDER)
      ========================================================================== */
   function openChartFullView(chartType, subFilter) {
     if (!APP_STATE) {
@@ -3475,31 +3646,22 @@
 
     if (!canvas) return;
 
-    if (CHART_FULLVIEW) {
-      CHART_FULLVIEW.destroy();
-      CHART_FULLVIEW = null;
-    }
+    // Set title and build persistent controls track (once per modal open)
+    setupFullViewHeader(chartType, title, controls);
 
-    switch (chartType) {
-      case 'networth':
-        renderFullViewNetworth(title, controls, canvas);
-        break;
-      case 'reaction':
-        renderFullViewReaction(title, controls, canvas);
-        break;
-      case 'monthlyChange':
-        renderFullViewMonthlyChange(title, controls, canvas);
-        break;
-      default:
-        renderFullViewNetworth(title, controls, canvas);
-    }
-
-    if (CHART_FULLVIEW) {
-      attachChartZoomReset(canvas, CHART_FULLVIEW);
-    }
+    // Render chart canvas
+    buildFullViewChart(canvas);
 
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Position slider glider pill with smooth entrance
+    setTimeout(function() {
+      if (controls) {
+        var activeBtn = controls.querySelector('.segment-btn.active');
+        if (activeBtn) repositionSegmentGlider(activeBtn, false);
+      }
+    }, 40);
   }
 
   function getDefaultSubFilter(chartType) {
@@ -3509,11 +3671,70 @@
     return 'default';
   }
 
+  function setupFullViewHeader(chartType, title, controls) {
+    if (!controls) return;
+    if (chartType === 'networth') {
+      if (title) title.innerText = 'Wealth Growth & Asset Layers';
+      var isStacked = (FULLVIEW_SUB_FILTER !== 'total');
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<div class="segment-glider-pill"></div>' +
+          '<button type="button" class="segment-btn ' + (isStacked ? 'active' : '') + '" data-val="stacked" onclick="handleFullViewFilterClick(this)"><span>Stacked Layers</span></button>' +
+          '<button type="button" class="segment-btn ' + (!isStacked ? 'active' : '') + '" data-val="total" onclick="handleFullViewFilterClick(this)"><span>Total Curve</span></button>' +
+        '</div>';
+    } else if (chartType === 'reaction') {
+      if (title) title.innerText = 'Investment Trajectory vs Market Benchmarks';
+      var mode = FULLVIEW_SUB_FILTER || 'mf';
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<div class="segment-glider-pill"></div>' +
+          '<button type="button" class="segment-btn ' + (mode === 'mf' ? 'active' : '') + '" data-val="mf" onclick="handleFullViewFilterClick(this)"><span>MF vs Nifty 50</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'gold' ? 'active' : '') + '" data-val="gold" onclick="handleFullViewFilterClick(this)"><span>Gold</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'silver' ? 'active' : '') + '" data-val="silver" onclick="handleFullViewFilterClick(this)"><span>Silver</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'all' ? 'active' : '') + '" data-val="all" onclick="handleFullViewFilterClick(this)"><span>All Combined</span></button>' +
+        '</div>';
+    } else if (chartType === 'monthlyChange') {
+      if (title) title.innerText = 'Monthly Wealth Added (₹)';
+      var isBars = (FULLVIEW_SUB_FILTER === 'bars');
+      controls.innerHTML =
+        '<div class="segment-well">' +
+          '<div class="segment-glider-pill"></div>' +
+          '<button type="button" class="segment-btn ' + (!isBars ? 'active' : '') + '" data-val="curve" onclick="handleFullViewFilterClick(this)"><span>Flow Curve</span></button>' +
+          '<button type="button" class="segment-btn ' + (isBars ? 'active' : '') + '" data-val="bars" onclick="handleFullViewFilterClick(this)"><span>Bar Histogram</span></button>' +
+        '</div>';
+    }
+  }
+
+  // Smooth liquid slider click handler: glides pill and updates canvas without destroying header DOM
+  function handleFullViewFilterClick(btn) {
+    if (!btn) return;
+    var well = btn.closest('.segment-well');
+    if (well) {
+      well.querySelectorAll('.segment-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      repositionSegmentGlider(btn, true);
+    }
+    var filterVal = btn.getAttribute('data-val');
+    FULLVIEW_SUB_FILTER = filterVal;
+    
+    var canvas = document.getElementById('chart-fullview-canvas');
+    if (canvas) {
+      buildFullViewChart(canvas);
+    }
+  }
+
   function setFullViewFilter(filterVal) {
     FULLVIEW_SUB_FILTER = filterVal;
-    if (CURRENT_FULLVIEW_TYPE) {
-      openChartFullView(CURRENT_FULLVIEW_TYPE, filterVal);
+    var controls = document.getElementById('fullview-header-controls');
+    if (controls) {
+      var btn = controls.querySelector('.segment-btn[data-val="' + filterVal + '"]');
+      if (btn) {
+        handleFullViewFilterClick(btn);
+        return;
+      }
     }
+    var canvas = document.getElementById('chart-fullview-canvas');
+    if (canvas) buildFullViewChart(canvas);
   }
 
   function closeChartFullView() {
@@ -3524,6 +3745,8 @@
       CHART_FULLVIEW.destroy();
       CHART_FULLVIEW = null;
     }
+    var controls = document.getElementById('fullview-header-controls');
+    if (controls) controls.innerHTML = '';
     CURRENT_FULLVIEW_TYPE = null;
   }
 
@@ -3533,20 +3756,39 @@
     }
   }
 
-  function renderFullViewNetworth(title, controls, canvas) {
-    if (title) title.innerText = 'Wealth Growth & Asset Layers';
-    var isStacked = (FULLVIEW_SUB_FILTER !== 'total');
-    if (controls) {
-      controls.innerHTML =
-        '<div class="segment-well">' +
-          '<button type="button" class="segment-btn ' + (isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'stacked\')"><span>Stacked Layers</span></button>' +
-          '<button type="button" class="segment-btn ' + (!isStacked ? 'active' : '') + '" onclick="setFullViewFilter(\'total\')"><span>Total Curve</span></button>' +
-        '</div>';
+  function buildFullViewChart(canvas) {
+    if (!canvas || !CURRENT_FULLVIEW_TYPE || !APP_STATE) return;
+
+    if (CHART_FULLVIEW) {
+      CHART_FULLVIEW.destroy();
+      CHART_FULLVIEW = null;
     }
 
+    switch (CURRENT_FULLVIEW_TYPE) {
+      case 'networth':
+        buildFullViewNetworthChart(canvas);
+        break;
+      case 'reaction':
+        buildFullViewReactionChart(canvas);
+        break;
+      case 'monthlyChange':
+        buildFullViewMonthlyChangeChart(canvas);
+        break;
+      default:
+        buildFullViewNetworthChart(canvas);
+    }
+
+    if (CHART_FULLVIEW) {
+      attachChartZoomReset(canvas, CHART_FULLVIEW);
+    }
+  }
+
+  function buildFullViewNetworthChart(canvas) {
+    var isStacked = (FULLVIEW_SUB_FILTER !== 'total');
     var cd = APP_STATE.chartData;
     var ctx = canvas.getContext('2d');
     var datasets = [];
+    var trendData = calculateTrendline(cd.netWorth);
 
     if (isStacked) {
       datasets = [
@@ -3582,23 +3824,48 @@
           borderWidth: 2.5,
           pointRadius: 2.5,
           pointHoverRadius: 6
+        },
+        {
+          label: 'Average Trend',
+          data: trendData,
+          borderColor: 'rgba(255, 255, 255, 0.40)',
+          borderDash: [5, 4],
+          borderWidth: 1.8,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          stack: 'trend'
         }
       ];
     } else {
       var grad = ctx.createLinearGradient(0, 0, 0, 500);
       grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
       grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
-      datasets = [{
-        label: 'Total Net Worth',
-        data: cd.netWorth,
-        borderColor: '#38BDF8',
-        backgroundColor: grad,
-        fill: true,
-        tension: 0,
-        borderWidth: 3,
-        pointRadius: 3,
-        pointHoverRadius: 7
-      }];
+      datasets = [
+        {
+          label: 'Total Net Worth',
+          data: cd.netWorth,
+          borderColor: '#38BDF8',
+          backgroundColor: grad,
+          fill: true,
+          tension: 0,
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 7
+        },
+        {
+          label: 'Average Trend',
+          data: trendData,
+          borderColor: 'rgba(255, 255, 255, 0.45)',
+          borderDash: [5, 4],
+          borderWidth: 1.8,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0
+        }
+      ];
     }
 
     CHART_FULLVIEW = new Chart(ctx, {
@@ -3608,7 +3875,7 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 10, right: 20, top: 12, bottom: 22 }
+          padding: { left: 4, right: 12, top: 6, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -3616,25 +3883,15 @@
             display: isStacked,
             position: 'top',
             align: 'end',
-            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 14 }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-            callbacks: {
-              label: function(c) { return ' ' + c.dataset.label + ': ' + formatIndian(c.raw, false); },
-              afterBody: function(items) {
-                if (isStacked && items && items.length) {
-                  var sum = items.reduce(function(a, b) { return a + (b.raw || 0); }, 0);
-                  return '\nTotal Net Worth: ' + formatIndian(sum, false);
-                }
-                return '';
-              }
+            labels: {
+              color: '#CBD5E1',
+              font: { size: 11, weight: '700' },
+              boxWidth: 12,
+              padding: 10,
+              filter: function(item) { return item.text !== 'Average Trend'; }
             }
           },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(cd.labels)
         },
         scales: {
@@ -3643,7 +3900,7 @@
             ticks: {
               color: '#CBD5E1',
               font: { weight: '600', size: 11 },
-              padding: 8,
+              padding: 4,
               maxRotation: 0
             }
           },
@@ -3653,7 +3910,7 @@
             ticks: {
               color: '#94A3B8',
               font: { family: 'JetBrains Mono', size: 11 },
-              padding: 8,
+              padding: 4,
               callback: function(v) { return formatCompactLakhs(v); }
             }
           }
@@ -3662,32 +3919,21 @@
     });
   }
 
-  function renderFullViewReaction(title, controls, canvas) {
-    if (title) title.innerText = 'Investment Trajectory vs Market Benchmarks';
+  function buildFullViewReactionChart(canvas) {
     var mode = FULLVIEW_SUB_FILTER || 'mf';
-    if (controls) {
-      controls.innerHTML =
-        '<div class="segment-well">' +
-          '<button type="button" class="segment-btn ' + (mode === 'mf' ? 'active' : '') + '" onclick="setFullViewFilter(\'mf\')"><span>MF vs Nifty 50</span></button>' +
-          '<button type="button" class="segment-btn ' + (mode === 'gold' ? 'active' : '') + '" onclick="setFullViewFilter(\'gold\')"><span>Gold</span></button>' +
-          '<button type="button" class="segment-btn ' + (mode === 'silver' ? 'active' : '') + '" onclick="setFullViewFilter(\'silver\')"><span>Silver</span></button>' +
-          '<button type="button" class="segment-btn ' + (mode === 'all' ? 'active' : '') + '" onclick="setFullViewFilter(\'all\')"><span>All Combined</span></button>' +
-        '</div>';
-    }
-
     var rx = APP_STATE.chartData.reaction;
     var datasets = [];
     var scales = {
       x: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-        ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
+        ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 4, maxRotation: 0 }
       }
     };
 
     if (mode === 'mf') {
       datasets = [
         {
-          label: 'My Mutual Funds (₹)',
+          label: 'My Mutual Funds',
           data: rx.mfRaw,
           borderColor: '#38BDF8',
           backgroundColor: 'rgba(56, 189, 248, 0.12)',
@@ -3714,20 +3960,20 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Mutual Funds Value (₹)', color: '#38BDF8', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 8 },
+        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 4 },
         title: { display: true, text: 'Nifty 50 Index', color: '#34D399', font: { weight: '700' } }
       };
     } else if (mode === 'gold') {
       datasets = [
         {
-          label: 'My Gold Holdings (₹)',
+          label: 'My Gold Holdings',
           data: rx.goldHoldingRaw,
           borderColor: '#FACC15',
           backgroundColor: 'rgba(250, 204, 21, 0.12)',
@@ -3754,20 +4000,20 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Gold Holdings (₹)', color: '#FACC15', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: '#FB923C', font: { weight: '700' } }
       };
     } else if (mode === 'silver') {
       datasets = [
         {
-          label: 'My Silver Holdings (₹)',
+          label: 'My Silver Holdings',
           data: rx.silverHoldingRaw,
           borderColor: '#E2E8F0',
           backgroundColor: 'rgba(226, 232, 240, 0.12)',
@@ -3794,14 +4040,14 @@
         type: 'linear',
         position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Silver Holdings (₹)', color: '#E2E8F0', font: { weight: '700' } }
       };
       scales.yRight = {
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 8, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
         title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: '#60A5FA', font: { weight: '700' } }
       };
     } else {
@@ -3815,7 +4061,7 @@
       ];
       scales.y = {
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return (v >= 0 ? '+' : '') + v + '%'; } },
+        ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return (v >= 0 ? '+' : '') + v + '%'; } },
         title: { display: true, text: 'Percentage Growth vs Inception (%)', color: '#CBD5E1', font: { weight: '700' } }
       };
     }
@@ -3828,7 +4074,7 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 10, right: 20, top: 12, bottom: 22 }
+          padding: { left: 4, right: 12, top: 6, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -3836,15 +4082,9 @@
             display: true,
             position: 'top',
             align: 'end',
-            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 14 }
+            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 12, padding: 10 }
           },
-          tooltip: {
-            backgroundColor: 'rgba(8, 13, 25, 0.96)',
-            borderColor: 'rgba(56, 189, 248, 0.4)',
-            borderWidth: 1,
-            titleColor: '#FFFFFF',
-            bodyFont: { family: 'JetBrains Mono', weight: 'bold' }
-          },
+          tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(rx.labels)
         },
         scales: scales
@@ -3852,65 +4092,62 @@
     });
   }
 
-  function renderFullViewMonthlyChange(title, controls, canvas) {
-    if (title) title.innerText = 'Monthly Wealth Added (₹)';
+  function buildFullViewMonthlyChangeChart(canvas) {
     var isBars = (FULLVIEW_SUB_FILTER === 'bars');
-    if (controls) {
-      controls.innerHTML =
-        '<div class="segment-well">' +
-          '<button type="button" class="segment-btn ' + (!isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'curve\')"><span>Flow Curve</span></button>' +
-          '<button type="button" class="segment-btn ' + (isBars ? 'active' : '') + '" onclick="setFullViewFilter(\'bars\')"><span>Bar Histogram</span></button>' +
-        '</div>';
-    }
-
     var cd = APP_STATE.chartData;
     var changes = cd.monthlyChange;
     var ctx = canvas.getContext('2d');
     var colors = changes.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
     var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
+    var avgPace = Math.round(changes.reduce(function(a, b) { return a + b; }, 0) / (changes.length || 1));
+    var avgPaceLine = changes.map(function() { return avgPace; });
 
     if (isBars) {
       CHART_FULLVIEW = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: cd.labels,
-          datasets: [{
-            label: 'Monthly Net Change',
-            data: changes,
-            backgroundColor: bgColors,
-            borderColor: colors,
-            borderWidth: 1.5,
-            borderRadius: 6
-          }]
+          datasets: [
+            {
+              label: 'Monthly Net Change',
+              data: changes,
+              backgroundColor: bgColors,
+              borderColor: colors,
+              borderWidth: 1.5,
+              borderRadius: 6
+            },
+            {
+              type: 'line',
+              label: 'Average Pace',
+              data: avgPaceLine,
+              borderColor: 'rgba(251, 191, 36, 0.55)',
+              borderDash: [5, 4],
+              borderWidth: 1.6,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 0
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 10, right: 20, top: 12, bottom: 22 }
+            padding: { left: 4, right: 12, top: 6, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(8, 13, 25, 0.96)',
-              borderColor: 'rgba(56, 189, 248, 0.4)',
-              borderWidth: 1,
-              titleColor: '#FFFFFF',
-              bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-              callbacks: {
-                label: function(c) { return ' ' + (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
-              }
-            },
+            tooltip: getLiquidGlassTooltipConfig(),
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
+              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 4, maxRotation: 0 }
             },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
             }
           }
         }
@@ -3920,56 +4157,58 @@
         type: 'line',
         data: {
           labels: cd.labels,
-          datasets: [{
-            label: 'Monthly Net Change',
-            data: changes,
-            borderColor: '#38BDF8',
-            borderWidth: 3,
-            tension: 0,
-            fill: true,
-            backgroundColor: 'rgba(56, 189, 248, 0.14)',
-            pointRadius: 4.5,
-            pointHoverRadius: 7,
-            pointBackgroundColor: colors,
-            pointBorderColor: '#070B14',
-            pointBorderWidth: 2
-          }]
+          datasets: [
+            {
+              label: 'Monthly Net Change',
+              data: changes,
+              borderColor: '#38BDF8',
+              borderWidth: 3,
+              tension: 0,
+              fill: true,
+              backgroundColor: 'rgba(56, 189, 248, 0.14)',
+              pointRadius: 4.5,
+              pointHoverRadius: 7,
+              pointBackgroundColor: colors,
+              pointBorderColor: '#070B14',
+              pointBorderWidth: 2
+            },
+            {
+              label: 'Average Pace',
+              data: avgPaceLine,
+              borderColor: 'rgba(251, 191, 36, 0.55)',
+              borderDash: [5, 4],
+              borderWidth: 1.6,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 0
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 10, right: 20, top: 12, bottom: 22 }
+            padding: { left: 4, right: 12, top: 6, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(8, 13, 25, 0.96)',
-              borderColor: 'rgba(56, 189, 248, 0.4)',
-              borderWidth: 1,
-              titleColor: '#FFFFFF',
-              bodyFont: { family: 'JetBrains Mono', weight: 'bold' },
-              callbacks: {
-                label: function(c) { return ' ' + (c.raw >= 0 ? '+' : '') + formatIndian(c.raw, false); }
-              }
-            },
+            tooltip: getLiquidGlassTooltipConfig(),
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 8, maxRotation: 0 }
+              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 4, maxRotation: 0 }
             },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', padding: 8, callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
             }
           }
         }
       });
     }
   }
-
   // Keyboard accessibility: dismiss open overlays with Escape key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' || e.key === 'Esc') {

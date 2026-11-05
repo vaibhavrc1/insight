@@ -117,6 +117,20 @@
   <!-- Toast Notification -->
   <div class="liquid-toast" id="toast">Saved to Cloud</div>
 
+  <!-- Floating Liquid Glass PWA Install Banner (Transient: Auto-hides after 5s) -->
+  <div id="pwa-install-banner" class="pwa-install-pill">
+    <div class="pwa-install-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    </div>
+    <div class="pwa-install-title">Install Insight App</div>
+    <button type="button" class="btn-pwa-install" onclick="triggerPwaInstall()">Install</button>
+    <button type="button" class="btn-pwa-dismiss" onclick="dismissPwaInstall()" aria-label="Dismiss">✕</button>
+  </div>
+
   <!-- Specular border engine applied directly to elements -->
 
   <div class="app-shell">
@@ -324,7 +338,16 @@
 
       <!-- Row 1 Charts: Stacked Wealth Composition + Granular Donut -->
       <section class="bento-two-col">
-        <div class="liquid-slab reveal-item">
+        <div class="liquid-slab chart-card reveal-item">
+          <!-- Anchored Top-Right Expand Button -->
+          <button type="button" class="btn-chart-expand" onclick="openChartFullView('networth')" title="Full Screen View" aria-label="Full screen view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h6v6"></path>
+              <path d="M9 21H3v-6"></path>
+              <path d="M21 3l-7 7"></path>
+              <path d="M3 21l7-7"></path>
+            </svg>
+          </button>
           <div class="chart-header">
             <div class="chart-title-group">
               <h3>Wealth Growth & Asset Layers</h3>
@@ -341,14 +364,6 @@
                   <span class="label-short">Total</span>
                 </button>
               </div>
-              <button type="button" class="btn-chart-expand" onclick="openChartFullView('networth')" title="Full Screen View" aria-label="Full screen view">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M15 3h6v6"></path>
-                  <path d="M9 21H3v-6"></path>
-                  <path d="M21 3l-7 7"></path>
-                  <path d="M3 21l7-7"></path>
-                </svg>
-              </button>
             </div>
           </div>
           <div class="canvas-holder" style="min-height: 270px;">
@@ -372,7 +387,16 @@
       </section>
 
       <!-- Row 2 Chart: Investment Trajectory vs Market Benchmarks -->
-      <section class="liquid-slab reveal-item">
+      <section class="liquid-slab chart-card reveal-item">
+        <!-- Anchored Top-Right Expand Button -->
+        <button type="button" class="btn-chart-expand" onclick="openChartFullView('reaction')" title="Full Screen View" aria-label="Full screen view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6"></path>
+            <path d="M9 21H3v-6"></path>
+            <path d="M21 3l-7 7"></path>
+            <path d="M3 21l7-7"></path>
+          </svg>
+        </button>
         <div class="chart-header">
           <div class="chart-title-group">
             <h3>Investment Trajectory vs Market Benchmarks</h3>
@@ -397,14 +421,6 @@
                 <span class="label-short">All</span>
               </button>
             </div>
-            <button type="button" class="btn-chart-expand" onclick="openChartFullView('reaction')" title="Full Screen View" aria-label="Full screen view">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h6v6"></path>
-                <path d="M9 21H3v-6"></path>
-                <path d="M21 3l-7 7"></path>
-                <path d="M3 21l7-7"></path>
-              </svg>
-            </button>
           </div>
         </div>
         <div class="canvas-holder" style="min-height: 290px;">
@@ -415,7 +431,16 @@
       </section>
 
       <!-- Row 3 Chart: Monthly Wealth Additions -->
-      <section class="liquid-slab reveal-item">
+      <section class="liquid-slab chart-card reveal-item">
+        <!-- Anchored Top-Right Expand Button -->
+        <button type="button" class="btn-chart-expand" onclick="openChartFullView('monthlyChange')" title="Full Screen View" aria-label="Full screen view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6"></path>
+            <path d="M9 21H3v-6"></path>
+            <path d="M21 3l-7 7"></path>
+            <path d="M3 21l7-7"></path>
+          </svg>
+        </button>
         <div class="chart-header">
           <div class="chart-title-group">
             <h3>Monthly Wealth Added (₹)</h3>
@@ -423,14 +448,6 @@
           </div>
           <div class="chart-header-actions">
             <span class="glow-badge positive">Monthly Additions vs Dips</span>
-            <button type="button" class="btn-chart-expand" onclick="openChartFullView('monthlyChange')" title="Full Screen View" aria-label="Full screen view">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h6v6"></path>
-                <path d="M9 21H3v-6"></path>
-                <path d="M21 3l-7 7"></path>
-                <path d="M3 21l7-7"></path>
-              </svg>
-            </button>
           </div>
         </div>
         <div class="canvas-holder" style="min-height: 210px;">
