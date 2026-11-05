@@ -29,11 +29,10 @@
     --coral-bright: #FB7185;
     --silver-bright: #E2E8F0;
 
-    /* Realistic Ambient Occlusion (AO) Shadow Stack */
+    /* Subtle Optical Ambient Occlusion (AO) Shadow Stack (Zero Heavy Black Streaks) */
     --ao-contact-shadow: 
-      0 2px 3px rgba(0, 0, 0, 0.95),
-      0 10px 22px -4px rgba(0, 0, 0, 0.82),
-      0 28px 56px -12px rgba(0, 0, 0, 0.75);
+      0 2px 4px rgba(0, 0, 0, 0.18),
+      0 8px 20px -4px rgba(0, 0, 0, 0.22);
 
     /* Recessed Trench / Well Ambient Occlusion */
     --ao-recessed-well: 
@@ -43,8 +42,8 @@
 
     /* Optical Liquid Glass Inner Refraction */
     --liquid-refraction: 
-      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.32),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.85),
+      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.22),
       inset 1px 0 1px 0 rgba(255, 255, 255, 0.09);
   }
 
@@ -442,6 +441,8 @@
                 box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
                 border-color 0.25s ease;
     overflow: hidden;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
   }
 
   /* Directional Liquid Glass Rim Refraction Border */
@@ -484,14 +485,16 @@
      ========================================================================== */
   .focal-glow-cyan {
     box-shadow: 
-      var(--ao-contact-shadow),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 20px -4px rgba(0, 0, 0, 0.20),
+      0 0 20px -4px rgba(56, 189, 248, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
   }
 
   .focal-glow-emerald {
     box-shadow: 
-      var(--ao-contact-shadow),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 20px -4px rgba(0, 0, 0, 0.20),
+      0 0 20px -4px rgba(52, 211, 153, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
   }
 
   .hero-number-glow {
@@ -784,7 +787,7 @@
     position: relative;
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: visible;
   }
 
   .view-section {
@@ -796,7 +799,7 @@
     display: none;
     flex-direction: column;
     gap: 16px;
-    overflow-x: hidden;
+    overflow: visible;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     backface-visibility: hidden;
@@ -4593,7 +4596,7 @@
       inset 0 4px 12px -3px rgba(255, 255, 255, 0.05),
       inset 1px 0 1.2px 0 rgba(56, 189, 248, 0.10),
       inset -1px 0 1.2px 0 rgba(192, 132, 252, 0.08),
-      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.75);
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.22);
 
     /* Deep Carved Smoked-Crystal Recessed Trench */
     --ao-recessed-well:
@@ -4695,10 +4698,12 @@
     backdrop-filter: blur(28px) saturate(210%) brightness(1.10) contrast(1.04) !important;
     -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.10) contrast(1.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
     box-shadow:
-      0 20px 50px -12px rgba(0, 0, 0, 0.70),
-      0 4px 14px -2px rgba(0, 0, 0, 0.45),
-      0 0 24px -6px rgba(56, 189, 248, 0.10),
+      0 8px 20px -4px rgba(0, 0, 0, 0.22),
+      0 2px 6px rgba(0, 0, 0, 0.12),
+      0 0 18px -4px rgba(56, 189, 248, 0.08),
       var(--liquid-refraction) !important;
   }
 
@@ -4725,12 +4730,12 @@
   .liquid-slab.interactive-lift:hover {
     transform: translateY(-3px) scale(1.002);
     box-shadow:
-      0 26px 58px -10px rgba(0, 0, 0, 0.82),
-      0 8px 20px -4px rgba(0, 0, 0, 0.68),
-      0 0 22px -6px rgba(56, 189, 248, 0.14),
+      0 12px 28px -4px rgba(0, 0, 0, 0.28),
+      0 4px 10px -2px rgba(0, 0, 0, 0.16),
+      0 0 22px -4px rgba(56, 189, 248, 0.12),
       inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.32),
       inset 0 6px 16px -4px rgba(255, 255, 255, 0.08),
-      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.75) !important;
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.22) !important;
   }
 
   /* Hero Bento Subsurface Caustic Glow (Deep Aurora Refraction) */
