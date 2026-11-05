@@ -174,6 +174,9 @@ function getInitialData() {
   var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var lastKnownBench = { nifty: 22650, gold: 148200, silver: 212800 };
 
+  // Read hybrid market benchmarks from Google Sheet (Market_Benchmarks tab)
+  var benchmarksMap = getMarketBenchmarksMap(ss);
+
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
     var dtVal = r[0];
@@ -255,7 +258,7 @@ function getInitialData() {
     silverArr.push(silver);
     monthlyChangeArr.push(monthlyChange);
 
-    var bench = MARKET_BENCHMARKS[ymKey] || lastKnownBench;
+    var bench = benchmarksMap[ymKey] || lastKnownBench;
     lastKnownBench = bench;
     niftyRaw.push(bench.nifty);
     goldBenchRaw.push(bench.gold);
@@ -268,6 +271,23 @@ function getInitialData() {
       if (arr[i] && arr[i] > 0) return arr[i];
     }
     return 1;
+  }
+
+  // If latest recorded month is missing from Market_Benchmarks, auto-fetch and update benchmarks
+  if (records.length > 0) {
+    var lastRec = records[records.length - 1];
+    var lastYmKey = lastRec.monthIso.substring(0, 7);
+    if (!benchmarksMap[lastYmKey]) {
+      try {
+        var autoBench = ensureBenchmarkForMonth(ss, lastYmKey, false);
+        if (autoBench && autoBench.nifty > 0) {
+          niftyRaw[niftyRaw.length - 1] = autoBench.nifty;
+          goldBenchRaw[goldBenchRaw.length - 1] = autoBench.gold;
+          silverBenchRaw[silverBenchRaw.length - 1] = autoBench.silver;
+          benchmarksMap[lastYmKey] = autoBench;
+        }
+      } catch(e) {}
+    }
   }
 
   var baseNW = findBaseVal(netWorthArr);
@@ -498,6 +518,14 @@ function saveRecord(p) {
     recalculateAllChangeFormulas(sheet);
   }
 
+  // Ensure Market Benchmark exists for this month (Auto-fetch if new)
+  try {
+    var ymKey = String(p.month).substring(0, 7);
+    ensureBenchmarkForMonth(ss, ymKey, false);
+  } catch (benchErr) {
+    Logger.log("Notice: Market benchmark sync: " + benchErr);
+  }
+
   SpreadsheetApp.flush();
   return getInitialData();
 }
@@ -663,5 +691,314 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("Portfolio Web App")
     .addItem("Clean & Format Storage Sheet", "setupStorageSheet")
+    .addItem("Sync & Format Market Benchmarks", "setupBenchmarksSheet")
+    .addItem("Fetch Latest Market Benchmark Now", "refreshLatestMarketBenchmark")
     .addToUi();
+}
+
+/**
+ * ============================================================================
+ * HYBRID MARKET BENCHMARKS ENGINE (Google Sheet + Yahoo Finance Free API)
+ * ============================================================================
+ */
+
+/**
+ * Initializes and styles the dedicated "Market_Benchmarks" sheet tab.
+ * Populates all historical months from MARKET_BENCHMARKS baseline if empty.
+ */
+function setupBenchmarksSheet(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Market_Benchmarks");
+  if (!sheet) {
+    sheet = ss.insertSheet("Market_Benchmarks");
+  }
+
+  try {
+    sheet.getDataRange().breakApart();
+  } catch (e) {}
+
+  var headers = [
+    "Month",
+    "Nifty 50 Index",
+    "Gold (10g INR)",
+    "Silver (1kg INR)",
+    "Source / Notes",
+    "Last Synced"
+  ];
+
+  sheet.getRange(1, 1, 1, 6).setValues([headers]);
+  sheet.setFrozenRows(1);
+  sheet.setFrozenColumns(1);
+  sheet.getRange(1, 1, 1, 6)
+    .setBackground("#0F172A")
+    .setFontColor("#F8FAFC")
+    .setFontFamily("Google Sans")
+    .setFontSize(10)
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 38);
+
+  if (sheet.getLastRow() < 2) {
+    var months = Object.keys(MARKET_BENCHMARKS).sort();
+    var rowsToInsert = [];
+    var nowTimestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+    
+    for (var i = 0; i < months.length; i++) {
+      var m = months[i];
+      var b = MARKET_BENCHMARKS[m];
+      rowsToInsert.push([
+        m,
+        b.nifty,
+        b.gold,
+        b.silver,
+        "Historical Baseline",
+        nowTimestamp
+      ]);
+    }
+
+    if (rowsToInsert.length > 0) {
+      sheet.getRange(2, 1, rowsToInsert.length, 6).setValues(rowsToInsert);
+      for (var r = 2; r <= rowsToInsert.length + 1; r++) {
+        formatBenchmarkRow(sheet, r);
+      }
+    }
+  }
+
+  sheet.setColumnWidth(1, 110);
+  sheet.setColumnWidth(2, 130);
+  sheet.setColumnWidth(3, 150);
+  sheet.setColumnWidth(4, 150);
+  sheet.setColumnWidth(5, 220);
+  sheet.setColumnWidth(6, 150);
+
+  return sheet;
+}
+
+/**
+ * Applies dark slate styling matching Portfolio_Data to each row of Market_Benchmarks
+ */
+function formatBenchmarkRow(sheet, r) {
+  var bg = (r % 2 === 0) ? "#0F172A" : "#141E33";
+  sheet.getRange(r, 1, 1, 6)
+    .setBackground(bg)
+    .setFontFamily("Google Sans")
+    .setFontSize(9)
+    .setVerticalAlignment("middle");
+
+  sheet.getRange(r, 1).setNumberFormat("@").setHorizontalAlignment("center").setFontColor("#CBD5E1").setFontWeight("bold");
+  sheet.getRange(r, 2).setNumberFormat("#,##0").setHorizontalAlignment("right").setFontColor("#38BDF8").setFontWeight("bold");
+  sheet.getRange(r, 3).setNumberFormat("[$\\u20B9]#,##0").setHorizontalAlignment("right").setFontColor("#FACC15").setFontWeight("bold");
+  sheet.getRange(r, 4).setNumberFormat("[$\\u20B9]#,##0").setHorizontalAlignment("right").setFontColor("#E2E8F0").setFontWeight("bold");
+  sheet.getRange(r, 5).setNumberFormat("@").setHorizontalAlignment("left").setFontColor("#94A3B8");
+  sheet.getRange(r, 6).setNumberFormat("@").setHorizontalAlignment("center").setFontColor("#64748B");
+  sheet.setRowHeight(r, 26);
+}
+
+/**
+ * Reads all benchmarks from Market_Benchmarks sheet with fallback to MARKET_BENCHMARKS
+ */
+function getMarketBenchmarksMap(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Market_Benchmarks");
+  if (!sheet || sheet.getLastRow() < 2) {
+    sheet = setupBenchmarksSheet(ss);
+  }
+
+  var map = {};
+  // 1. Seed with in-memory baseline
+  for (var k in MARKET_BENCHMARKS) {
+    if (MARKET_BENCHMARKS.hasOwnProperty(k)) {
+      map[k] = {
+        nifty: MARKET_BENCHMARKS[k].nifty,
+        gold: MARKET_BENCHMARKS[k].gold,
+        silver: MARKET_BENCHMARKS[k].silver
+      };
+    }
+  }
+
+  if (!sheet) return map;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    for (var i = 0; i < data.length; i++) {
+      var mVal = data[i][0];
+      if (!mVal) continue;
+      var ymKey = "";
+      if (mVal instanceof Date) {
+        ymKey = Utilities.formatDate(mVal, Session.getScriptTimeZone(), "yyyy-MM");
+      } else {
+        ymKey = String(mVal).trim().substring(0, 7);
+      }
+      var nifty = Number(data[i][1]) || 0;
+      var gold = Number(data[i][2]) || 0;
+      var silver = Number(data[i][3]) || 0;
+      if (ymKey && nifty > 0) {
+        map[ymKey] = { nifty: nifty, gold: gold, silver: silver };
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * Fetches real-time closing figures for Nifty 50, Gold, and Silver using Yahoo Finance's free endpoints.
+ * Converts Gold (10g INR) and Silver (1kg INR) incorporating Indian customs and local retail spreads (~1.18).
+ */
+function fetchLiveMarketBenchmarks() {
+  try {
+    var headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" };
+    var requests = [
+      { url: "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=1d&interval=1d", muteHttpExceptions: true, headers: headers },
+      { url: "https://query1.finance.yahoo.com/v8/finance/chart/GC=F?range=1d&interval=1d", muteHttpExceptions: true, headers: headers },
+      { url: "https://query1.finance.yahoo.com/v8/finance/chart/SI=F?range=1d&interval=1d", muteHttpExceptions: true, headers: headers },
+      { url: "https://query1.finance.yahoo.com/v8/finance/chart/INR=X?range=1d&interval=1d", muteHttpExceptions: true, headers: headers }
+    ];
+
+    var responses = UrlFetchApp.fetchAll(requests);
+
+    var niftyPrice = null;
+    var goldUsd = null;
+    var silverUsd = null;
+    var usdinr = 85.0;
+
+    // 1. Nifty 50
+    try {
+      var nRes = JSON.parse(responses[0].getContentText());
+      if (nRes && nRes.chart && nRes.chart.result && nRes.chart.result[0]) {
+        niftyPrice = Math.round(nRes.chart.result[0].meta.regularMarketPrice);
+      }
+    } catch(e) {}
+
+    // 2. Gold Futures (USD per troy oz)
+    try {
+      var gRes = JSON.parse(responses[1].getContentText());
+      if (gRes && gRes.chart && gRes.chart.result && gRes.chart.result[0]) {
+        goldUsd = Number(gRes.chart.result[0].meta.regularMarketPrice);
+      }
+    } catch(e) {}
+
+    // 3. Silver Futures (USD per troy oz)
+    try {
+      var sRes = JSON.parse(responses[2].getContentText());
+      if (sRes && sRes.chart && sRes.chart.result && sRes.chart.result[0]) {
+        silverUsd = Number(sRes.chart.result[0].meta.regularMarketPrice);
+      }
+    } catch(e) {}
+
+    // 4. USD/INR
+    try {
+      var iRes = JSON.parse(responses[3].getContentText());
+      if (iRes && iRes.chart && iRes.chart.result && iRes.chart.result[0]) {
+        usdinr = Number(iRes.chart.result[0].meta.regularMarketPrice) || 85.0;
+      }
+    } catch(e) {}
+
+    if (!niftyPrice || !goldUsd || !silverUsd) {
+      Logger.log("Incomplete live response from market feed.");
+      return null;
+    }
+
+    // Conversion formulas:
+    // 1 troy ounce = 31.1034768 grams.
+    // 10g Gold INR = (goldUsd * usdinr / 31.1034768) * 10 * 1.18 (India customs/duty/GST multiplier)
+    // 1kg Silver INR = (silverUsd * usdinr / 31.1034768) * 1000 * 1.18
+    var gold10g = Math.round(goldUsd * usdinr * (10 / 31.1034768) * 1.18);
+    var silver1kg = Math.round(silverUsd * usdinr * (1000 / 31.1034768) * 1.18);
+
+    return {
+      nifty: niftyPrice,
+      gold: gold10g,
+      silver: silver1kg,
+      source: "Auto-Fetched (Yahoo Finance Free API)"
+    };
+  } catch (err) {
+    Logger.log("fetchLiveMarketBenchmarks error: " + err);
+    return null;
+  }
+}
+
+/**
+ * Ensures that a benchmark entry exists in Market_Benchmarks for the given ymKey ("YYYY-MM").
+ * If missing, automatically fetches live data and saves it to the sheet.
+ */
+function ensureBenchmarkForMonth(ss, ymKey, forceRefresh) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Market_Benchmarks");
+  if (!sheet) {
+    sheet = setupBenchmarksSheet(ss);
+  }
+
+  var existingRow = -1;
+  var lastRow = sheet.getLastRow();
+  var fallbackBench = { nifty: 24500, gold: 148000, silver: 210000 };
+
+  if (lastRow >= 2) {
+    var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    for (var i = 0; i < data.length; i++) {
+      var mVal = data[i][0];
+      var rowKey = (mVal instanceof Date) 
+        ? Utilities.formatDate(mVal, Session.getScriptTimeZone(), "yyyy-MM")
+        : String(mVal).trim().substring(0, 7);
+      
+      if (rowKey === ymKey) {
+        existingRow = i + 2;
+        fallbackBench = {
+          nifty: Number(data[i][1]) || fallbackBench.nifty,
+          gold: Number(data[i][2]) || fallbackBench.gold,
+          silver: Number(data[i][3]) || fallbackBench.silver
+        };
+        break;
+      }
+      if (Number(data[i][1]) > 0) {
+        fallbackBench = {
+          nifty: Number(data[i][1]),
+          gold: Number(data[i][2]),
+          silver: Number(data[i][3])
+        };
+      }
+    }
+  }
+
+  if (existingRow !== -1 && !forceRefresh) {
+    return fallbackBench; // Already recorded
+  }
+
+  // Fetch live market data
+  var live = fetchLiveMarketBenchmarks();
+  var finalBench = live || {
+    nifty: fallbackBench.nifty,
+    gold: fallbackBench.gold,
+    silver: fallbackBench.silver,
+    source: "Carried Forward (Offline Fallback)"
+  };
+
+  var targetRow = (existingRow !== -1) ? existingRow : (sheet.getLastRow() + 1);
+  var nowTimestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+
+  sheet.getRange(targetRow, 1).setValue(ymKey);
+  sheet.getRange(targetRow, 2).setValue(finalBench.nifty);
+  sheet.getRange(targetRow, 3).setValue(finalBench.gold);
+  sheet.getRange(targetRow, 4).setValue(finalBench.silver);
+  sheet.getRange(targetRow, 5).setValue(finalBench.source);
+  sheet.getRange(targetRow, 6).setValue(nowTimestamp);
+  formatBenchmarkRow(sheet, targetRow);
+
+  if (sheet.getLastRow() >= 3) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).sort({ column: 1, ascending: true });
+  }
+
+  SpreadsheetApp.flush();
+  return finalBench;
+}
+
+/**
+ * On-demand trigger to fetch or refresh benchmark for the current month.
+ */
+function refreshLatestMarketBenchmark() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var today = new Date();
+  var ymKey = Utilities.formatDate(today, Session.getScriptTimeZone(), "yyyy-MM");
+  return ensureBenchmarkForMonth(ss, ymKey, true);
 }
