@@ -3155,6 +3155,310 @@
     transform: translateY(-1px);
   }
 
+  /* Premium Chart Full-View Expand Button */
+  .btn-chart-expand {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.32);
+    color: var(--cyan-core);
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-chart-expand svg {
+    transition: transform 0.22s ease;
+    flex-shrink: 0;
+  }
+  .btn-chart-expand:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(52, 211, 153, 0.18) 100%);
+    border-color: rgba(56, 189, 248, 0.65);
+    color: #FFFFFF;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+  }
+  .btn-chart-expand:hover svg {
+    transform: scale(1.18);
+    color: #38BDF8;
+  }
+  .btn-chart-expand:active {
+    transform: scale(0.95);
+  }
+
+  /* ==========================================================================
+     FULL-VIEW CHART MODAL SYSTEM
+     ========================================================================== */
+  .liquid-chart-fullview-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2800;
+    background: rgba(3, 7, 18, 0.85);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.26s ease;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .liquid-chart-fullview-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .liquid-chart-fullview-dialog {
+    background: linear-gradient(168deg, rgba(14, 22, 40, 0.96) 0%, rgba(6, 11, 24, 0.98) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    width: min(1260px, calc(100vw - 32px));
+    max-width: 1260px;
+    height: 92vh;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 
+      0 28px 75px -15px rgba(0, 0, 0, 0.95),
+      0 0 50px rgba(56, 189, 248, 0.22),
+      var(--liquid-refraction);
+    transform: translateY(16px) scale(0.97) translateZ(0);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .liquid-chart-fullview-backdrop.open .liquid-chart-fullview-dialog {
+    transform: translateY(0) scale(1) translateZ(0);
+  }
+
+  .fullview-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0E1628;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .fullview-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .fullview-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .fullview-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .fullview-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin: 2px 0 0 0;
+    letter-spacing: -0.3px;
+  }
+
+  .fullview-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .fullview-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .fullview-controls-cluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .fullview-metrics-ribbon {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.28);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .fullview-metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.2s ease;
+  }
+  .fullview-metric-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(56, 189, 248, 0.35);
+  }
+
+  .fullview-metric-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+  }
+
+  .fullview-metric-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: #FFFFFF;
+    letter-spacing: -0.2px;
+  }
+
+  .fullview-canvas-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    padding: 16px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fullview-canvas-wrap .chart-timeline-inner {
+    height: 100% !important;
+    min-height: 380px;
+  }
+
+  .fullview-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    background: rgba(0, 0, 0, 0.35);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+
+  .fullview-footer-tip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .fullview-footer-tip svg {
+    color: var(--cyan-core);
+    flex-shrink: 0;
+  }
+
+  .fullview-legend-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .fullview-legend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #CBD5E1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .fullview-legend-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  .fullview-legend-chip.disabled {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+  .fullview-legend-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  @media (max-width: 768px) {
+    .btn-chart-expand span {
+      display: none;
+    }
+    .btn-chart-expand {
+      padding: 5px 6px;
+    }
+    .fullview-dialog-header {
+      padding: 12px 14px 10px;
+    }
+    .fullview-title {
+      font-size: 16px;
+    }
+    .fullview-metrics-ribbon {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 8px 14px;
+    }
+    .fullview-metric-card {
+      padding: 6px 8px;
+    }
+    .fullview-metric-value {
+      font-size: 14px;
+    }
+    .fullview-canvas-wrap {
+      padding: 10px 12px;
+    }
+    .fullview-footer {
+      padding: 8px 14px;
+    }
+  }
+
   /* ==========================================================================
      COMPACT NOTE BUTTONS FOR TABLES
      ========================================================================== */
