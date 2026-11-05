@@ -4466,27 +4466,27 @@
 /* ==========================================================================
      TRUE APPLE LIQUID GLASS ENGINE (visionOS / iOS 26 Optical Physics)
      - High-Index Backdrop Translucency + Chromatic Meniscus Refraction
-     - Living Caustic Backlight Stage
+     - Living Caustic Backlight Stage (Subtle Ambient Glow)
      - Pointer-Reactive Fresnel Specular Rim (--glass-x, --glass-y)
      - Convex Liquid-Mercury Glider Lenses
      ========================================================================== */
   :root {
-    --glass-blur: 42px;
-    --glass-saturate: 225%;
-    --glass-brightness: 1.14;
-    --glass-contrast: 1.06;
+    --glass-blur: 32px;
+    --glass-saturate: 165%;
+    --glass-brightness: 1.0;
+    --glass-contrast: 1.02;
     --glass-x: 28%;
     --glass-y: 12%;
     --global-glass-x: 50vw;
     --global-glass-y: 25vh;
 
-    /* 5-Layer Optical Meniscus Inner Bevel + Specular Rim */
+    /* 5-Layer Subtle Optical Meniscus Inner Bevel + Specular Rim */
     --liquid-refraction:
-      inset 0 1.75px 1.5px 0 rgba(255, 255, 255, 0.52),
-      inset 0 6px 18px -4px rgba(255, 255, 255, 0.14),
-      inset 1.25px 0 1.5px 0 rgba(56, 189, 248, 0.22),
-      inset -1.25px 0 1.5px 0 rgba(192, 132, 252, 0.18),
-      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.72);
+      inset 0 1.2px 1.2px 0 rgba(255, 255, 255, 0.22),
+      inset 0 4px 12px -3px rgba(255, 255, 255, 0.05),
+      inset 1px 0 1.2px 0 rgba(56, 189, 248, 0.10),
+      inset -1px 0 1.2px 0 rgba(192, 132, 252, 0.08),
+      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.75);
 
     /* Deep Carved Smoked-Crystal Recessed Trench */
     --ao-recessed-well:
@@ -4496,14 +4496,15 @@
       0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
-  /* Living Caustic Light Orbs Behind the Glass Stage */
+  /* Living Caustic Light Orbs Behind the Glass Stage (Softened Opacity) */
   .lighting-stage .caustic-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(85px);
+    filter: blur(95px);
     pointer-events: none;
     will-change: transform, opacity;
     mix-blend-mode: screen;
+    opacity: 0.42;
   }
 
   .lighting-stage .orb-cyan {
@@ -4511,7 +4512,7 @@
     height: 560px;
     top: -12%;
     left: 8%;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.26) 0%, rgba(14, 165, 233, 0.08) 55%, transparent 75%);
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.11) 0%, rgba(14, 165, 233, 0.03) 55%, transparent 75%);
     animation: causticFloat1 22s ease-in-out infinite alternate;
   }
 
@@ -4520,7 +4521,7 @@
     height: 500px;
     top: 18%;
     right: -6%;
-    background: radial-gradient(circle, rgba(52, 211, 153, 0.20) 0%, rgba(16, 185, 129, 0.06) 55%, transparent 75%);
+    background: radial-gradient(circle, rgba(52, 211, 153, 0.08) 0%, rgba(16, 185, 129, 0.02) 55%, transparent 75%);
     animation: causticFloat2 26s ease-in-out infinite alternate;
   }
 
@@ -4529,7 +4530,7 @@
     height: 540px;
     bottom: 6%;
     left: -8%;
-    background: radial-gradient(circle, rgba(192, 132, 252, 0.20) 0%, rgba(139, 92, 246, 0.06) 55%, transparent 75%);
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.08) 0%, rgba(139, 92, 246, 0.02) 55%, transparent 75%);
     animation: causticFloat3 28s ease-in-out infinite alternate;
   }
 
@@ -4538,7 +4539,7 @@
     height: 420px;
     bottom: 18%;
     right: 14%;
-    background: radial-gradient(circle, rgba(251, 191, 36, 0.14) 0%, rgba(245, 158, 11, 0.04) 55%, transparent 75%);
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.06) 0%, rgba(245, 158, 11, 0.01) 55%, transparent 75%);
     animation: causticFloat1 30s ease-in-out infinite alternate-reverse;
   }
 
@@ -4560,74 +4561,74 @@
     100% { transform: translate3d(-40px, 30px, 0) scale(1.12); }
   }
 
-  /* True Apple Liquid Glass Card Slab */
+  /* True Apple Liquid Glass Card Slab (Subtle pointer light, rich obsidian depth) */
   .liquid-slab {
     background:
       radial-gradient(
-        560px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.135) 0%,
-        rgba(56, 189, 248, 0.055) 34%,
+        320px circle at var(--glass-x, 28%) var(--glass-y, 12%),
+        rgba(255, 255, 255, 0.035) 0%,
+        rgba(56, 189, 248, 0.018) 35%,
         transparent 70%
       ),
       linear-gradient(
         165deg,
-        rgba(38, 56, 94, 0.42) 0%,
-        rgba(15, 24, 44, 0.34) 48%,
-        rgba(7, 12, 24, 0.48) 100%
+        rgba(18, 28, 48, 0.65) 0%,
+        rgba(9, 14, 26, 0.75) 48%,
+        rgba(4, 7, 15, 0.88) 100%
       ) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
     box-shadow:
-      0 20px 48px -12px rgba(0, 0, 0, 0.72),
-      0 4px 14px -2px rgba(0, 0, 0, 0.55),
-      0 0 28px -8px rgba(56, 189, 248, 0.12),
+      0 20px 48px -12px rgba(0, 0, 0, 0.78),
+      0 4px 14px -2px rgba(0, 0, 0, 0.65),
+      0 0 20px -8px rgba(56, 189, 248, 0.08),
       var(--liquid-refraction) !important;
   }
 
-  /* Interactive Fresnel Specular Rim Border on .liquid-slab::after */
+  /* Softened Interactive Fresnel Specular Rim Border on .liquid-slab::after */
   .liquid-slab::after {
-    padding: 1.35px !important;
+    padding: 1.2px !important;
     background:
       radial-gradient(
-        380px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.85) 0%,
-        rgba(56, 189, 248, 0.52) 32%,
-        rgba(255, 255, 255, 0.14) 62%,
+        220px circle at var(--glass-x, 28%) var(--glass-y, 12%),
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(56, 189, 248, 0.12) 30%,
+        rgba(255, 255, 255, 0.03) 55%,
         transparent 100%
       ),
       linear-gradient(
         142deg,
-        rgba(255, 255, 255, 0.52) 0%,
-        rgba(255, 255, 255, 0.12) 32%,
-        rgba(56, 189, 248, 0.10) 68%,
-        rgba(192, 132, 252, 0.34) 100%
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.05) 32%,
+        rgba(56, 189, 248, 0.05) 68%,
+        rgba(192, 132, 252, 0.12) 100%
       ) !important;
   }
 
   .liquid-slab.interactive-lift:hover {
-    transform: translateY(-3.5px) scale(1.004);
+    transform: translateY(-3px) scale(1.002);
     box-shadow:
-      0 26px 58px -10px rgba(0, 0, 0, 0.78),
-      0 8px 20px -4px rgba(0, 0, 0, 0.62),
-      0 0 34px -6px rgba(56, 189, 248, 0.24),
-      inset 0 2px 2px 0 rgba(255, 255, 255, 0.68),
-      inset 0 8px 22px -4px rgba(255, 255, 255, 0.18),
-      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.72) !important;
+      0 26px 58px -10px rgba(0, 0, 0, 0.82),
+      0 8px 20px -4px rgba(0, 0, 0, 0.68),
+      0 0 22px -6px rgba(56, 189, 248, 0.14),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.32),
+      inset 0 6px 16px -4px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.75) !important;
   }
 
   /* Hero Bento Subsurface Caustic Glow */
   .hero-bento {
     background:
       radial-gradient(
-        650px circle at var(--glass-x, 22%) var(--glass-y, 15%),
-        rgba(255, 255, 255, 0.16) 0%,
-        rgba(56, 189, 248, 0.12) 36%,
+        340px circle at var(--glass-x, 22%) var(--glass-y, 15%),
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(56, 189, 248, 0.03) 36%,
         transparent 72%
       ),
-      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.22) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.16) 0%, transparent 65%),
-      linear-gradient(165deg, rgba(28, 44, 78, 0.46) 0%, rgba(10, 17, 34, 0.42) 100%) !important;
+      radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.10) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 65%),
+      linear-gradient(165deg, rgba(16, 26, 46, 0.68) 0%, rgba(7, 12, 24, 0.82) 100%) !important;
   }
 
   /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
@@ -4635,17 +4636,17 @@
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.12) 48%, transparent 75%),
-      linear-gradient(180deg, rgba(56, 189, 248, 0.38) 0%, rgba(14, 165, 233, 0.18) 55%, rgba(52, 211, 153, 0.24) 100%) !important;
-    backdrop-filter: blur(20px) saturate(250%) brightness(1.24) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(250%) brightness(1.24) !important;
-    border: 1px solid rgba(255, 255, 255, 0.58) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.88) !important;
+      radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 48%, transparent 75%),
+      linear-gradient(180deg, rgba(56, 189, 248, 0.24) 0%, rgba(14, 165, 233, 0.12) 55%, rgba(52, 211, 153, 0.16) 100%) !important;
+    backdrop-filter: blur(16px) saturate(180%) brightness(1.0) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.0) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.45) !important;
     box-shadow:
-      0 6px 20px -2px rgba(14, 165, 233, 0.42),
-      0 0 24px rgba(56, 189, 248, 0.38),
-      inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.88),
-      inset 0 -2px 3px 0 rgba(14, 165, 233, 0.45) !important;
+      0 4px 14px -2px rgba(14, 165, 233, 0.25),
+      0 0 16px rgba(56, 189, 248, 0.20),
+      inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.25) !important;
   }
 
   /* Carved Crystal Navigation & Segment Wells */
@@ -4653,28 +4654,28 @@
   .segment-well,
   .month-stepper-control {
     background:
-      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 70%),
-      linear-gradient(180deg, rgba(8, 14, 28, 0.52) 0%, rgba(4, 8, 18, 0.68) 100%) !important;
-    backdrop-filter: blur(32px) saturate(210%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.65) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.24) !important;
+      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.025) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(8, 14, 28, 0.65) 0%, rgba(4, 8, 18, 0.82) 100%) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.75) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
     box-shadow: var(--ao-recessed-well) !important;
   }
 
   /* Floating Optical Liquid-Glass Mobile Dock */
   .mobile-dock {
     background:
-      radial-gradient(320px circle at var(--glass-x, 50%) var(--glass-y, 20%), rgba(255, 255, 255, 0.18) 0%, transparent 70%),
-      linear-gradient(180deg, rgba(28, 44, 78, 0.46) 0%, rgba(10, 17, 34, 0.56) 100%) !important;
-    backdrop-filter: blur(44px) saturate(235%) brightness(1.18) !important;
-    -webkit-backdrop-filter: blur(44px) saturate(235%) brightness(1.18) !important;
-    border: 1px solid rgba(255, 255, 255, 0.24) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.62) !important;
+      radial-gradient(260px circle at var(--glass-x, 50%) var(--glass-y, 20%), rgba(255, 255, 255, 0.04) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(16, 25, 44, 0.82) 0%, rgba(7, 12, 22, 0.92) 100%) !important;
+    backdrop-filter: blur(32px) saturate(165%) brightness(1.0) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(165%) brightness(1.0) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.28) !important;
     box-shadow:
-      0 22px 50px -8px rgba(0, 0, 0, 0.78),
-      0 0 28px rgba(56, 189, 248, 0.20),
+      0 22px 50px -8px rgba(0, 0, 0, 0.85),
+      0 0 18px rgba(56, 189, 248, 0.10),
       var(--liquid-refraction) !important;
   }
 
@@ -4688,15 +4689,15 @@
   .liquid-toast,
   .liquid-undo-toast {
     background:
-      radial-gradient(520px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.14) 0%, rgba(56, 189, 248, 0.06) 38%, transparent 72%),
-      linear-gradient(165deg, rgba(24, 38, 68, 0.58) 0%, rgba(10, 16, 32, 0.66) 55%, rgba(5, 9, 20, 0.74) 100%) !important;
-    backdrop-filter: blur(48px) saturate(230%) brightness(1.14) contrast(1.06) !important;
-    -webkit-backdrop-filter: blur(48px) saturate(230%) brightness(1.14) contrast(1.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.56) !important;
+      radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 38%, transparent 72%),
+      linear-gradient(165deg, rgba(16, 25, 44, 0.85) 0%, rgba(8, 13, 25, 0.92) 55%, rgba(4, 7, 16, 0.96) 100%) !important;
+    backdrop-filter: blur(36px) saturate(170%) brightness(1.0) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(170%) brightness(1.0) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.32) !important;
     box-shadow:
-      0 28px 72px -12px rgba(0, 0, 0, 0.85),
-      0 0 42px rgba(56, 189, 248, 0.22),
+      0 28px 72px -12px rgba(0, 0, 0, 0.88),
+      0 0 24px rgba(56, 189, 248, 0.10),
       var(--liquid-refraction) !important;
   }
 
@@ -4731,18 +4732,16 @@
 
   .btn-emissive {
     background:
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.45) 0%, transparent 60%),
-      linear-gradient(135deg, rgba(14, 165, 233, 0.88) 0%, rgba(2, 132, 199, 0.82) 55%, rgba(16, 185, 129, 0.78) 100%) !important;
-    backdrop-filter: blur(20px) saturate(220%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(220%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.42) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.82) !important;
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 60%),
+      linear-gradient(135deg, rgba(14, 165, 233, 0.82) 0%, rgba(2, 132, 199, 0.78) 55%, rgba(16, 185, 129, 0.72) 100%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.52) !important;
     box-shadow:
-      0 8px 22px -4px rgba(14, 165, 233, 0.55),
-      0 0 24px rgba(56, 189, 248, 0.42),
-      inset 0 2px 2px rgba(255, 255, 255, 0.72),
+      0 8px 22px -4px rgba(14, 165, 233, 0.42),
+      0 0 18px rgba(56, 189, 248, 0.28),
+      inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45),
       inset 0 -2px 3px rgba(0, 0, 0, 0.45) !important;
   }
-
-
 </style>
