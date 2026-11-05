@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Dual Undulation Flow — Majestic 1% Brightness, 16px Grid, 100% Fill Opacity (6px Blur)</title>
+  <title>Silky Smooth Dark Waves — 60fps Continuous Liquid Flow (No Grids)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -12,84 +12,84 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg-void: #01040A;
+      --glass-blur: 6px;
+      --glass-saturate: 180%;
+      --glass-brightness: 1.02;
+      --glass-contrast: 1.02;
+      --glass-bg: rgba(6, 12, 24, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-inner-bevel: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.4);
+      --text-main: #FFFFFF;
+      --text-muted: #94A3B8;
+      --accent-emerald: #10B981;
+      --accent-sapphire: #38BDF8;
+      --accent-purple: #A855F7;
+      --accent-ruby: #F43F5E;
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
-      color: #F8FAFC;
-      background: #02050E;
       overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       position: relative;
+      user-select: none;
     }
 
-    /* Fullscreen Retina Canvas */
     #live-bg-canvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
       z-index: 0;
-      pointer-events: none;
       display: block;
+      pointer-events: none;
     }
 
-    /* Ambient Depth Vignette */
     .ambient-vignette {
       position: fixed;
       inset: 0;
+      pointer-events: none;
       z-index: 1;
-      pointer-events: none;
-      background: radial-gradient(ellipse 95% 85% at 50% 35%, transparent 52%, rgba(2, 5, 14, 0.75) 85%, #02050E 100%);
-    }
-
-    /* Subtle Pointer Highlight Follower */
-    .pointer-fresnel {
-      position: fixed;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.10) 0%, rgba(56, 189, 248, 0.03) 45%, transparent 70%);
-      z-index: 2;
-      transition: opacity 0.3s ease;
-      will-change: transform;
+      background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(1, 4, 10, 0.65) 100%);
     }
 
     /* ==========================================================================
-       CONTROL DECK (STICKY HEADER)
+       CONTROL DECK (Glassmorphic)
        ========================================================================== */
     .control-deck-container {
-      position: sticky;
-      top: 10px;
-      z-index: 1000;
-      width: 95%;
-      max-width: 1180px;
-      margin: 10px auto 16px auto;
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      width: calc(100% - 28px);
+      max-width: 1240px;
+      background: rgba(3, 7, 18, 0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 10px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .control-deck-bar {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: rgba(10, 18, 36, 0.85);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-top: 1.5px solid rgba(255, 255, 255, 0.45);
-      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75);
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .deck-group {
@@ -102,238 +102,175 @@
     .deck-label {
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.6px;
       text-transform: uppercase;
-      color: #94A3B8;
+      letter-spacing: 0.08em;
+      color: #64748B;
       margin-right: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
     }
 
-    .btn-gradient-flow {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #E2E8F0;
-      padding: 6px 13px;
-      border-radius: 999px;
-      font-size: 11.5px;
-      font-weight: 700;
+    .btn-wave-style {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94A3B8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 10px;
       cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .btn-gradient-flow:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.35);
-      color: #FFFFFF;
-      transform: translateY(-1px);
-    }
-    .btn-gradient-flow.active {
-      background: linear-gradient(135deg, rgba(5, 71, 42, 0.75) 0%, rgba(8, 40, 92, 0.75) 33%, rgba(50, 11, 94, 0.75) 66%, rgba(84, 9, 34, 0.75) 100%);
-      border: 1px solid rgba(168, 85, 247, 0.85);
-      box-shadow: 0 0 18px rgba(168, 85, 247, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.5);
-      color: #FFFFFF;
     }
 
-    /* Continuous Gradient Preview Bar */
-    .gradient-preview-bar {
-      width: 140px;
-      height: 12px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #0A5C38 0%, #0C397D 33%, #461280 66%, #6E0D2E 100%);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 0 10px rgba(70, 18, 128, 0.4);
-      margin-left: 4px;
+    .btn-wave-style:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.16);
     }
 
-    /* Secondary Sliders Bar */
+    .btn-wave-style.active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(56, 189, 248, 0.18));
+      color: #FFFFFF;
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+    }
+
     .control-deck-subbar {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: 12px;
-      padding: 8px 18px;
-      border-radius: 999px;
-      background: rgba(8, 14, 28, 0.70);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      font-size: 11px;
-      color: #94A3B8;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .slider-item {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 7px;
-      font-weight: 700;
+      gap: 8px;
     }
+
+    .slider-item label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .slider-item input[type="range"] {
+      -webkit-appearance: none;
+      width: 80px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+    }
+
+    .slider-item input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #38BDF8;
+      cursor: pointer;
+      box-shadow: 0 0 8px #38BDF8;
+    }
+
     .slider-item span {
-      color: #38BDF8;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      min-width: 36px;
-    }
-    .slider-item input[type="range"] {
-      width: 75px;
-      height: 4px;
-      accent-color: #A855F7;
-      cursor: pointer;
+      font-weight: 700;
+      color: #38BDF8;
+      min-width: 32px;
     }
 
-    .view-toggle-pills {
-      display: inline-flex;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 2px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.10);
-    }
-    .view-toggle-btn {
-      background: transparent;
-      border: none;
-      color: #94A3B8;
-      padding: 4px 12px;
-      border-radius: 999px;
+    .fps-badge {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
-      cursor: pointer;
-      transition: all 0.18s ease;
-    }
-    .view-toggle-btn.active {
-      background: rgba(255, 255, 255, 0.14);
-      color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    /* Explainer Banner */
+    .fps-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ==========================================================================
+       FEEDBACK BANNER
+       ========================================================================== */
     .feedback-banner {
-      width: 95%;
-      max-width: 1180px;
-      margin: 0 auto 14px auto;
-      padding: 10px 16px;
+      position: relative;
+      z-index: 10;
+      margin: 110px auto 16px auto;
+      max-width: 1240px;
+      width: calc(100% - 28px);
+      background: rgba(10, 16, 30, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 14px;
-      background: rgba(14, 28, 56, 0.50);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(168, 85, 247, 0.35);
+      padding: 12px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
-      font-size: 12px;
+      font-size: 13px;
       color: #CBD5E1;
-      z-index: 10;
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
     }
-    .feedback-banner b { color: #C084FC; }
 
     /* ==========================================================================
-       CRYSTAL TRANSMISSIVE LIQUID GLASS CSS SYSTEM (6PX GLASS BLUR)
+       LIQUID GLASS CARDS & SLABS (6px Blur Target)
        ========================================================================== */
-    :root {
-      --glass-blur: 6px; /* User's exact chosen blur */
-      --glass-saturate: 190%;
-      --glass-brightness: 1.05;
-      --glass-contrast: 1.04;
-      --glass-opacity: 0.18;
-      --glass-x: 50%;
-      --glass-y: 25%;
-      --liquid-refraction:
-        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.38),
-        inset 0 4px 14px -2px rgba(255, 255, 255, 0.08),
-        inset 1.5px 0 1.5px 0 rgba(56, 189, 248, 0.20),
-        inset -1.5px 0 1.5px 0 rgba(192, 132, 252, 0.15),
-        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.25);
-    }
-
     .main-stage-container {
       position: relative;
       z-index: 10;
-      width: 100%;
-      max-width: 1180px;
-      padding: 0 20px 80px 20px;
+      max-width: 1240px;
+      margin: 0 auto 60px auto;
+      width: calc(100% - 28px);
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
-    /* Crystal Clear Liquid Slab */
     .liquid-slab {
       position: relative;
-      border-radius: 24px;
-      padding: 24px 28px;
-      background:
-        radial-gradient(
-          420px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-          rgba(255, 255, 255, 0.08) 0%,
-          rgba(168, 85, 247, 0.04) 35%,
-          transparent 70%
-        ),
-        linear-gradient(
-          165deg,
-          rgba(16, 28, 54, calc(var(--glass-opacity) * 0.85)) 0%,
-          rgba(8, 14, 28, var(--glass-opacity)) 48%,
-          rgba(3, 6, 16, calc(var(--glass-opacity) * 1.35)) 100%
-        ) !important;
+      background: var(--glass-bg);
       backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
       -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness)) contrast(var(--glass-contrast)) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      border-top: 1.5px solid rgba(255, 255, 255, 0.38) !important;
-      box-shadow:
-        0 10px 24px -4px rgba(0, 0, 0, 0.25),
-        0 2px 6px rgba(0, 0, 0, 0.14),
-        0 0 24px -4px rgba(168, 85, 247, 0.12),
-        var(--liquid-refraction) !important;
-      isolation: isolate;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
-      overflow: visible;
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+      border: 1px solid var(--glass-border);
+      box-shadow: 
+        0 16px 36px -12px rgba(0, 0, 0, 0.45),
+        var(--glass-inner-bevel);
+      border-radius: 24px;
+      padding: 24px;
+      overflow: hidden;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Prismatic Refraction Border Stroke */
-    .liquid-slab::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      padding: 1.2px;
-      background:
-        radial-gradient(
-          260px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-          rgba(255, 255, 255, 0.42) 0%,
-          rgba(168, 85, 247, 0.25) 30%,
-          rgba(56, 189, 248, 0.15) 55%,
-          transparent 100%
-        ),
-        linear-gradient(
-          142deg,
-          rgba(255, 255, 255, 0.30) 0%,
-          rgba(255, 255, 255, 0.08) 32%,
-          rgba(56, 189, 248, 0.12) 68%,
-          rgba(192, 132, 252, 0.22) 100%
-        ) !important;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-
-    .liquid-slab.interactive-lift:hover {
-      transform: translateY(-3.5px) scale(1.002);
-      box-shadow:
-        0 16px 32px -6px rgba(0, 0, 0, 0.30),
-        0 4px 12px rgba(0, 0, 0, 0.18),
-        0 0 32px rgba(168, 85, 247, 0.25),
-        var(--liquid-refraction) !important;
-    }
-
-    /* ==========================================================================
-       DASHBOARD CARDS
-       ========================================================================== */
     .hero-bento {
+      padding: 32px 36px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -341,99 +278,66 @@
 
     .hero-top-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+      justify-content: space-between;
     }
 
     .hero-tag {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
+      color: #64748B;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #94A3B8;
-      display: inline-flex;
+      letter-spacing: 0.08em;
+      display: flex;
       align-items: center;
       gap: 8px;
     }
-    .hero-tag .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #34D399;
-      box-shadow: 0 0 12px #34D399;
-      animation: pulseDot 2s infinite ease-in-out;
-    }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+
+    .hero-delta-pill {
+      font-size: 12px;
+      font-weight: 700;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
     }
 
     .hero-amount {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 46px;
       font-weight: 800;
-      letter-spacing: -1.4px;
-      background: linear-gradient(180deg, #FFFFFF 20%, #E2E8F0 75%, #94A3B8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
+      letter-spacing: -0.03em;
+      color: #FFFFFF;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
-    .hero-delta-pill {
-      font-size: 13px;
-      font-weight: 700;
-      color: #34D399;
-      background: rgba(52, 211, 153, 0.15);
-      border: 1px solid rgba(52, 211, 153, 0.35);
-      padding: 4px 12px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .hero-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 14px;
-      margin-top: 6px;
-    }
-
-    .hero-submetric {
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .hero-submetric-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94A3B8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .hero-submetric-val {
-      font-size: 18px;
-      font-weight: 800;
-      color: #F8FAFC;
-    }
-
-    /* 4 Pillars Grid (Harmonized with the Smooth Gradient Stops) */
     .pillars-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
     }
 
+    @media (max-width: 900px) {
+      .pillars-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 540px) {
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-amount {
+        font-size: 34px;
+      }
+    }
+
     .pillar-card {
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      cursor: pointer;
+      gap: 10px;
     }
 
     .pillar-header {
@@ -442,259 +346,119 @@
       justify-content: space-between;
     }
 
-    .pillar-icon-box {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-    }
-    .pillar-icon-box.emerald { background: rgba(5, 71, 42, 0.4); border: 1px solid rgba(52, 211, 153, 0.45); color: #34D399; }
-    .pillar-icon-box.sapphire { background: rgba(8, 40, 92, 0.4); border: 1px solid rgba(56, 189, 248, 0.45); color: #38BDF8; }
-    .pillar-icon-box.purple { background: rgba(50, 11, 94, 0.4); border: 1px solid rgba(168, 85, 247, 0.45); color: #C084FC; }
-    .pillar-icon-box.ruby { background: rgba(84, 9, 34, 0.4); border: 1px solid rgba(244, 63, 94, 0.45); color: #FB7185; }
-
-    .pillar-pct {
-      font-size: 12.5px;
-      font-weight: 800;
-      color: #34D399;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .pillar-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #CBD5E1;
-    }
-    .pillar-val {
-      font-size: 23px;
-      font-weight: 800;
-      color: #FFFFFF;
-      letter-spacing: -0.4px;
-    }
-
-    /* Chart Card */
-    .chart-card {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .chart-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .chart-legend {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #94A3B8;
-    }
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .chart-container-box {
-      position: relative;
-      width: 100%;
-      height: 260px;
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.22);
-      overflow: hidden;
-    }
-
-    #growth-chart-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    /* Liquid Glass Floating Chart Tooltip with 6px Blur */
-    .liquid-chart-tooltip {
-      position: absolute;
-      top: 50px;
-      left: 55%;
-      transform: translate(-50%, -100%);
-      pointer-events: none;
-      padding: 10px 14px;
-      border-radius: 14px;
-      background: rgba(14, 25, 48, 0.35);
-      backdrop-filter: blur(var(--glass-blur)) saturate(190%);
-      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(190%);
-      border: 1px solid rgba(255, 255, 255, 0.20);
-      border-top: 1.5px solid rgba(255, 255, 255, 0.45);
-      box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.45), var(--liquid-refraction);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      z-index: 100;
-      white-space: nowrap;
-    }
-    .tooltip-date {
-      font-size: 10.5px;
+    .pillar-title {
+      font-size: 12px;
       font-weight: 700;
       color: #94A3B8;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.05em;
     }
-    .tooltip-val {
-      font-size: 15px;
-      font-weight: 800;
-      color: #38BDF8;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .tooltip-benchmarks {
-      font-size: 10px;
-      color: #94A3B8;
+
+    .pillar-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       display: flex;
-      gap: 8px;
-      margin-top: 2px;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .icon-emerald { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34D399; }
+    .icon-sapphire { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38BDF8; }
+    .icon-purple { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #C084FC; }
+    .icon-ruby { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #FB7185; }
+
+    .pillar-val {
       font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 800;
+      color: #FFFFFF;
     }
 
-    /* Draggable Stage */
-    .draggable-stage {
+    .pillar-sub {
+      font-size: 11px;
+      color: #64748B;
+      font-weight: 600;
+    }
+
+    /* Draggable Lenses Playground */
+    #stage-draggable {
       display: none;
+      min-height: 480px;
       position: relative;
-      width: 100%;
-      height: 560px;
-      border-radius: 24px;
-      border: 1px dashed rgba(168, 85, 247, 0.35);
-      background: rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-      margin-bottom: 40px;
-    }
-    .draggable-stage.active {
-      display: block;
-    }
-
-    .drag-hint {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      font-weight: 700;
-      color: #E2E8F0;
-      background: rgba(10, 20, 40, 0.65);
-      backdrop-filter: blur(12px);
-      padding: 6px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      pointer-events: none;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
     }
 
     .draggable-slab {
       position: absolute;
       cursor: grab;
       user-select: none;
-      touch-action: none;
     }
+
     .draggable-slab:active {
       cursor: grabbing;
-      transform: scale(1.02);
-      box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.45), 0 0 32px rgba(168, 85, 247, 0.30), var(--liquid-refraction) !important;
-    }
-
-    #drag-slab-1 { top: 80px; left: 60px; width: 330px; }
-    #drag-slab-2 { top: 120px; right: 70px; width: 360px; }
-    #drag-slab-3 { bottom: 50px; left: 35%; width: 310px; }
-
-    @media (max-width: 768px) {
-      .hero-amount { font-size: 32px; }
-      .control-deck-bar { border-radius: 20px; padding: 10px 14px; }
-      .pillars-grid { grid-template-columns: 1fr; }
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.8), var(--glass-inner-bevel);
     }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen Retina Live Canvas Engine -->
+  <!-- Fullscreen 60fps Continuous Wave Canvas -->
   <canvas id="live-bg-canvas"></canvas>
   <div class="ambient-vignette"></div>
-  <div class="pointer-fresnel" id="pointer-fresnel"></div>
 
   <!-- Interactive Control Deck -->
   <div class="control-deck-container">
     <div class="control-deck-bar">
       <div class="deck-group">
-        <span class="deck-label">🌊 Flow Mode:</span>
-        <button class="btn-gradient-flow active" onclick="switchGradientFlow('sinusoidal', this)">〰️ Dual Undulation Flow</button>
-        <button class="btn-gradient-flow" onclick="switchGradientFlow('diagonal', this)">🌊 Diagonal Flow</button>
-        <button class="btn-gradient-flow" onclick="switchGradientFlow('radial', this)">💫 Radial Ripple</button>
-
-        <!-- Continuous Smooth Gradient Preview Bar -->
-        <div class="gradient-preview-bar" title="Smooth Gradient: Emerald → Sapphire → Purple → Ruby Wine → Emerald"></div>
+        <span class="deck-label">🌊 Wave Style:</span>
+        <button class="btn-wave-style active" onclick="switchWaveStyle('fluid_ribbons', this)">🌊 1. Fluid Ribbons</button>
+        <button class="btn-wave-style" onclick="switchWaveStyle('contour_waves', this)">〰️ 2. Contour Waves</button>
+        <button class="btn-wave-style" onclick="switchWaveStyle('abyssal_aurora', this)">🌌 3. Abyssal Aurora</button>
+        <button class="btn-wave-style" onclick="switchWaveStyle('dual_undulation_sheets', this)">💫 4. Dual Undulation Sheets</button>
+        <button class="btn-wave-style" onclick="switchWaveStyle('liquid_mercury', this)">🌑 5. Obsidian Mercury</button>
       </div>
 
       <div class="deck-group">
-        <span style="font-size: 11px; font-weight: 700; color: #94A3B8;">1% Brightness • 100% Fill • 16px Grid • 0.4x Speed</span>
+        <div class="fps-badge">
+          <span class="fps-dot"></span>
+          <span id="fps-counter">60 FPS</span> • Zero Grids (60fps Silky)
+        </div>
       </div>
     </div>
 
     <!-- Sliders Bar -->
     <div class="control-deck-subbar">
-      <div class="slider-item">
-        <label>Glass Blur:</label>
-        <input type="range" id="param-blur" min="2" max="24" value="6" oninput="updateGlassBlur(this.value)">
-        <span id="val-blur">6px</span>
+      <div class="deck-group">
+        <span class="deck-label">🎨 Dark Palette:</span>
+        <button class="btn-wave-style active" id="btn-pal-jewels" onclick="switchPalette('abyssal_jewels', this)">💎 Abyssal Jewels</button>
+        <button class="btn-wave-style" id="btn-pal-cyber" onclick="switchPalette('obsidian_cyber', this)">⚡ Obsidian Smoke</button>
+        <button class="btn-wave-style" id="btn-pal-royal" onclick="switchPalette('royal_velvet', this)">👑 Royal Velvet</button>
+        <button class="btn-wave-style" id="btn-pal-stealth" onclick="switchPalette('stealth_carbon', this)">🕶️ Carbon Stealth</button>
       </div>
 
       <div class="slider-item">
-        <label>Brightness (Lightness):</label>
-        <input type="range" id="param-lightness" min="4" max="24" value="8" oninput="updateParam('lightness', this.value)">
-        <span id="val-lightness">8%</span>
+        <label>Darkness:</label>
+        <input type="range" id="param-darkness" min="4" max="14" value="7" oninput="updateParam('darkness', this.value)">
+        <span id="val-darkness">7%</span>
       </div>
 
       <div class="slider-item">
-        <label>Fill Opacity:</label>
-        <input type="range" id="param-fillopacity" min="40" max="100" value="100" oninput="updateParam('fillopacity', this.value)">
-        <span id="val-fillopacity">100%</span>
-      </div>
-
-      <div class="slider-item">
-        <label>Line Thickness:</label>
-        <input type="range" id="param-thickness" min="10" max="45" value="25" oninput="updateParam('thickness', this.value)">
-        <span id="val-thickness">2.5px</span>
-      </div>
-
-      <div class="slider-item">
-        <label>Grid Cell Size:</label>
-        <input type="range" id="param-gridsize" min="14" max="48" value="20" oninput="updateParam('gridsize', this.value)">
-        <span id="val-gridsize">20px</span>
+        <label>Wave Height:</label>
+        <input type="range" id="param-amplitude" min="20" max="90" value="48" oninput="updateParam('amplitude', this.value)">
+        <span id="val-amplitude">48px</span>
       </div>
 
       <div class="slider-item">
         <label>Speed:</label>
-        <input type="range" id="param-speed" min="10" max="100" value="40" oninput="updateParam('speed', this.value)">
+        <input type="range" id="param-speed" min="10" max="80" value="40" oninput="updateParam('speed', this.value)">
         <span id="val-speed">0.4x</span>
       </div>
 
-      <div class="view-toggle-pills">
-        <button class="view-toggle-btn active" id="btn-view-dash" onclick="switchStageView('dashboard')">Insight Dashboard</button>
-        <button class="view-toggle-btn" id="btn-view-drag" onclick="switchStageView('draggable')">Draggable Lenses</button>
+      <div class="slider-item">
+        <label>Glass Blur:</label>
+        <input type="range" id="param-blur" min="2" max="20" value="6" oninput="updateParam('blur', this.value)">
+        <span id="val-blur">6px</span>
       </div>
     </div>
   </div>
@@ -702,10 +466,11 @@
   <!-- Real-Time Visual Feedback Banner -->
   <div class="feedback-banner">
     <div>
-      <b>✨ Dual Undulation Flow (Locked In):</b> Configured with: <b>Brightness at 8%</b>, <b>Fill Opacity at 100%</b>, <b>Line Thickness 2.5px</b>, <b>Grid Cell Size 20px</b>, <b>Speed 0.4x</b>, and <b>Glass Blur 6px</b>! Cells are hollow when ambient; as the natural dual wave crests, the 20px cells fill with 100% solid, rich, majestic dark color (Emerald → Sapphire → Purple → Ruby Wine) and drain back to blank space effortlessly!
+      <b id="banner-title">🌊 1. Fluid Ribbons (Silky Smooth Continuous Wave):</b>
+      <span id="banner-desc">Completely replaces discrete choppy grid squares with 6 overlapping continuous fluid wave ribbons flowing at a locked 60fps. Styled in velvety dark gemstone tones (Emerald, Sapphire, Plum, Garnet) at stealth 7% lightness. Zero choppiness, zero grid lines, 100% effortless fluid elegance!</span>
     </div>
     <div style="font-size: 11px; color: #94A3B8;">
-      💡 Tip: Drag the glass slabs around to observe the fine 20px grid and 6px optical refraction!
+      💡 Tip: Click any Wave Style button above to preview the 5 continuous liquid alternatives!
     </div>
   </div>
 
@@ -713,10 +478,10 @@
   <div class="main-stage-container" id="stage-dashboard">
 
     <!-- Hero Bento Slab -->
-    <div class="liquid-slab hero-bento interactive-lift">
+    <div class="liquid-slab hero-bento">
       <div class="hero-top-row">
         <div class="hero-tag">
-          <span class="live-dot"></span>
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981;"></span>
           <span>Consolidated Net Worth</span>
         </div>
         <div class="hero-delta-pill">
@@ -728,176 +493,101 @@
         $463,556.84
       </div>
 
-      <div class="hero-metrics-grid">
-        <div class="hero-submetric">
-          <div class="hero-submetric-label">Monthly Savings</div>
-          <div class="hero-submetric-val" style="color: #38BDF8;">$6,420.00</div>
-        </div>
-        <div class="hero-submetric">
-          <div class="hero-submetric-label">Annualized IRR</div>
-          <div class="hero-submetric-val" style="color: #34D399;">16.84%</div>
-        </div>
-        <div class="hero-submetric">
-          <div class="hero-submetric-label">Target Milestone</div>
-          <div class="hero-submetric-val" style="color: #F8FAFC;">$500,000 (92.7%)</div>
-        </div>
+      <div style="font-size: 13px; color: #94A3B8; display: flex; gap: 20px;">
+        <span>Liquid Cash: <b style="color: #FFFFFF;">$84,200.00</b></span>
+        <span>Investments: <b style="color: #FFFFFF;">$328,950.00</b></span>
+        <span>Reserves: <b style="color: #FFFFFF;">$50,406.84</b></span>
       </div>
     </div>
 
-    <!-- 4 Core Pillars Grid -->
+    <!-- 4 Pillars of Insight (Grounded by the 4 Majestic Colors) -->
     <div class="pillars-grid">
-      <!-- Stop 1: Deep Emerald -->
-      <div class="liquid-slab pillar-card interactive-lift">
+      <!-- 1. Emerald Funds -->
+      <div class="liquid-slab pillar-card">
         <div class="pillar-header">
-          <div class="pillar-icon-box emerald">🌿</div>
-          <div class="pillar-pct" style="color: #34D399;">+18.4%</div>
+          <span class="pillar-title">Emerald Growth</span>
+          <div class="pillar-icon icon-emerald">💎</div>
         </div>
-        <div>
-          <div class="pillar-name">Deep Emerald • Mutual Funds</div>
-          <div class="pillar-val">$245,820</div>
-        </div>
+        <div class="pillar-val">$148,220</div>
+        <div class="pillar-sub">▲ +12.4% vs prev year</div>
       </div>
 
-      <!-- Stop 2: Royal Sapphire -->
-      <div class="liquid-slab pillar-card interactive-lift">
+      <!-- 2. Sapphire Equity -->
+      <div class="liquid-slab pillar-card">
         <div class="pillar-header">
-          <div class="pillar-icon-box sapphire">🌊</div>
-          <div class="pillar-pct" style="color: #38BDF8;">+24.1%</div>
+          <span class="pillar-title">Sapphire Equity</span>
+          <div class="pillar-icon icon-sapphire">🔷</div>
         </div>
-        <div>
-          <div class="pillar-name">Royal Sapphire • Equity & Stocks</div>
-          <div class="pillar-val">$132,490</div>
-        </div>
+        <div class="pillar-val">$180,730</div>
+        <div class="pillar-sub">▲ +8.1% vs prev year</div>
       </div>
 
-      <!-- Stop 3: Legendary Purple -->
-      <div class="liquid-slab pillar-card interactive-lift">
+      <!-- 3. Imperial Purple Gold -->
+      <div class="liquid-slab pillar-card">
         <div class="pillar-header">
-          <div class="pillar-icon-box purple">👑</div>
-          <div class="pillar-pct" style="color: #C084FC;">+14.8%</div>
+          <span class="pillar-title">Imperial Purple</span>
+          <div class="pillar-icon icon-purple">👑</div>
         </div>
-        <div>
-          <div class="pillar-name">Legendary Purple • Sovereign Gold</div>
-          <div class="pillar-val">$51,200</div>
-        </div>
+        <div class="pillar-val">$84,200</div>
+        <div class="pillar-sub">▲ +15.2% vs prev year</div>
       </div>
 
-      <!-- Stop 4: Deep Ruby Wine -->
-      <div class="liquid-slab pillar-card interactive-lift">
+      <!-- 4. Ruby Wine Reserves -->
+      <div class="liquid-slab pillar-card">
         <div class="pillar-header">
-          <div class="pillar-icon-box ruby">🍷</div>
-          <div class="pillar-pct" style="color: #FB7185;">+6.2%</div>
+          <span class="pillar-title">Ruby Wine Reserve</span>
+          <div class="pillar-icon icon-ruby">🍷</div>
         </div>
-        <div>
-          <div class="pillar-name">Ruby Wine • Liquid Reserves</div>
-          <div class="pillar-val">$34,046</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Interactive Performance Chart Slab -->
-    <div class="liquid-slab chart-card interactive-lift">
-      <div class="chart-header">
-        <div class="chart-title">
-          <span>Portfolio Trajectory & Market Benchmark</span>
-        </div>
-        <div class="chart-legend">
-          <div class="legend-item"><span class="legend-dot" style="background: #38BDF8;"></span> Portfolio</div>
-          <div class="legend-item"><span class="legend-dot" style="background: #34D399;"></span> Emerald Index</div>
-          <div class="legend-item"><span class="legend-dot" style="background: #A78BFA;"></span> Legendary Purple</div>
-          <div class="legend-item"><span class="legend-dot" style="background: #FB7185;"></span> Ruby Wine</div>
-        </div>
-      </div>
-
-      <div class="chart-container-box">
-        <!-- Liquid Glass Tooltip with 6px Blur -->
-        <div class="liquid-chart-tooltip" id="chart-tooltip">
-          <div class="tooltip-date">24 Oct 2026 • Live Sample</div>
-          <div class="tooltip-val">$463,556.84 (+6.53%)</div>
-          <div class="tooltip-benchmarks">
-            <span>Emerald: +3.2%</span> • <span>Ruby: +2.8%</span>
-          </div>
-        </div>
-
-        <svg id="growth-chart-svg" viewBox="0 0 1000 260" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="chartFillGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#A855F7" stop-opacity="0.25"/>
-              <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.10"/>
-              <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-
-          <!-- Grid Lines -->
-          <line x1="40" y1="50" x2="960" y2="50" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4"/>
-          <line x1="40" y1="110" x2="960" y2="110" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4"/>
-          <line x1="40" y1="170" x2="960" y2="170" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4"/>
-          <line x1="40" y1="230" x2="960" y2="230" stroke="rgba(255,255,255,0.06)"/>
-
-          <!-- Benchmarks -->
-          <path d="M 40 220 Q 250 205, 500 170 T 960 130" fill="none" stroke="#34D399" stroke-width="1.8" stroke-opacity="0.55"/>
-          <path d="M 40 225 Q 300 210, 520 185 T 960 150" fill="none" stroke="#A78BFA" stroke-width="1.6" stroke-opacity="0.45"/>
-          <path d="M 40 215 Q 260 215, 550 195 T 960 175" fill="none" stroke="#FB7185" stroke-width="1.4" stroke-opacity="0.40"/>
-
-          <!-- Main Portfolio Curve with Fill -->
-          <path d="M 40 220 C 180 200, 320 180, 440 140 C 560 100, 720 115, 840 70 L 960 45 L 960 230 L 40 230 Z" fill="url(#chartFillGrad)"/>
-          <path d="M 40 220 C 180 200, 320 180, 440 140 C 560 100, 720 115, 840 70 L 960 45" fill="none" stroke="#C084FC" stroke-width="3"/>
-          <circle cx="840" cy="70" r="5" fill="#FFFFFF" stroke="#C084FC" stroke-width="2.5"/>
-        </svg>
+        <div class="pillar-val">$50,406</div>
+        <div class="pillar-sub">▲ +4.6% vs prev year</div>
       </div>
     </div>
   </div>
 
-  <!-- Draggable Stage Mode -->
-  <div class="main-stage-container">
-    <div class="draggable-stage" id="stage-draggable">
-      <div class="drag-hint">✋ Drag any liquid glass slab around to see the 20px mesh with 8% brightness and 100% fill opacity refract through 6px blur</div>
-
-      <div class="liquid-slab draggable-slab" id="drag-slab-1">
-        <div style="font-size: 11px; font-weight: 800; color: #34D399; letter-spacing: 0.6px; margin-bottom: 6px;">DUAL UNDULATION 1</div>
-        <h4 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">20px High-Density Mesh</h4>
-        <p style="font-size: 12.5px; color: #CBD5E1; line-height: 1.5;">At 20px grid size, the geometric definition is ultra-crisp, providing rich optical texture under the 6px blur.</p>
-      </div>
-
-      <div class="liquid-slab draggable-slab" id="drag-slab-2">
-        <div style="font-size: 11px; font-weight: 800; color: #C084FC; letter-spacing: 0.6px; margin-bottom: 6px;">DUAL UNDULATION 2</div>
-        <h4 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">1% Brightness • 100% Fill (16px Grid)</h4>
-        <p style="font-size: 12.5px; color: #CBD5E1; line-height: 1.5;">Stealth dark jewel tones with solid 100% opaque cell fill on crests, dissolving back to dark void.</p>
-      </div>
-
-      <div class="liquid-slab draggable-slab" id="drag-slab-3">
-        <div style="font-size: 11px; font-weight: 800; color: #FB7185; letter-spacing: 0.6px; margin-bottom: 6px;">DUAL UNDULATION 3</div>
-        <h4 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Calm 0.4x Speed</h4>
-        <p style="font-size: 12.5px; color: #CBD5E1; line-height: 1.5;">Serene, continuous fluid motion with 2.5px lines.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Canvas Engine Scripts -->
   <script>
-    const canvas = document.getElementById('live-bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let width = 0, height = 0, dpr = 1;
+    /* ==========================================================================
+       60FPS CONTINUOUS LIQUID WAVE ENGINE (NO GRIDS — SILKY SMOOTH)
+       ========================================================================== */
+    var canvas = document.getElementById('live-bg-canvas');
+    var ctx = canvas.getContext('2d');
 
-    let FLOW_TYPE = 'sinusoidal'; // Dual Undulation Flow active!
+    var width = 0, height = 0, dpr = 1;
+    var ACTIVE_STYLE = 'fluid_ribbons';
+    var ACTIVE_PALETTE = 'abyssal_jewels';
 
-    // USER'S EXACT SPECIFIED PARAMETERS:
-    const PARAMS = {
-      blur: 6,            // 6px glass blur
-      lightness: 8,       // 8% brightness (stealth dark majestic!)
-      fillOpacity: 1.0,   // 100% fill opacity
-      thickness: 2.5,     // 2.5px line thickness
-      gridSize: 20,       // 20px grid cell size
-      speed: 0.4,         // 0.4x speed
-      saturation: 88      // 88% gemstone saturation
+    var PARAMS = {
+      darkness: 7,        // 7% stealth darkness (deep velvet, not bright!)
+      amplitude: 48,      // 48px wave amplitude
+      speed: 0.4,         // 0.4x calm, effortless speed
+      blur: 6             // 6px glass blur
     };
 
-    const MOUSE = {
-      x: window.innerWidth * 0.5,
-      y: window.innerHeight * 0.3,
-      targetX: window.innerWidth * 0.5,
-      targetY: window.innerHeight * 0.3,
-      isDown: false
+    // Curated Deep Dark Velvet Palettes
+    var PALETTES = {
+      abyssal_jewels: [
+        { name: 'Emerald', h: 158, s: 80 },
+        { name: 'Sapphire', h: 218, s: 85 },
+        { name: 'Imperial Plum', h: 275, s: 80 },
+        { name: 'Ruby Wine', h: 344, s: 75 }
+      ],
+      obsidian_cyber: [
+        { name: 'Abyssal Cyan', h: 185, s: 75 },
+        { name: 'Midnight Cobalt', h: 226, s: 78 },
+        { name: 'Dark Amethyst', h: 268, s: 72 },
+        { name: 'Deep Wine', h: 338, s: 70 }
+      ],
+      royal_velvet: [
+        { name: 'Velvet Garnet', h: 345, s: 75 },
+        { name: 'Deep Royal Purple', h: 280, s: 75 },
+        { name: 'Midnight Blue', h: 220, s: 80 },
+        { name: 'Forest Obsidian', h: 162, s: 70 }
+      ],
+      stealth_carbon: [
+        { name: 'Charcoal Slate', h: 220, s: 20 },
+        { name: 'Deep Steel', h: 210, s: 25 },
+        { name: 'Obsidian Smoke', h: 240, s: 18 },
+        { name: 'Night Glass', h: 200, s: 30 }
+      ]
     };
 
     function resize() {
@@ -906,291 +596,362 @@
       height = window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // Mouse Tracking
-    const pointerFresnel = document.getElementById('pointer-fresnel');
-    window.addEventListener('pointermove', (e) => {
-      MOUSE.targetX = e.clientX;
-      MOUSE.targetY = e.clientY;
+    // FPS Meter
+    var lastTime = performance.now();
+    var frameCount = 0;
+    var lastFpsUpdate = performance.now();
+    var fpsDisplay = document.getElementById('fps-counter');
 
-      pointerFresnel.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
-
-      const x = ((e.clientX / window.innerWidth) * 100).toFixed(1) + '%';
-      const y = ((e.clientY / window.innerHeight) * 100).toFixed(1) + '%';
-      document.documentElement.style.setProperty('--glass-x', x);
-      document.documentElement.style.setProperty('--glass-y', y);
-    });
-
-    window.addEventListener('pointerdown', (e) => { MOUSE.isDown = true; });
-    window.addEventListener('pointerup', () => { MOUSE.isDown = false; });
-
-    function switchGradientFlow(flow, btn) {
-      FLOW_TYPE = flow;
-      document.querySelectorAll('.btn-gradient-flow').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
-    // Sliders
-    function updateParam(param, val) {
-      if (param === 'thickness') {
-        PARAMS.thickness = val / 10;
-        document.getElementById('val-thickness').innerText = (val / 10).toFixed(1) + 'px';
-      } else if (param === 'gridsize') {
-        PARAMS.gridSize = parseInt(val, 10);
-        document.getElementById('val-gridsize').innerText = val + 'px';
-      } else if (param === 'speed') {
-        PARAMS.speed = val / 100;
-        document.getElementById('val-speed').innerText = (val / 100).toFixed(1) + 'x';
-      } else if (param === 'lightness') {
-        PARAMS.lightness = parseInt(val, 10);
-        document.getElementById('val-lightness').innerText = val + '%';
-      } else if (param === 'fillopacity') {
-        PARAMS.fillOpacity = val / 100;
-        document.getElementById('val-fillopacity').innerText = val + '%';
+    function updateFps(now) {
+      frameCount++;
+      if (now - lastFpsUpdate >= 500) {
+        var fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate));
+        if (fpsDisplay) fpsDisplay.innerText = fps + ' FPS';
+        frameCount = 0;
+        lastFpsUpdate = now;
       }
     }
 
-    function updateGlassBlur(val) {
-      PARAMS.blur = parseInt(val, 10);
-      document.getElementById('val-blur').innerText = val + 'px';
-      document.documentElement.style.setProperty('--glass-blur', val + 'px');
+    /* --------------------------------------------------------------------------
+       STYLE 1: FLUID WAVE RIBBONS (Continuous overlapping liquid silk sheets)
+       -------------------------------------------------------------------------- */
+    function renderFluidRibbons(time) {
+      var t = time * 0.0006 * PARAMS.speed;
+      var pal = PALETTES[ACTIVE_PALETTE];
+      var layers = 6;
+      var baseSpacing = height / (layers + 1);
+
+      for (var i = 0; i < layers; i++) {
+        var pCol = pal[i % pal.length];
+        var layerOffset = i * 1.35;
+        var baseY = baseSpacing * (i + 0.8) + Math.sin(t * 0.8 + layerOffset) * 20;
+
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        ctx.lineTo(0, baseY);
+
+        var segs = 32;
+        var dx = width / segs;
+
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          // Dual harmonic sinusoidal wave for organic fluidity:
+          var w1 = Math.sin(x * 0.0035 + t * 1.5 + layerOffset) * PARAMS.amplitude;
+          var w2 = Math.cos(x * 0.0018 - t * 1.1 + layerOffset * 0.8) * (PARAMS.amplitude * 0.6);
+          var w3 = Math.sin((x + baseY) * 0.001 + t * 0.7) * (PARAMS.amplitude * 0.35);
+          var y = baseY + w1 + w2 + w3;
+
+          if (s === 0) {
+            ctx.lineTo(x, y);
+          } else {
+            var prevX = (s - 1) * dx;
+            var cpx = (prevX + x) * 0.5;
+            ctx.quadraticCurveTo(prevX, ctx.lastY || y, cpx, (ctx.lastY + y) * 0.5);
+          }
+          ctx.lastY = y;
+        }
+
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        // Deep stealth dark jewel fill with soft gradient:
+        var fillL = PARAMS.darkness + (i % 2 === 0 ? 2 : 0);
+        var strokeL = fillL + 6;
+
+        var grad = ctx.createLinearGradient(0, baseY - PARAMS.amplitude, 0, height);
+        grad.addColorStop(0, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL + 4) + '%, 0.42)');
+        grad.addColorStop(0.35, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + fillL + '%, 0.28)');
+        grad.addColorStop(1, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL - 2) + '%, 0.05)');
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Silky crest highlight line (calm, dark, no bright glare):
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + strokeL + '%, 0.55)';
+        ctx.stroke();
+      }
     }
 
-    function switchStageView(view) {
-      const dash = document.getElementById('stage-dashboard');
-      const drag = document.getElementById('stage-draggable');
-      const btnDash = document.getElementById('btn-view-dash');
-      const btnDrag = document.getElementById('btn-view-drag');
+    /* --------------------------------------------------------------------------
+       STYLE 2: TOPOGRAPHICAL CONTOUR WAVES (Continuous elevation isobars)
+       -------------------------------------------------------------------------- */
+    function renderContourWaves(time) {
+      var t = time * 0.0005 * PARAMS.speed;
+      var pal = PALETTES[ACTIVE_PALETTE];
+      var lines = 16;
+      var spacing = (height + 100) / lines;
 
-      if (view === 'dashboard') {
-        dash.style.display = 'flex';
-        drag.classList.remove('active');
-        btnDash.classList.add('active');
-        btnDrag.classList.remove('active');
-      } else {
-        dash.style.display = 'none';
-        drag.classList.add('active');
-        btnDash.classList.remove('active');
-        btnDrag.classList.add('active');
+      for (var i = 0; i < lines; i++) {
+        var pCol = pal[i % pal.length];
+        var baseY = i * spacing - 30;
+        var lineT = t + i * 0.3;
+
+        ctx.beginPath();
+        var segs = 40;
+        var dx = width / segs;
+
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          var wave = Math.sin(x * 0.004 + lineT * 1.6) * PARAMS.amplitude * 0.8 +
+                     Math.cos(x * 0.002 - lineT * 1.2 + i * 0.4) * (PARAMS.amplitude * 0.5);
+          var y = baseY + wave;
+
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        var lineLight = PARAMS.darkness + 5 + Math.sin(lineT) * 2;
+        var alpha = 0.32 + (i % 3 === 0 ? 0.2 : 0);
+
+        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + lineLight + '%, ' + alpha + ')';
+        ctx.stroke();
+
+        // Subtle shaded depth between every 2nd line
+        if (i % 2 === 0) {
+          ctx.lineTo(width, height);
+          ctx.lineTo(0, height);
+          ctx.closePath();
+          ctx.fillStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + PARAMS.darkness + '%, 0.06)';
+          ctx.fill();
+        }
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       STYLE 3: ABYSSAL AURORA (Smooth curtain folds in deep ocean void)
+       -------------------------------------------------------------------------- */
+    function renderAbyssalAurora(time) {
+      var t = time * 0.0005 * PARAMS.speed;
+      var pal = PALETTES[ACTIVE_PALETTE];
+      var curtains = 5;
+
+      for (var c = 0; c < curtains; c++) {
+        var pCol = pal[c % pal.length];
+        var phase = t * 1.2 + c * 1.4;
+
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+
+        var segs = 36;
+        var dx = width / segs;
+
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          var fold = Math.sin(x * 0.003 + phase) * Math.cos(x * 0.0015 - phase * 0.7) * (PARAMS.amplitude * 1.6);
+          var baseY = height * 0.35 + c * (height * 0.12) + fold;
+
+          if (s === 0) ctx.lineTo(x, baseY);
+          else ctx.lineTo(x, baseY);
+        }
+
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        var grad = ctx.createLinearGradient(0, height * 0.2, 0, height);
+        var baseL = PARAMS.darkness;
+        grad.addColorStop(0, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL + 6) + '%, 0.40)');
+        grad.addColorStop(0.5, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + baseL + '%, 0.22)');
+        grad.addColorStop(1, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL - 3) + '%, 0.02)');
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL + 8) + '%, 0.45)';
+        ctx.stroke();
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       STYLE 4: DUAL UNDULATION SHEETS (Continuous ribbon version of user flow)
+       -------------------------------------------------------------------------- */
+    function renderDualUndulationSheets(time) {
+      var t = time * 0.0007 * PARAMS.speed;
+      var pal = PALETTES[ACTIVE_PALETTE];
+      var bands = 7;
+      var stepY = height / (bands + 1);
+
+      for (var b = 0; b < bands; b++) {
+        var pCol = pal[b % pal.length];
+        var bPhase = (b * 0.8) - t * 1.4;
+        var baseY = stepY * (b + 0.9);
+
+        ctx.beginPath();
+        ctx.moveTo(0, baseY);
+
+        var segs = 36;
+        var dx = width / segs;
+
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          // Exact dual sinusoidal undulation:
+          var u1 = Math.sin(x * 0.004 + bPhase + b * 0.3) * (PARAMS.amplitude * 0.9);
+          var u2 = Math.cos((x * 0.003 - baseY * 0.004) - t * 1.2) * (PARAMS.amplitude * 0.6);
+          var y = baseY + u1 + u2;
+
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        // Draw ribbon downward
+        ctx.lineTo(width, baseY + 60);
+        for (var s = segs; s >= 0; s--) {
+          var x = s * dx;
+          var u1 = Math.sin(x * 0.004 + bPhase + b * 0.3) * (PARAMS.amplitude * 0.9);
+          var u2 = Math.cos((x * 0.003 - baseY * 0.004) - t * 1.2) * (PARAMS.amplitude * 0.6);
+          var y = baseY + u1 + u2 + 45;
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+
+        var fillL = PARAMS.darkness + 2;
+        ctx.fillStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + fillL + '%, 0.30)';
+        ctx.fill();
+
+        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL + 6) + '%, 0.50)';
+        ctx.stroke();
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       STYLE 5: OBSIDIAN MERCURY (Volumetric soft liquid swells)
+       -------------------------------------------------------------------------- */
+    function renderLiquidMercury(time) {
+      var t = time * 0.0004 * PARAMS.speed;
+      var pal = PALETTES[ACTIVE_PALETTE];
+      var swells = 4;
+
+      for (var i = 0; i < swells; i++) {
+        var pCol = pal[i % pal.length];
+        var swellY = height * (0.3 + i * 0.22);
+
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        ctx.lineTo(0, swellY);
+
+        var segs = 28;
+        var dx = width / segs;
+
+        for (var s = 0; s <= segs; s++) {
+          var x = s * dx;
+          var m1 = Math.sin(x * 0.0025 + t * 1.2 + i * 1.1) * (PARAMS.amplitude * 1.3);
+          var m2 = Math.cos(x * 0.0012 - t * 0.9 + i * 0.7) * (PARAMS.amplitude * 0.7);
+          var y = swellY + m1 + m2;
+          ctx.lineTo(x, y);
+        }
+
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        var grad = ctx.createRadialGradient(width * 0.5, swellY, 20, width * 0.5, height, width * 0.7);
+        var baseL = PARAMS.darkness;
+        grad.addColorStop(0, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL + 4) + '%, 0.35)');
+        grad.addColorStop(0.7, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + baseL + '%, 0.20)');
+        grad.addColorStop(1, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL - 3) + '%, 0.05)');
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (baseL + 7) + '%, 0.40)';
+        ctx.stroke();
       }
     }
 
     /* ==========================================================================
-       SEAMLESS CONTINUOUS SMOOTH GRADIENT MATHEMATICS
-       0.00: Deep Emerald (160°)
-       0.25: Royal Sapphire (218°)
-       0.50: Legendary Purple (275°)
-       0.75: Deep Ruby Wine (344°)
-       1.00: Wrap back to Deep Emerald (160°)
+       MAIN ANIMATION DISPATCHER (60FPS LOCKED)
        ========================================================================== */
-    const GRADIENT_STOPS = [
-      { pos: 0.00, h: 160, s: 88 }, // Deep Gemstone Emerald
-      { pos: 0.25, h: 218, s: 90 }, // Royal Sapphire Blue
-      { pos: 0.50, h: 275, s: 88 }, // Legendary Imperial Purple
-      { pos: 0.75, h: 344, s: 86 }, // Deep Ruby Wine
-      { pos: 1.00, h: 160, s: 88 }  // Wrap to Emerald
-    ];
+    function render(now) {
+      updateFps(now);
 
-    function getSmoothGradientColor(tNorm, fillIntensity) {
-      let p = ((tNorm % 1.0) + 1.0) % 1.0;
-
-      let i = 0;
-      while (i < GRADIENT_STOPS.length - 1 && p > GRADIENT_STOPS[i + 1].pos) {
-        i++;
-      }
-      const s1 = GRADIENT_STOPS[i];
-      const s2 = GRADIENT_STOPS[i + 1];
-
-      const localT = (p - s1.pos) / (s2.pos - s1.pos);
-      const easedT = (1 - Math.cos(localT * Math.PI)) * 0.5;
-
-      let h1 = s1.h;
-      let h2 = s2.h;
-      if (h2 < h1) h2 += 360;
-      const finalHue = (h1 + (h2 - h1) * easedT) % 360;
-
-      // Rich, visible majestic dark gemstone fill lightness:
-      // Base: 18% + subtle luster up to 22% (clearly visible as filled color, yet deep and majestic)
-      const targetL = 17 + (PARAMS.lightness - 1) * 0.3 + (fillIntensity * 5);
-
-      return {
-        h: finalHue,
-        s: PARAMS.saturation,
-        l: targetL
-      };
-    }
-
-    /* ==========================================================================
-       RENDER ENGINE: DUAL UNDULATION FLOW
-       ========================================================================== */
-    function renderDualUndulationMesh(time) {
-      ctx.fillStyle = '#02050E';
+      // Deep Midnight Void Canvas
+      ctx.fillStyle = '#01040A';
       ctx.fillRect(0, 0, width, height);
 
-      // Natural 0.4x speed
-      const t = time * 0.0008 * PARAMS.speed;
-      const step = PARAMS.gridSize; // 20px
-      const cols = Math.ceil(width / step) + 2;
-      const rows = Math.ceil(height / step) + 2;
-
-      // 1. Compute 3D mesh points & dual undulation wave elevation
-      const grid = [];
-      for (let r = 0; r < rows; r++) {
-        grid[r] = [];
-        for (let c = 0; c < cols; c++) {
-          const bx = (c - 0.5) * step;
-          const by = (r - 0.5) * step;
-
-          // Natural 3D fluid undulation
-          const w1 = Math.sin(bx * 0.006 + t * 2.2 + r * 0.20) * 16;
-          const w2 = Math.cos(by * 0.008 - t * 1.8 + c * 0.16) * 12;
-          const finalZ = w1 + w2;
-
-          // Dual undulation flow phase calculation:
-          let wavePhase;
-          if (FLOW_TYPE === 'diagonal') {
-            wavePhase = (bx * 0.0035 + by * 0.0045) - t * 1.5;
-          } else if (FLOW_TYPE === 'radial') {
-            const dist = Math.hypot(bx - width * 0.5, by - height * 0.4);
-            wavePhase = (dist * 0.006) - t * 1.8;
-          } else {
-            // Dual Undulation Sinusoidal Flow:
-            wavePhase = (bx * 0.003 - by * 0.004) - t * 1.6;
-          }
-
-          const rawWave = Math.sin(wavePhase);
-
-          // Only crests fill with color; troughs are 100% empty/blank space!
-          const fillIntensity = rawWave > 0 ? Math.pow(rawWave, 1.3) : 0;
-          const gradientProgress = (wavePhase * 0.18 + bx * 0.0008 + by * 0.0006);
-
-          grid[r][c] = {
-            x: bx,
-            y: by + finalZ,
-            z: finalZ,
-            fillIntensity: fillIntensity,
-            gradProgress: gradientProgress
-          };
-        }
-      }
-
       ctx.save();
-
-      // ========================================================================
-      // STEP 1: CLEAN LIQUID COLOR FILL WITH 100% FILL OPACITY
-      // ========================================================================
-      for (let r = 0; r < rows - 1; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const p1 = grid[r][c];
-          const p2 = grid[r][c + 1];
-          const p4 = grid[r + 1][c + 1];
-          const p3 = grid[r + 1][c];
-
-          const cellIntensity = (p1.fillIntensity + p2.fillIntensity + p3.fillIntensity + p4.fillIntensity) * 0.25;
-
-          if (cellIntensity > 0.02) {
-            const avgProgress = (p1.gradProgress + p2.gradProgress + p3.gradProgress + p4.gradProgress) * 0.25;
-            const col = getSmoothGradientColor(avgProgress, cellIntensity);
-
-            // 100% fill opacity at wave crest!
-            const fillAlpha = Math.min(1.0, cellIntensity * PARAMS.fillOpacity);
-
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.lineTo(p4.x, p4.y);
-            ctx.lineTo(p3.x, p3.y);
-            ctx.closePath();
-
-            // Pure clean liquid color fill at 8% brightness, 100% fill opacity
-            ctx.fillStyle = `hsla(${col.h}, ${col.s}%, ${col.l}%, ${fillAlpha})`;
-            ctx.fill();
-          }
-        }
+      if (ACTIVE_STYLE === 'fluid_ribbons') {
+        renderFluidRibbons(now);
+      } else if (ACTIVE_STYLE === 'contour_waves') {
+        renderContourWaves(now);
+      } else if (ACTIVE_STYLE === 'abyssal_aurora') {
+        renderAbyssalAurora(now);
+      } else if (ACTIVE_STYLE === 'dual_undulation_sheets') {
+        renderDualUndulationSheets(now);
+      } else if (ACTIVE_STYLE === 'liquid_mercury') {
+        renderLiquidMercury(now);
       }
-
-      // ========================================================================
-      // STEP 2: RENDER STEADY 2.5PX GRID LINES (DO NOT GET BRIGHTER WITH WAVE)
-      // The wave fills the AREA with color; the lines remain calm, steady & subtle.
-      // ========================================================================
-      ctx.lineWidth = PARAMS.thickness;
-
-      // Horizontal Lines
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const p1 = grid[r][c];
-          const p2 = grid[r][c + 1];
-
-          // Steady subtle jewel line color with 1% brightness styling (alpha 0.35, no brightening burst)
-          const col = getSmoothGradientColor(p1.gradProgress, 0);
-          ctx.strokeStyle = `hsla(${col.h}, 65%, 15%, 0.38)`;
-
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-      }
-
-      // Vertical Lines
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows - 1; r++) {
-          const p1 = grid[r][c];
-          const p2 = grid[r + 1][c];
-
-          const col = getSmoothGradientColor(p1.gradProgress, 0);
-          ctx.strokeStyle = `hsla(${col.h}, 65%, 15%, 0.38)`;
-
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-      }
-
       ctx.restore();
+
+      requestAnimationFrame(render);
     }
+    requestAnimationFrame(render);
 
-    // Main Animation Loop
-    function animate(time) {
-      MOUSE.x += (MOUSE.targetX - MOUSE.x) * 0.1;
-      MOUSE.y += (MOUSE.targetY - MOUSE.y) * 0.1;
-
-      renderDualUndulationMesh(time);
-
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-
-    // Draggable Slabs
-    function initDraggableSlabs() {
-      const slabs = document.querySelectorAll('.draggable-slab');
-      slabs.forEach(slab => {
-        let isDragging = false, startX, startY, initialLeft, initialTop;
-
-        slab.addEventListener('pointerdown', (e) => {
-          isDragging = true;
-          slab.setPointerCapture(e.pointerId);
-          startX = e.clientX; startY = e.clientY;
-          initialLeft = slab.offsetLeft; initialTop = slab.offsetTop;
-        });
-
-        slab.addEventListener('pointermove', (e) => {
-          if (!isDragging) return;
-          slab.style.left = (initialLeft + e.clientX - startX) + 'px';
-          slab.style.top = (initialTop + e.clientY - startY) + 'px';
-        });
-
-        const stopDrag = () => { isDragging = false; };
-        slab.addEventListener('pointerup', stopDrag);
-        slab.addEventListener('pointercancel', stopDrag);
+    /* ==========================================================================
+       INTERACTIVE CONTROLS
+       ========================================================================== */
+    function switchWaveStyle(style, btn) {
+      ACTIVE_STYLE = style;
+      document.querySelectorAll('.btn-wave-style').forEach(function(b) {
+        if (b.innerText.includes('1.') || b.innerText.includes('2.') || b.innerText.includes('3.') || b.innerText.includes('4.') || b.innerText.includes('5.')) {
+          b.classList.remove('active');
+        }
       });
+      if (btn) btn.classList.add('active');
+
+      var titles = {
+        fluid_ribbons: '🌊 1. Fluid Ribbons (Silky Smooth Continuous Wave):',
+        contour_waves: '〰️ 2. Topographical Contour Waves (Liquid Isobar Sweeps):',
+        abyssal_aurora: '🌌 3. Abyssal Aurora (Deep Midnight Curtain Folds):',
+        dual_undulation_sheets: '💫 4. Dual Undulation Sheets (Continuous Liquid Flow):',
+        liquid_mercury: '🌑 5. Obsidian Mercury (Volumetric Dark Swells):'
+      };
+
+      var descs = {
+        fluid_ribbons: 'Replaces discrete choppy grid squares with 6 overlapping continuous fluid wave ribbons flowing at locked 60fps. Styled in velvety dark gemstone tones at stealth 7% lightness. Zero choppiness, zero grid lines, 100% effortless fluid elegance!',
+        contour_waves: 'Minimalist continuous elevation contour curves (isobars) undulating gracefully across the screen without any grid mesh. Super clean, razor sharp under 6px glass blur.',
+        abyssal_aurora: 'Vertical and diagonal flowing curtain waves with fluid harmonics, creating deep, dark, undulating folds of color like northern lights in midnight ocean trenches.',
+        dual_undulation_sheets: 'The continuous ribbon version of dual undulation! The two sinusoidal waves intersect to form broad, smooth, undulating sheets of liquid color with smooth continuous gradients.',
+        liquid_mercury: 'Heavy, slow-rolling, low-frequency liquid swells with soft specular edges that catch light like dark liquid chrome or black obsidian.'
+      };
+
+      document.getElementById('banner-title').innerText = titles[style] || '';
+      document.getElementById('banner-desc').innerText = descs[style] || '';
     }
-    initDraggableSlabs();
+
+    function switchPalette(palName, btn) {
+      ACTIVE_PALETTE = palName;
+      ['btn-pal-jewels', 'btn-pal-cyber', 'btn-pal-royal', 'btn-pal-stealth'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      if (btn) btn.classList.add('active');
+    }
+
+    function updateParam(name, val) {
+      if (name === 'darkness') {
+        PARAMS.darkness = parseInt(val, 10);
+        document.getElementById('val-darkness').innerText = val + '%';
+      } else if (name === 'amplitude') {
+        PARAMS.amplitude = parseInt(val, 10);
+        document.getElementById('val-amplitude').innerText = val + 'px';
+      } else if (name === 'speed') {
+        PARAMS.speed = parseInt(val, 10) / 100;
+        document.getElementById('val-speed').innerText = (parseInt(val, 10) / 100).toFixed(1) + 'x';
+      } else if (name === 'blur') {
+        PARAMS.blur = parseInt(val, 10);
+        document.getElementById('val-blur').innerText = val + 'px';
+        document.documentElement.style.setProperty('--glass-blur', val + 'px');
+      }
+    }
   </script>
 </body>
 </html>
