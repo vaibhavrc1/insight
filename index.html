@@ -117,21 +117,7 @@
   <!-- Toast Notification -->
   <div class="liquid-toast" id="toast">Saved to Cloud</div>
 
-  <!-- Floating Liquid Glass PWA Install Banner (Transient: Auto-hides after 5s) -->
-  <div id="pwa-install-banner" class="pwa-install-pill">
-    <div class="pwa-install-icon">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-      </svg>
-    </div>
-    <div class="pwa-install-title">Install Insight App</div>
-    <button type="button" class="btn-pwa-install" onclick="triggerPwaInstall()">Install</button>
-    <button type="button" class="btn-pwa-dismiss" onclick="dismissPwaInstall()" aria-label="Dismiss">✕</button>
-  </div>
-
-  <!-- Specular border engine applied directly to elements -->
+  <div id="pwa-install-banner" style="display: none !important; visibility: hidden !important; pointer-events: none !important;" aria-hidden="true"></div>
 
   <div class="app-shell">
     <!-- TOP BAR -->

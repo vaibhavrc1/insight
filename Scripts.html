@@ -107,28 +107,15 @@
   var DEFERRED_INSTALL_PROMPT = null;
   var INSTALL_BANNER_TIMER = null;
 
-  window.addEventListener('beforeinstallprompt', function(e) {
-    // Intercept Chrome default install prompt so it never blocks the user's viewport
+    window.addEventListener('beforeinstallprompt', function(e) {
+    // Intercept Chrome default install prompt
     e.preventDefault();
     DEFERRED_INSTALL_PROMPT = e;
-
-    // Show transient notification only when opening website, then auto-hide
-    if (!sessionStorage.getItem('pwa_prompt_dismissed')) {
-      showPwaInstallBanner();
-    }
   });
 
   function showPwaInstallBanner() {
-    if (sessionStorage.getItem('pwa_prompt_dismissed') || APP_STATE) return;
-    var banner = document.getElementById('pwa-install-banner');
-    if (!banner) return;
-    banner.classList.add('show');
-
-    if (INSTALL_BANNER_TIMER) clearTimeout(INSTALL_BANNER_TIMER);
-    // Auto-hide after 4 seconds so it never blocks the view
-    INSTALL_BANNER_TIMER = setTimeout(function() {
-      dismissPwaInstall();
-    }, 4000);
+    // In-page banner permanently removed
+    return;
   }
 
   function dismissPwaInstall() {
