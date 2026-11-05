@@ -4384,10 +4384,12 @@ function observeRevealItems() {
   window.onload = initApp;
 
   /* ==========================================================================
-     SILKY SMOOTH DARK LIQUID WAVES ENGINE (NO GRIDS — 60FPS LOCKED)
-     Continuous Sinusoidal Fluid Sheets in Deep Stealth Dark Jewel Tones
+     TOPOGRAPHICAL CONTOUR WAVES ENGINE — APPLE LIQUID GLASS LIVE BACKGROUND
+     Config: Contour Waves (Continuous Elevation Isobars),
+             Obsidian Smoke Palette (Abyssal Cyan, Cobalt, Amethyst, Deep Wine),
+             12% Darkness, 0.4x Speed, 6px Glass Blur (Zero Grids, 60fps Locked)
      ========================================================================== */
-  function initContinuousWaveCanvas() {
+  function initContourWavesCanvas() {
     var canvas = document.getElementById('live-bg-canvas');
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
@@ -4397,17 +4399,17 @@ function observeRevealItems() {
 
     var PARAMS = {
       blur: 6,
-      darkness: 7,        // 7% stealth darkness (velvety dark, non-glaring)
+      darkness: 12,       // 12% darkness (velvety dark obsidian, non-glaring)
       amplitude: 48,      // 48px wave amplitude
       speed: 0.4          // 0.4x calm, effortless speed
     };
 
-    // Deep Stealth Dark Gemstone Palette
+    // Obsidian Smoke Palette
     var PALETTE = [
-      { name: 'Emerald', h: 158, s: 80 },
-      { name: 'Sapphire', h: 218, s: 85 },
-      { name: 'Imperial Plum', h: 275, s: 80 },
-      { name: 'Ruby Wine', h: 344, s: 75 }
+      { name: 'Abyssal Cyan',   h: 185, s: 78 },
+      { name: 'Midnight Cobalt', h: 226, s: 80 },
+      { name: 'Dark Amethyst',  h: 268, s: 75 },
+      { name: 'Deep Wine',      h: 338, s: 72 }
     ];
 
     function resize() {
@@ -4428,65 +4430,61 @@ function observeRevealItems() {
         return;
       }
 
-      // Midnight Void Canvas
+      // Midnight Obsidian Void Canvas
       ctx.fillStyle = '#01040A';
       ctx.fillRect(0, 0, width, height);
 
-      var t = now * 0.0006 * PARAMS.speed;
-      var layers = 6;
-      var baseSpacing = height / (layers + 1);
+      var t = now * 0.0005 * PARAMS.speed;
+      var lines = 16;
+      var spacing = (height + 120) / lines;
 
       ctx.save();
 
-      for (var i = 0; i < layers; i++) {
+      for (var i = 0; i < lines; i++) {
         var pCol = PALETTE[i % PALETTE.length];
-        var layerOffset = i * 1.35;
-        var baseY = baseSpacing * (i + 0.8) + Math.sin(t * 0.8 + layerOffset) * 20;
+        var baseY = i * spacing - 40;
+        var lineT = t + i * 0.28;
 
-        ctx.beginPath();
-        ctx.moveTo(0, height);
-        ctx.lineTo(0, baseY);
-
-        var segs = 32;
+        var segs = 36;
         var dx = width / segs;
+        var points = [];
 
         for (var s = 0; s <= segs; s++) {
           var x = s * dx;
-          // Dual harmonic sinusoidal wave for organic fluidity:
-          var w1 = Math.sin(x * 0.0035 + t * 1.5 + layerOffset) * PARAMS.amplitude;
-          var w2 = Math.cos(x * 0.0018 - t * 1.1 + layerOffset * 0.8) * (PARAMS.amplitude * 0.6);
-          var w3 = Math.sin((x + baseY) * 0.001 + t * 0.7) * (PARAMS.amplitude * 0.35);
-          var y = baseY + w1 + w2 + w3;
-
-          if (s === 0) {
-            ctx.lineTo(x, y);
-          } else {
-            var prevX = (s - 1) * dx;
-            var cpx = (prevX + x) * 0.5;
-            ctx.quadraticCurveTo(prevX, ctx.lastY || y, cpx, (ctx.lastY + y) * 0.5);
-          }
-          ctx.lastY = y;
+          // Dual harmonic sinusoidal elevation wave:
+          var w1 = Math.sin(x * 0.0035 + lineT * 1.5) * (PARAMS.amplitude * 0.85);
+          var w2 = Math.cos(x * 0.0018 - lineT * 1.1 + i * 0.35) * (PARAMS.amplitude * 0.55);
+          var y = baseY + w1 + w2;
+          points.push({ x: x, y: y });
         }
 
-        ctx.lineTo(width, height);
-        ctx.closePath();
+        // Draw smooth continuous contour curve with quadratic bezier interpolation:
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
 
-        // Deep stealth dark jewel fill with soft gradient:
-        var fillL = PARAMS.darkness + (i % 2 === 0 ? 2 : 0);
-        var strokeL = fillL + 6;
+        for (var s = 1; s < points.length; s++) {
+          var xc = (points[s - 1].x + points[s].x) * 0.5;
+          var yc = (points[s - 1].y + points[s].y) * 0.5;
+          ctx.quadraticCurveTo(points[s - 1].x, points[s - 1].y, xc, yc);
+        }
+        ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
 
-        var grad = ctx.createLinearGradient(0, baseY - PARAMS.amplitude, 0, height);
-        grad.addColorStop(0, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL + 4) + '%, 0.40)');
-        grad.addColorStop(0.35, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + fillL + '%, 0.26)');
-        grad.addColorStop(1, 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + (fillL - 2) + '%, 0.04)');
+        // Calibrated 12% darkness styling with gentle crest luster:
+        var lineLight = PARAMS.darkness + 2 + Math.sin(lineT) * 1.5; // ~12% to 14%
+        var alpha = 0.38 + (i % 3 === 0 ? 0.18 : 0);
 
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Silky crest highlight line (calm, dark, no bright glare):
-        ctx.lineWidth = 1.8;
-        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + strokeL + '%, 0.50)';
+        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + lineLight + '%, ' + alpha + ')';
         ctx.stroke();
+
+        // Subtle shaded depth between alternate isobars for topographical relief
+        if (i % 2 === 0) {
+          ctx.lineTo(width, height);
+          ctx.lineTo(0, height);
+          ctx.closePath();
+          ctx.fillStyle = 'hsla(' + pCol.h + ', ' + pCol.s + '%, ' + PARAMS.darkness + '%, 0.055)';
+          ctx.fill();
+        }
       }
 
       ctx.restore();
@@ -4498,9 +4496,9 @@ function observeRevealItems() {
 
   // Auto initialize on DOM ready or immediately
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initContinuousWaveCanvas);
+    document.addEventListener('DOMContentLoaded', initContourWavesCanvas);
   } else {
-    initContinuousWaveCanvas();
+    initContourWavesCanvas();
   }
 
 </script>

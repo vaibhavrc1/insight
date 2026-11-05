@@ -412,8 +412,8 @@
     <div class="control-deck-bar">
       <div class="deck-group">
         <span class="deck-label">🌊 Wave Style:</span>
-        <button class="btn-wave-style active" onclick="switchWaveStyle('fluid_ribbons', this)">🌊 1. Fluid Ribbons</button>
-        <button class="btn-wave-style" onclick="switchWaveStyle('contour_waves', this)">〰️ 2. Contour Waves</button>
+        <button class="btn-wave-style" onclick="switchWaveStyle('fluid_ribbons', this)">🌊 1. Fluid Ribbons</button>
+        <button class="btn-wave-style active" onclick="switchWaveStyle('contour_waves', this)">〰️ 2. Contour Waves</button>
         <button class="btn-wave-style" onclick="switchWaveStyle('abyssal_aurora', this)">🌌 3. Abyssal Aurora</button>
         <button class="btn-wave-style" onclick="switchWaveStyle('dual_undulation_sheets', this)">💫 4. Dual Undulation Sheets</button>
         <button class="btn-wave-style" onclick="switchWaveStyle('liquid_mercury', this)">🌑 5. Obsidian Mercury</button>
@@ -431,16 +431,16 @@
     <div class="control-deck-subbar">
       <div class="deck-group">
         <span class="deck-label">🎨 Dark Palette:</span>
-        <button class="btn-wave-style active" id="btn-pal-jewels" onclick="switchPalette('abyssal_jewels', this)">💎 Abyssal Jewels</button>
-        <button class="btn-wave-style" id="btn-pal-cyber" onclick="switchPalette('obsidian_cyber', this)">⚡ Obsidian Smoke</button>
+        <button class="btn-wave-style" id="btn-pal-jewels" onclick="switchPalette('abyssal_jewels', this)">💎 Abyssal Jewels</button>
+        <button class="btn-wave-style active" id="btn-pal-cyber" onclick="switchPalette('obsidian_cyber', this)">⚡ Obsidian Smoke</button>
         <button class="btn-wave-style" id="btn-pal-royal" onclick="switchPalette('royal_velvet', this)">👑 Royal Velvet</button>
         <button class="btn-wave-style" id="btn-pal-stealth" onclick="switchPalette('stealth_carbon', this)">🕶️ Carbon Stealth</button>
       </div>
 
       <div class="slider-item">
         <label>Darkness:</label>
-        <input type="range" id="param-darkness" min="4" max="14" value="7" oninput="updateParam('darkness', this.value)">
-        <span id="val-darkness">7%</span>
+        <input type="range" id="param-darkness" min="4" max="20" value="12" oninput="updateParam('darkness', this.value)">
+        <span id="val-darkness">12%</span>
       </div>
 
       <div class="slider-item">
@@ -466,8 +466,8 @@
   <!-- Real-Time Visual Feedback Banner -->
   <div class="feedback-banner">
     <div>
-      <b id="banner-title">🌊 1. Fluid Ribbons (Silky Smooth Continuous Wave):</b>
-      <span id="banner-desc">Completely replaces discrete choppy grid squares with 6 overlapping continuous fluid wave ribbons flowing at a locked 60fps. Styled in velvety dark gemstone tones (Emerald, Sapphire, Plum, Garnet) at stealth 7% lightness. Zero choppiness, zero grid lines, 100% effortless fluid elegance!</span>
+      <b id="banner-title">〰️ 2. Contour Waves (Topographical Elevation Isobars):</b>
+      <span id="banner-desc">Selected Configuration: Contour Waves in Obsidian Smoke palette (Abyssal Cyan, Cobalt, Amethyst, Deep Wine) at 12% darkness and 6px glass blur. Continuous curved isobars flowing at 60fps with zero grids, zero choppiness!</span>
     </div>
     <div style="font-size: 11px; color: #94A3B8;">
       💡 Tip: Click any Wave Style button above to preview the 5 continuous liquid alternatives!
@@ -552,11 +552,11 @@
     var ctx = canvas.getContext('2d');
 
     var width = 0, height = 0, dpr = 1;
-    var ACTIVE_STYLE = 'fluid_ribbons';
-    var ACTIVE_PALETTE = 'abyssal_jewels';
+    var ACTIVE_STYLE = 'contour_waves';
+    var ACTIVE_PALETTE = 'obsidian_cyber';
 
     var PARAMS = {
-      darkness: 7,        // 7% stealth darkness (deep velvet, not bright!)
+      darkness: 12,        // 7% stealth darkness (deep velvet, not bright!)
       amplitude: 48,      // 48px wave amplitude
       speed: 0.4,         // 0.4x calm, effortless speed
       blur: 6             // 6px glass blur
