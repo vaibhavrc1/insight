@@ -71,7 +71,7 @@
       root.setProperty('--global-glass-x', clientX.toFixed(1) + 'px');
       root.setProperty('--global-glass-y', clientY.toFixed(1) + 'px');
 
-      var surfaces = document.querySelectorAll('.liquid-slab, .pin-vault-card, .loading-glass-card, .mobile-dock, .nav-well, .segment-well, .liquid-modal-dialog, .liquid-drilldown-dialog, .liquid-chart-fullview-dialog, .liquid-month-popover');
+      var surfaces = document.querySelectorAll('.liquid-slab, .pin-vault-card, .loading-glass-card, .mobile-dock, .nav-well, .segment-well, .liquid-modal-dialog, .liquid-drilldown-dialog, .liquid-chart-fullview-dialog, .liquid-month-popover, .apple-liquid-glass-tooltip');
       for (var i = 0; i < surfaces.length; i++) {
         var el = surfaces[i];
         var rect = el.getBoundingClientRect();
@@ -420,6 +420,11 @@ function observeRevealItems() {
     tooltipEl.style.transform = 'none';
     tooltipEl.style.opacity = '1';
     tooltipEl.style.pointerEvents = 'none';
+
+    var relX = ((posX - left) / tooltipW) * 100;
+    var relY = ((posY - top) / tooltipH) * 100;
+    tooltipEl.style.setProperty('--glass-x', relX.toFixed(1) + '%');
+    tooltipEl.style.setProperty('--glass-y', relY.toFixed(1) + '%');
   }
 
   function getLiquidGlassTooltipConfig() {

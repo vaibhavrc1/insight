@@ -3260,18 +3260,29 @@
     top: 8px;
     z-index: 1200;
     pointer-events: none;
-    background: rgba(14, 22, 40, 0.48) !important;
-    background: linear-gradient(135deg, rgba(28, 40, 68, 0.52) 0%, rgba(10, 16, 30, 0.38) 100%) !important;
-    backdrop-filter: blur(28px) saturate(220%) brightness(1.18) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(1.18) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.50) !important;
+    background:
+      radial-gradient(
+        180px circle at var(--glass-x, 50%) var(--glass-y, 0%),
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(56, 189, 248, 0.02) 40%,
+        transparent 80%
+      ),
+      linear-gradient(
+        165deg,
+        rgba(16, 25, 44, 0.85) 0%,
+        rgba(8, 13, 25, 0.92) 55%,
+        rgba(4, 7, 16, 0.96) 100%
+      ) !important;
+    backdrop-filter: blur(var(--glass-blur, 32px)) saturate(var(--glass-saturate, 165%)) brightness(var(--glass-brightness, 1.0)) contrast(var(--glass-contrast, 1.02)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 32px)) saturate(var(--glass-saturate, 165%)) brightness(var(--glass-brightness, 1.0)) contrast(var(--glass-contrast, 1.02)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.32) !important;
     border-radius: 14px !important;
     padding: 8px 13px !important;
     box-shadow: 
-      0 16px 36px -6px rgba(0, 0, 0, 0.65),
-      0 0 20px rgba(56, 189, 248, 0.20),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.35) !important;
+      0 20px 48px -8px rgba(0, 0, 0, 0.82),
+      0 0 20px rgba(56, 189, 248, 0.10),
+      var(--liquid-refraction) !important;
     color: #FFFFFF;
     font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
     min-width: 140px;
@@ -3280,6 +3291,35 @@
     transform: translateX(-50%) translateY(0) scale(0.96);
     transition: opacity 0.14s cubic-bezier(0.16, 1, 0.3, 1), transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), left 0.08s ease-out;
     box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Interactive Fresnel Specular Rim for Graph Tooltip */
+  .apple-liquid-glass-tooltip::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.1px !important;
+    background:
+      radial-gradient(
+        160px circle at var(--glass-x, 50%) var(--glass-y, 0%),
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(56, 189, 248, 0.12) 35%,
+        rgba(255, 255, 255, 0.03) 60%,
+        transparent 100%
+      ),
+      linear-gradient(
+        142deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.05) 32%,
+        rgba(56, 189, 248, 0.05) 68%,
+        rgba(192, 132, 252, 0.12) 100%
+      ) !important;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
   .apple-liquid-glass-tooltip .alg-title {
@@ -4687,7 +4727,8 @@
   .liquid-chart-fullview-dialog,
   .liquid-month-popover,
   .liquid-toast,
-  .liquid-undo-toast {
+  .liquid-undo-toast,
+  .apple-liquid-glass-tooltip {
     background:
       radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 38%, transparent 72%),
       linear-gradient(165deg, rgba(16, 25, 44, 0.85) 0%, rgba(8, 13, 25, 0.92) 55%, rgba(4, 7, 16, 0.96) 100%) !important;
