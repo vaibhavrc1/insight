@@ -3156,17 +3156,17 @@
   }
 
   /* ==========================================================================
-     PWA INSTALL PILL - NON-BLOCKING & TRANSIENT (AUTO-HIDES AFTER 5s)
+     PWA INSTALL PILL - STRICTLY HIDDEN UNLESS ACTIVE & TRANSIENT
      ========================================================================== */
   .pwa-install-pill {
+    display: none !important;
     position: fixed;
     top: 14px;
     right: 14px;
     z-index: 99999;
-    display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: rgba(13, 20, 36, 0.90);
+    background: rgba(13, 20, 36, 0.88);
     backdrop-filter: blur(24px) saturate(200%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid rgba(56, 189, 248, 0.4);
@@ -3183,6 +3183,7 @@
   }
 
   .pwa-install-pill.show {
+    display: inline-flex !important;
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0) scale(1);
@@ -3251,30 +3252,32 @@
   }
 
   /* ==========================================================================
-     APPLE LIQUID GLASS CHART TOOLTIP (HUD)
+     APPLE LIQUID GLASS CHART HUD (AUTHENTIC TRANSLUCENT GLASS + TOP ANCHORED)
      ========================================================================== */
   .apple-liquid-glass-tooltip {
     position: absolute;
+    top: 8px;
     z-index: 1200;
     pointer-events: none;
-    background: rgba(10, 16, 30, 0.84) !important;
-    backdrop-filter: blur(24px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.38) !important;
+    background: rgba(14, 22, 40, 0.48) !important;
+    background: linear-gradient(135deg, rgba(28, 40, 68, 0.52) 0%, rgba(10, 16, 30, 0.38) 100%) !important;
+    backdrop-filter: blur(28px) saturate(220%) brightness(1.18) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(1.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.50) !important;
     border-radius: 14px !important;
-    padding: 9px 13px !important;
+    padding: 8px 13px !important;
     box-shadow: 
-      0 18px 40px -8px rgba(0, 0, 0, 0.85),
-      0 0 24px rgba(56, 189, 248, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+      0 16px 36px -6px rgba(0, 0, 0, 0.65),
+      0 0 20px rgba(56, 189, 248, 0.20),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.35) !important;
     color: #FFFFFF;
     font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
     min-width: 140px;
-    max-width: 250px;
+    max-width: 260px;
     opacity: 0;
-    transform: translate(-50%, -100%) scale(0.96);
-    transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(-50%) translateY(0) scale(0.96);
+    transition: opacity 0.14s cubic-bezier(0.16, 1, 0.3, 1), transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), left 0.08s ease-out;
     box-sizing: border-box;
   }
 

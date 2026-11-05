@@ -119,20 +119,24 @@
   });
 
   function showPwaInstallBanner() {
+    if (sessionStorage.getItem('pwa_prompt_dismissed') || APP_STATE) return;
     var banner = document.getElementById('pwa-install-banner');
     if (!banner) return;
     banner.classList.add('show');
 
     if (INSTALL_BANNER_TIMER) clearTimeout(INSTALL_BANNER_TIMER);
-    // Auto-hide after 5 seconds so it never blocks the view
+    // Auto-hide after 4 seconds so it never blocks the view
     INSTALL_BANNER_TIMER = setTimeout(function() {
       dismissPwaInstall();
-    }, 5000);
+    }, 4000);
   }
 
   function dismissPwaInstall() {
     var banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.classList.remove('show');
+    if (banner) {
+      banner.classList.remove('show');
+      banner.style.display = 'none';
+    }
     sessionStorage.setItem('pwa_prompt_dismissed', '1');
     if (INSTALL_BANNER_TIMER) {
       clearTimeout(INSTALL_BANNER_TIMER);
@@ -176,11 +180,55 @@
     return trend;
   }
 
+  // Calculates exponential best-fit trendline (y = a * e^(b*x)) representing continuous wealth compounding
+  function calculateExponentialTrend(values) {
+    if (!values || values.length <= 1) return (values || []).slice();
+    var n = values.length;
+    var sumX = 0, sumZ = 0, sumXZ = 0, sumX2 = 0;
+    for (var i = 0; i < n; i++) {
+      var y = Number(values[i]) || 0;
+      if (y <= 0) y = 1; // Prevent ln(0) or ln(negative)
+      var z = Math.log(y);
+      sumX += i;
+      sumZ += z;
+      sumXZ += i * z;
+      sumX2 += i * i;
+    }
+    var denom = (n * sumX2 - sumX * sumX);
+    if (denom === 0) return values.slice();
+    var b = (n * sumXZ - sumX * sumZ) / denom;
+    var a = (sumZ - b * sumX) / n;
+    var trend = [];
+    for (var j = 0; j < n; j++) {
+      var fitted = Math.exp(a + b * j);
+      trend.push(Math.round(fitted));
+    }
+    return trend;
+  }
+
+  // Calculates smooth rolling average (SMA) threading smoothly between volatile monthly bars/dots
+  function calculateRollingAverage(values, windowSize) {
+    if (!values || !values.length) return [];
+    var w = windowSize || 3;
+    var result = [];
+    for (var i = 0; i < values.length; i++) {
+      var start = Math.max(0, i - w + 1);
+      var count = i - start + 1;
+      var sum = 0;
+      for (var k = start; k <= i; k++) {
+        sum += (Number(values[k]) || 0);
+      }
+      result.push(Math.round(sum / count));
+    }
+    return result;
+  }
+
   // Converts verbose internal dataset labels into clean, stylish HUD labels
   function cleanChartLabel(raw) {
     if (!raw) return '';
     if (/market investments/i.test(raw)) return 'Market Assets';
-    if (/bank & fixed deposits/i.test(raw)) return 'Bank & FD';
+    if (/bank & fixed deposits|bank & fd/i.test(raw)) return 'Bank & FD';
+    if (/repo/i.test(raw)) return 'RBI Repo Rate';
     if (/epf balance/i.test(raw)) return 'EPF Balance';
     if (/mutual fund/i.test(raw) || raw === 'My Mutual Funds (₹)') return 'MF Holdings';
     if (/nifty/i.test(raw)) return 'Nifty 50';
@@ -188,6 +236,8 @@
     if (/gold/i.test(raw)) return 'Gold Holdings';
     if (/silver.*rate|silver.*bullion|silver spot/i.test(raw)) return 'Silver Spot';
     if (/silver/i.test(raw)) return 'Silver Holdings';
+    if (/compounding/i.test(raw)) return 'Compounding Trend';
+    if (/3m rolling|rolling pace/i.test(raw)) return '3M Rolling Pace';
     if (/monthly net|monthly wealth|monthly.*change/i.test(raw)) return 'Wealth Added';
     if (/pace|average added/i.test(raw)) return 'Average Pace';
     if (/trend/i.test(raw)) return 'Average Trend';
@@ -245,7 +295,9 @@
 
       if (typeof val === 'number') {
         if (p.dataset.yAxisID === 'yRight') {
-          if (/nifty/i.test(rawLabel)) {
+          if (/repo/i.test(rawLabel) || /repo/i.test(label)) {
+            formattedVal = val.toFixed(2) + '% p.a.';
+          } else if (/nifty/i.test(rawLabel)) {
             formattedVal = Math.round(val).toLocaleString('en-IN') + ' pts';
           } else if (/gold/i.test(rawLabel)) {
             formattedVal = '₹' + Math.round(val).toLocaleString('en-IN') + ' / 10g';
@@ -293,29 +345,20 @@
     html += '</div>';
     tooltipEl.innerHTML = html;
 
-    // Position relative to parent container
+    // Anchor HUD at top margin of container so it glides horizontally and never overlaps data points or X-axis
     var parentRect = parent.getBoundingClientRect();
     var canvasRect = canvas.getBoundingClientRect();
     var offsetLeft = canvasRect.left - parentRect.left;
-    var offsetTop = canvasRect.top - parentRect.top;
 
     var posX = offsetLeft + tooltip.caretX;
-    var posY = offsetTop + tooltip.caretY;
-
     var wrapW = parent.clientWidth || 300;
-    var halfW = 85;
-    var clampedX = Math.max(halfW + 6, Math.min(wrapW - halfW - 6, posX));
+    var tooltipW = tooltipEl.offsetWidth || 180;
+    var halfW = tooltipW / 2;
+    var clampedX = Math.max(halfW + 8, Math.min(wrapW - halfW - 8, posX));
 
     tooltipEl.style.left = clampedX + 'px';
-
-    if (posY < 95) {
-      tooltipEl.style.top = (posY + 14) + 'px';
-      tooltipEl.style.transform = 'translateX(-50%) translateY(0) scale(1)';
-    } else {
-      tooltipEl.style.top = (posY - 12) + 'px';
-      tooltipEl.style.transform = 'translateX(-50%) translateY(-100%) scale(1)';
-    }
-
+    tooltipEl.style.top = '8px';
+    tooltipEl.style.transform = 'translateX(-50%) scale(1)';
     tooltipEl.style.opacity = '1';
     tooltipEl.style.pointerEvents = 'none';
   }
@@ -1503,6 +1546,7 @@
 
   function loadStateData(data) {
     APP_STATE = data;
+    dismissPwaInstall();
     var loader = document.getElementById('app-loading-screen');
     if (loader) {
       loader.classList.add('fade-out');
@@ -1632,7 +1676,7 @@
 
     var datasets = [];
     var isStacked = TRAJECTORY_MODE === 'stacked';
-    var trendData = calculateTrendline(cd.netWorth);
+    var trendData = calculateExponentialTrend(cd.netWorth);
 
     if (isStacked) {
       datasets = [
@@ -1667,9 +1711,9 @@
           pointRadius: 0
         },
         {
-          label: 'Average Trend',
+          label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.40)',
+          borderColor: 'rgba(255, 255, 255, 0.45)',
           borderDash: [5, 4],
           borderWidth: 1.8,
           fill: false,
@@ -1696,7 +1740,7 @@
           pointHoverRadius: 5
         },
         {
-          label: 'Average Trend',
+          label: 'Compounding Trend',
           data: trendData,
           borderColor: 'rgba(255, 255, 255, 0.45)',
           borderDash: [5, 4],
@@ -1719,6 +1763,9 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+        },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
@@ -1727,7 +1774,7 @@
               color: '#CBD5E1',
               font: { size: 11, weight: '600' },
               boxWidth: 12,
-              filter: function(item) { return item.text !== 'Average Trend'; }
+              filter: function(item) { return item.text !== 'Compounding Trend' && item.text !== 'Average Trend'; }
             }
           },
           tooltip: getLiquidGlassTooltipConfig(),
@@ -1802,12 +1849,12 @@
     var btnMf = document.getElementById('btn-react-mf');
     var btnGold = document.getElementById('btn-react-gold');
     var btnSilver = document.getElementById('btn-react-silver');
-    var btnAll = document.getElementById('btn-react-all');
+    var btnBank = document.getElementById('btn-react-bank');
     if (btnMf) btnMf.classList.toggle('active', mode === 'mf');
     if (btnGold) btnGold.classList.toggle('active', mode === 'gold');
     if (btnSilver) btnSilver.classList.toggle('active', mode === 'silver');
-    if (btnAll) btnAll.classList.toggle('active', mode === 'all');
-    var target = mode === 'mf' ? btnMf : (mode === 'gold' ? btnGold : (mode === 'silver' ? btnSilver : btnAll));
+    if (btnBank) btnBank.classList.toggle('active', mode === 'bank');
+    var target = mode === 'mf' ? btnMf : (mode === 'gold' ? btnGold : (mode === 'silver' ? btnSilver : btnBank));
     if (target) repositionSegmentGlider(target, true);
     renderReactionChart();
   }
@@ -1819,7 +1866,12 @@
     if (CHART_REACTION) CHART_REACTION.destroy();
 
     var datasets = [];
-    var scales = {};
+    var scales = {
+      x: {
+        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+        ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+      }
+    };
 
     if (REACTION_FILTER === 'mf') {
       datasets = [
@@ -1828,7 +1880,7 @@
           label: 'My Mutual Funds',
           data: rx.mfRaw,
           borderColor: '#38BDF8',
-          backgroundColor: 'rgba(56, 189, 248, 0.10)',
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
           borderWidth: 2.8,
           tension: 0,
           fill: true,
@@ -1841,50 +1893,50 @@
           id: 'nifty',
           label: 'Nifty 50 Benchmark',
           data: rx.niftyRaw,
-          borderColor: 'rgba(52, 211, 153, 0.45)',
+          borderColor: '#34D399',
           backgroundColor: 'transparent',
-          borderWidth: 1.8,
-          borderDash: [],
+          borderWidth: 2.2,
+          borderDash: [5, 4],
           tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 5,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
           pointBackgroundColor: '#34D399',
           yAxisID: 'yRight'
         }
       ];
 
-      scales = {
-        x: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
-          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left',
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: {
+          display: true,
+          color: '#38BDF8',
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
         },
-        yLeft: {
-          type: 'linear',
-          position: 'left',
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Mutual Funds Value (₹)',
-            color: '#38BDF8',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Mutual Funds (₹)',
+          color: '#38BDF8',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+      scales.yRight = {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: true,
+          color: '#34D399',
+          font: { size: 9.5 },
+          callback: function(v) { return Math.round(v).toLocaleString('en-IN'); }
         },
-        yRight: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Nifty 50 Benchmark',
-            color: 'rgba(52, 211, 153, 0.75)',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Nifty 50 Benchmark',
+          color: '#34D399',
+          font: { size: 10.5, weight: '700' }
         }
       };
     } else if (REACTION_FILTER === 'gold') {
@@ -1894,7 +1946,7 @@
           label: 'My Gold Holdings',
           data: rx.goldHoldingRaw,
           borderColor: '#FACC15',
-          backgroundColor: 'rgba(250, 204, 21, 0.10)',
+          backgroundColor: 'rgba(250, 204, 21, 0.12)',
           borderWidth: 2.8,
           tension: 0,
           fill: true,
@@ -1905,52 +1957,52 @@
         },
         {
           id: 'goldRate',
-          label: 'Gold Market Rate (10g)',
+          label: 'Gold Rate (₹ / 10g)',
           data: rx.goldBenchRaw,
-          borderColor: 'rgba(251, 146, 60, 0.45)',
+          borderColor: '#FB923C',
           backgroundColor: 'transparent',
-          borderWidth: 1.8,
-          borderDash: [],
+          borderWidth: 2.2,
+          borderDash: [5, 4],
           tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 5,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
           pointBackgroundColor: '#FB923C',
           yAxisID: 'yRight'
         }
       ];
 
-      scales = {
-        x: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
-          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left',
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: {
+          display: true,
+          color: '#FACC15',
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
         },
-        yLeft: {
-          type: 'linear',
-          position: 'left',
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Gold Holding Value (₹)',
-            color: '#FACC15',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Gold Holdings (₹)',
+          color: '#FACC15',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+      scales.yRight = {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: true,
+          color: '#FB923C',
+          font: { size: 9.5 },
+          callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
         },
-        yRight: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Gold Rate (₹ / 10g)',
-            color: 'rgba(251, 146, 60, 0.75)',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Gold Rate (₹ / 10g)',
+          color: '#FB923C',
+          font: { size: 10.5, weight: '700' }
         }
       };
     } else if (REACTION_FILTER === 'silver') {
@@ -1960,7 +2012,7 @@
           label: 'My Silver Holdings',
           data: rx.silverHoldingRaw,
           borderColor: '#E2E8F0',
-          backgroundColor: 'rgba(226, 232, 240, 0.10)',
+          backgroundColor: 'rgba(226, 232, 240, 0.12)',
           borderWidth: 2.8,
           tension: 0,
           fill: true,
@@ -1971,133 +2023,123 @@
         },
         {
           id: 'silverRate',
-          label: 'Silver Market Rate (1kg)',
+          label: 'Silver Rate (₹ / 1kg)',
           data: rx.silverBenchRaw,
-          borderColor: 'rgba(96, 165, 250, 0.45)',
+          borderColor: '#60A5FA',
           backgroundColor: 'transparent',
-          borderWidth: 1.8,
-          borderDash: [],
+          borderWidth: 2.2,
+          borderDash: [5, 4],
           tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 5,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
           pointBackgroundColor: '#60A5FA',
           yAxisID: 'yRight'
         }
       ];
 
-      scales = {
-        x: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
-          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left',
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: {
+          display: true,
+          color: '#E2E8F0',
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
         },
-        yLeft: {
-          type: 'linear',
-          position: 'left',
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Silver Holding Value (₹)',
-            color: '#E2E8F0',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Silver Holdings (₹)',
+          color: '#E2E8F0',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+      scales.yRight = {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: true,
+          color: '#60A5FA',
+          font: { size: 9.5 },
+          callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
         },
-        yRight: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Silver Rate (₹ / 1kg)',
-            color: 'rgba(96, 165, 250, 0.75)',
-            font: { size: 11, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Silver Rate (₹ / 1kg)',
+          color: '#60A5FA',
+          font: { size: 10.5, weight: '700' }
         }
       };
     } else {
-      // 'all' Combined (Normalized Base-100 Trajectory)
+      // 'bank' Mode: Bank & Fixed Deposits vs RBI Repo Rate Benchmark
+      var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
+      var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
       datasets = [
         {
-          id: 'mf',
-          label: 'My Mutual Funds',
-          data: rx.mfIndex,
-          borderColor: '#38BDF8',
-          borderWidth: 2.5,
+          id: 'bankHolding',
+          label: 'Bank & Fixed Deposits',
+          data: bankData,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+          borderWidth: 2.8,
           tension: 0,
-          pointRadius: 2
+          fill: true,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#F59E0B',
+          yAxisID: 'yLeft'
         },
         {
-          id: 'nifty',
-          label: 'Nifty 50 Benchmark',
-          data: rx.niftyIndex,
-          borderColor: 'rgba(52, 211, 153, 0.45)',
-          borderDash: [],
-          borderWidth: 1.8,
+          id: 'repoRate',
+          label: 'RBI Repo Rate Benchmark',
+          data: repoData,
+          borderColor: '#EC4899',
+          backgroundColor: 'transparent',
+          borderWidth: 2.2,
+          borderDash: [5, 4],
           tension: 0,
-          pointRadius: 0
-        },
-        {
-          id: 'goldHolding',
-          label: 'My Gold Holdings',
-          data: rx.goldHoldingIndex,
-          borderColor: '#FACC15',
-          borderWidth: 2.5,
-          tension: 0,
-          pointRadius: 2
-        },
-        {
-          id: 'goldRate',
-          label: 'Gold Rate (10g)',
-          data: rx.goldRateIndex,
-          borderColor: 'rgba(251, 146, 60, 0.45)',
-          borderDash: [],
-          borderWidth: 1.8,
-          tension: 0,
-          pointRadius: 0
-        },
-        {
-          id: 'silverHolding',
-          label: 'My Silver Holdings',
-          data: rx.silverHoldingIndex,
-          borderColor: '#CBD5E1',
-          borderWidth: 2.5,
-          tension: 0,
-          pointRadius: 2
-        },
-        {
-          id: 'silverRate',
-          label: 'Silver Rate (1kg)',
-          data: rx.silverRateIndex,
-          borderColor: 'rgba(96, 165, 250, 0.45)',
-          borderDash: [],
-          borderWidth: 1.8,
-          tension: 0,
-          pointRadius: 0
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#EC4899',
+          yAxisID: 'yRight'
         }
       ];
 
-      scales = {
-        x: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
-          ticks: { color: '#64748B', font: { size: 10 }, maxTicksLimit: 10 }
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left',
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: {
+          display: true,
+          color: '#F59E0B',
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
         },
-        y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          grace: '5%',
-          ticks: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Normalized Growth (Base 100)',
-            color: 'rgba(148, 163, 184, 0.7)',
-            font: { size: 10.5, weight: '700' }
-          }
+        title: {
+          display: true,
+          text: 'Bank & FD Deposits (₹)',
+          color: '#F59E0B',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+      scales.yRight = {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        suggestedMin: 4.5,
+        suggestedMax: 8.5,
+        ticks: {
+          display: true,
+          color: '#EC4899',
+          font: { size: 9.5 },
+          callback: function(v) { return Number(v).toFixed(1) + '%'; }
+        },
+        title: {
+          display: true,
+          text: 'RBI Repo Rate (% p.a.)',
+          color: '#EC4899',
+          font: { size: 10.5, weight: '700' }
         }
       };
     }
@@ -2108,6 +2150,9 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+        },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
@@ -2130,8 +2175,7 @@
     if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.destroy();
 
     var colors = cd.monthlyChange.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
-    var avgPace = Math.round(cd.monthlyChange.reduce(function(a, b) { return a + b; }, 0) / (cd.monthlyChange.length || 1));
-    var avgPaceLine = cd.monthlyChange.map(function() { return avgPace; });
+    var rollingPace = calculateRollingAverage(cd.monthlyChange, 3);
 
     var isMobile = window.innerWidth <= 768;
     var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
@@ -2157,13 +2201,13 @@
             pointBorderWidth: 1.5
           },
           {
-            label: 'Average Pace',
-            data: avgPaceLine,
-            borderColor: 'rgba(251, 191, 36, 0.45)',
+            label: '3M Rolling Pace',
+            data: rollingPace,
+            borderColor: 'rgba(251, 191, 36, 0.75)',
             borderDash: [5, 4],
-            borderWidth: 1.6,
+            borderWidth: 1.8,
             fill: false,
-            tension: 0,
+            tension: 0.35,
             pointRadius: 0,
             pointHoverRadius: 0
           }
@@ -2172,6 +2216,9 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+        },
         plugins: {
           legend: { display: false },
           tooltip: getLiquidGlassTooltipConfig(),
@@ -2193,12 +2240,6 @@
     });
     attachChartZoomReset(ctx.canvas, CHART_MONTHLY_CHANGE);
   }
-
-  /* ==========================================================================
-     6. VIEW 2: YEARLY VIEW (Year-by-Year Summary, Charts & Table)
-     ========================================================================== */
-  var SELECTED_DRILLDOWN_YEAR = null;
-  var CHART_DRILLDOWN_YEAR = null;
 
   function renderYearlyView(data) {
     var ys = data.yearlySummary || [];
@@ -3691,7 +3732,7 @@
           '<button type="button" class="segment-btn ' + (mode === 'mf' ? 'active' : '') + '" data-val="mf" onclick="handleFullViewFilterClick(this)"><span>MF vs Nifty 50</span></button>' +
           '<button type="button" class="segment-btn ' + (mode === 'gold' ? 'active' : '') + '" data-val="gold" onclick="handleFullViewFilterClick(this)"><span>Gold</span></button>' +
           '<button type="button" class="segment-btn ' + (mode === 'silver' ? 'active' : '') + '" data-val="silver" onclick="handleFullViewFilterClick(this)"><span>Silver</span></button>' +
-          '<button type="button" class="segment-btn ' + (mode === 'all' ? 'active' : '') + '" data-val="all" onclick="handleFullViewFilterClick(this)"><span>All Combined</span></button>' +
+          '<button type="button" class="segment-btn ' + (mode === 'bank' ? 'active' : '') + '" data-val="bank" onclick="handleFullViewFilterClick(this)"><span>Bank vs Repo Rate</span></button>' +
         '</div>';
     } else if (chartType === 'monthlyChange') {
       if (title) title.innerText = 'Monthly Wealth Added (₹)';
@@ -3788,7 +3829,7 @@
     var cd = APP_STATE.chartData;
     var ctx = canvas.getContext('2d');
     var datasets = [];
-    var trendData = calculateTrendline(cd.netWorth);
+    var trendData = calculateExponentialTrend(cd.netWorth);
 
     if (isStacked) {
       datasets = [
@@ -3826,9 +3867,9 @@
           pointHoverRadius: 6
         },
         {
-          label: 'Average Trend',
+          label: 'Compounding Trend',
           data: trendData,
-          borderColor: 'rgba(255, 255, 255, 0.40)',
+          borderColor: 'rgba(255, 255, 255, 0.45)',
           borderDash: [5, 4],
           borderWidth: 1.8,
           fill: false,
@@ -3855,7 +3896,7 @@
           pointHoverRadius: 7
         },
         {
-          label: 'Average Trend',
+          label: 'Compounding Trend',
           data: trendData,
           borderColor: 'rgba(255, 255, 255, 0.45)',
           borderDash: [5, 4],
@@ -3875,7 +3916,7 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: 6, bottom: 4 }
+          padding: { left: 4, right: 12, top: 48, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -3888,7 +3929,7 @@
               font: { size: 11, weight: '700' },
               boxWidth: 12,
               padding: 10,
-              filter: function(item) { return item.text !== 'Average Trend'; }
+              filter: function(item) { return item.text !== 'Compounding Trend' && item.text !== 'Average Trend'; }
             }
           },
           tooltip: getLiquidGlassTooltipConfig(),
@@ -3942,6 +3983,7 @@
           fill: true,
           pointRadius: 4,
           pointHoverRadius: 7,
+          pointBackgroundColor: '#38BDF8',
           yAxisID: 'yLeft'
         },
         {
@@ -3951,8 +3993,9 @@
           borderWidth: 2.2,
           borderDash: [5, 4],
           tension: 0,
-          pointRadius: 3,
+          pointRadius: 3.5,
           pointHoverRadius: 6,
+          pointBackgroundColor: '#34D399',
           yAxisID: 'yRight'
         }
       ];
@@ -3967,7 +4010,7 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 4 },
+        ticks: { color: '#34D399', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Math.round(v).toLocaleString('en-IN'); } },
         title: { display: true, text: 'Nifty 50 Index', color: '#34D399', font: { weight: '700' } }
       };
     } else if (mode === 'gold') {
@@ -3982,6 +4025,7 @@
           fill: true,
           pointRadius: 4,
           pointHoverRadius: 7,
+          pointBackgroundColor: '#FACC15',
           yAxisID: 'yLeft'
         },
         {
@@ -3991,8 +4035,9 @@
           borderWidth: 2.2,
           borderDash: [5, 4],
           tension: 0,
-          pointRadius: 3,
+          pointRadius: 3.5,
           pointHoverRadius: 6,
+          pointBackgroundColor: '#FB923C',
           yAxisID: 'yRight'
         }
       ];
@@ -4007,7 +4052,7 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
         title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: '#FB923C', font: { weight: '700' } }
       };
     } else if (mode === 'silver') {
@@ -4022,6 +4067,7 @@
           fill: true,
           pointRadius: 4,
           pointHoverRadius: 7,
+          pointBackgroundColor: '#E2E8F0',
           yAxisID: 'yLeft'
         },
         {
@@ -4031,8 +4077,9 @@
           borderWidth: 2.2,
           borderDash: [5, 4],
           tension: 0,
-          pointRadius: 3,
+          pointRadius: 3.5,
           pointHoverRadius: 6,
+          pointBackgroundColor: '#60A5FA',
           yAxisID: 'yRight'
         }
       ];
@@ -4047,22 +4094,55 @@
         type: 'linear',
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        ticks: { color: '#60A5FA', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
         title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: '#60A5FA', font: { weight: '700' } }
       };
     } else {
+      // 'bank' Mode: Bank & Fixed Deposits vs RBI Repo Rate Benchmark
+      var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
+      var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
       datasets = [
-        { label: 'My Mutual Funds %', data: rx.mfGrowth, borderColor: '#38BDF8', borderWidth: 2.8, tension: 0, pointRadius: 3 },
-        { label: 'Nifty 50 Benchmark %', data: rx.niftyGrowth, borderColor: '#34D399', borderWidth: 2, borderDash: [5, 4], tension: 0, pointRadius: 0 },
-        { label: 'My Gold Holdings %', data: rx.goldHoldingGrowth, borderColor: '#FACC15', borderWidth: 2.8, tension: 0, pointRadius: 3 },
-        { label: 'Gold Bullion %', data: rx.goldBenchGrowth, borderColor: '#FB923C', borderWidth: 2, borderDash: [5, 4], tension: 0, pointRadius: 0 },
-        { label: 'My Silver Holdings %', data: rx.silverHoldingGrowth, borderColor: '#E2E8F0', borderWidth: 2.8, tension: 0, pointRadius: 3 },
-        { label: 'Silver Bullion %', data: rx.silverBenchGrowth, borderColor: '#60A5FA', borderWidth: 2, borderDash: [5, 4], tension: 0, pointRadius: 0 }
+        {
+          label: 'Bank & Fixed Deposits',
+          data: bankData,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+          borderWidth: 3,
+          tension: 0,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#F59E0B',
+          yAxisID: 'yLeft'
+        },
+        {
+          label: 'RBI Repo Rate Benchmark',
+          data: repoData,
+          borderColor: '#EC4899',
+          borderWidth: 2.2,
+          borderDash: [5, 4],
+          tension: 0,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#EC4899',
+          yAxisID: 'yRight'
+        }
       ];
-      scales.y = {
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left',
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return (v >= 0 ? '+' : '') + v + '%'; } },
-        title: { display: true, text: 'Percentage Growth vs Inception (%)', color: '#CBD5E1', font: { weight: '700' } }
+        ticks: { color: '#F59E0B', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        title: { display: true, text: 'Bank & Fixed Deposits (₹)', color: '#F59E0B', font: { weight: '700' } }
+      };
+      scales.yRight = {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        suggestedMin: 4.5,
+        suggestedMax: 8.5,
+        ticks: { color: '#EC4899', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Number(v).toFixed(1) + '%'; } },
+        title: { display: true, text: 'RBI Repo Rate (% p.a.)', color: '#EC4899', font: { weight: '700' } }
       };
     }
 
@@ -4074,7 +4154,7 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: 6, bottom: 4 }
+          padding: { left: 4, right: 12, top: 48, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4099,8 +4179,7 @@
     var ctx = canvas.getContext('2d');
     var colors = changes.map(function(v) { return v >= 0 ? '#34D399' : '#FB7185'; });
     var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
-    var avgPace = Math.round(changes.reduce(function(a, b) { return a + b; }, 0) / (changes.length || 1));
-    var avgPaceLine = changes.map(function() { return avgPace; });
+    var rollingPace = calculateRollingAverage(changes, 3);
 
     if (isBars) {
       CHART_FULLVIEW = new Chart(ctx, {
@@ -4118,12 +4197,13 @@
             },
             {
               type: 'line',
-              label: 'Average Pace',
-              data: avgPaceLine,
-              borderColor: 'rgba(251, 191, 36, 0.55)',
+              label: '3M Rolling Pace',
+              data: rollingPace,
+              borderColor: 'rgba(251, 191, 36, 0.75)',
               borderDash: [5, 4],
-              borderWidth: 1.6,
+              borderWidth: 1.8,
               fill: false,
+              tension: 0.35,
               pointRadius: 0,
               pointHoverRadius: 0
             }
@@ -4133,7 +4213,7 @@
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 6, bottom: 4 }
+            padding: { left: 4, right: 12, top: 48, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
@@ -4170,15 +4250,16 @@
               pointHoverRadius: 7,
               pointBackgroundColor: colors,
               pointBorderColor: '#070B14',
-              pointBorderWidth: 2
+              pointBorderWidth: 1.5
             },
             {
-              label: 'Average Pace',
-              data: avgPaceLine,
-              borderColor: 'rgba(251, 191, 36, 0.55)',
+              label: '3M Rolling Pace',
+              data: rollingPace,
+              borderColor: 'rgba(251, 191, 36, 0.75)',
               borderDash: [5, 4],
-              borderWidth: 1.6,
+              borderWidth: 1.8,
               fill: false,
+              tension: 0.35,
               pointRadius: 0,
               pointHoverRadius: 0
             }
@@ -4188,7 +4269,7 @@
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 6, bottom: 4 }
+            padding: { left: 4, right: 12, top: 48, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
@@ -4209,6 +4290,7 @@
       });
     }
   }
+
   // Keyboard accessibility: dismiss open overlays with Escape key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' || e.key === 'Esc') {

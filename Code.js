@@ -299,12 +299,19 @@ function getInitialData() {
   var baseGoldBench = goldBenchRaw[0] || 1;
   var baseSilverBench = silverBenchRaw[0] || 1;
 
+  var repoRaw = [];
+  for (var bIdx = 0; bIdx < records.length; bIdx++) {
+    repoRaw.push(6.50); // RBI Repo Rate Benchmark (6.50% steady baseline)
+  }
+
   var reactionData = {
     labels: labels,
-    // Raw arrays for direct tooltip rupee inspections
+    // Raw arrays for direct inspections and comparisons
     mfRaw: mfArr,
     goldHoldingRaw: goldArr,
     silverHoldingRaw: silverArr,
+    bankRaw: bankArr,
+    repoRaw: repoRaw,
     niftyRaw: niftyRaw,
     goldBenchRaw: goldBenchRaw,
     silverBenchRaw: silverBenchRaw,
