@@ -2488,12 +2488,17 @@ function observeRevealItems() {
 
     var dialog = backdrop.querySelector('.liquid-drilldown-dialog');
     if (dialog) {
-      dialog.classList.remove('tab-hologram-landing');
-      void dialog.offsetWidth;
-      dialog.classList.add('tab-hologram-landing');
-      setTimeout(function() {
-        if (dialog) dialog.classList.remove('tab-hologram-landing');
-      }, 2200);
+      if (window.innerWidth <= 768) {
+        // Mobile performance optimization: avoid forced layout reflow and heavy 108-cell shimmer
+        dialog.classList.remove('tab-hologram-landing');
+      } else {
+        dialog.classList.remove('tab-hologram-landing');
+        void dialog.offsetWidth;
+        dialog.classList.add('tab-hologram-landing');
+        setTimeout(function() {
+          if (dialog) dialog.classList.remove('tab-hologram-landing');
+        }, 2200);
+      }
     }
 
     var bodyEl = backdrop.querySelector('.drilldown-dialog-body');
@@ -3890,6 +3895,23 @@ function observeRevealItems() {
       if (btn) btn.classList.remove('active');
     }
 
+    // Helper to snap and reposition the active segment glider pill to the new layout box
+    function updateFullViewGlider() {
+      var controls = document.getElementById('fullview-header-controls');
+      if (controls) {
+        var activeBtn = controls.querySelector('.segment-btn.active');
+        if (activeBtn) {
+          repositionSegmentGlider(activeBtn, false);
+        }
+      }
+    }
+
+    // Immediately snap glider and schedule across transition reflow phases
+    updateFullViewGlider();
+    setTimeout(updateFullViewGlider, 50);
+    setTimeout(updateFullViewGlider, 130);
+    setTimeout(updateFullViewGlider, 260);
+
     // Destroy existing chart immediately to purge stale aspect ratio / bitmap buffer
     if (CHART_FULLVIEW) {
       CHART_FULLVIEW.destroy();
@@ -3906,6 +3928,7 @@ function observeRevealItems() {
         canvas.style.height = '';
         buildFullViewChart(canvas);
       }
+      updateFullViewGlider();
     }, 120);
   }
 
