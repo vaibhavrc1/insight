@@ -641,6 +641,16 @@ function observeRevealItems() {
         IS_VIEW_TRANSITIONING = false;
         nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
         observeRevealItems();
+        if (viewId === 'yearly') {
+          if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+          if (CHART_YEARLY_PILLARS) CHART_YEARLY_PILLARS.resize();
+          if (CHART_YEARLY_ADDED) CHART_YEARLY_ADDED.resize();
+        } else if (viewId === 'dashboard') {
+          if (CHART_NETWORTH) CHART_NETWORTH.resize();
+          if (CHART_ALLOCATION) CHART_ALLOCATION.resize();
+          if (CHART_REACTION) CHART_REACTION.resize();
+          if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.resize();
+        }
       }
 
       CURRENT_FINALIZE_TIMER = setTimeout(finalize, 250);
@@ -670,6 +680,7 @@ function observeRevealItems() {
         if (CHART_REACTION) CHART_REACTION.resize();
         if (CHART_MONTHLY_CHANGE) CHART_MONTHLY_CHANGE.resize();
       } else if (viewId === 'yearly') {
+        if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
         if (CHART_YEARLY_PILLARS) CHART_YEARLY_PILLARS.resize();
         if (CHART_YEARLY_ADDED) CHART_YEARLY_ADDED.resize();
       } else if (viewId === 'simulator') {
@@ -1502,17 +1513,89 @@ function observeRevealItems() {
         return false;
       };
 
-      // 2. Wrap Category Zoom (Horizontal Timeline) with calibrated gentle small-step damping
-      var origZoomCategory = zoomPlugin.zoomFunctions.category;
+      // 2. Controlled Category Zoom with low-sensitivity fractional accumulator
+      // Eliminates erratic jumping by stepping exactly 1 index only after a deliberate pinch/scroll gesture
       zoomPlugin.zoomFunctions.category = function(scale, zoom, center, limits) {
         if (!scale || !scale.isHorizontal()) return true;
-        var isTouchPhone = (typeof window !== 'undefined' && window.innerWidth <= 768);
-        var sensitivity = isTouchPhone ? 0.45 : 0.55;
-        var dampedZoom = 1 + (zoom - 1) * sensitivity;
-        if (typeof origZoomCategory === 'function') {
-          return origZoomCategory(scale, dampedZoom, center, limits);
+        if (typeof zoom !== 'number' || isNaN(zoom) || zoom === 1) return true;
+
+        var now = Date.now();
+        if (!scale.__lastZoomTimestamp || (now - scale.__lastZoomTimestamp > 450)) {
+          scale.__zoomAcc = 0;
         }
-        return true;
+        scale.__lastZoomTimestamp = now;
+
+        var diff = zoom - 1;
+        var isTouch = (typeof window !== 'undefined' && (window.innerWidth <= 768 || 'ontouchstart' in window));
+        // Very low sensitivity threshold: requires sustained, deliberate movement to step 1 month
+        var threshold = isTouch ? 0.22 : 0.06;
+
+        scale.__zoomAcc = (scale.__zoomAcc || 0) + diff;
+
+        if (Math.abs(scale.__zoomAcc) < threshold) {
+          return false; // Micro-movements absorbed smoothly without jumping!
+        }
+
+        var labels = scale.getLabels ? scale.getLabels() : [];
+        var maxLimit = labels.length ? labels.length - 1 : 100;
+        var minLimit = 0;
+        var minRange = (limits && limits.x && limits.x.minRange) ? limits.x.minRange : (labels.length <= 8 ? 2 : 4);
+
+        var curMin = (scale.options.min !== undefined && scale.options.min !== null) ? Number(scale.options.min) : scale.min;
+        var curMax = (scale.options.max !== undefined && scale.options.max !== null) ? Number(scale.options.max) : scale.max;
+        if (isNaN(curMin)) curMin = 0;
+        if (isNaN(curMax)) curMax = maxLimit;
+        var curRange = curMax - curMin;
+
+        var centerRatio = 0.5;
+        if (center && typeof center.x === 'number' && scale.width) {
+          centerRatio = Math.max(0, Math.min(1, (center.x - scale.left) / scale.width));
+        }
+
+        var changed = false;
+        if (scale.__zoomAcc >= threshold) {
+          // Zoom IN: contract range by exactly 1 month
+          scale.__zoomAcc = 0;
+          if (curRange > minRange) {
+            if (centerRatio > 0.5) {
+              if (curMin < curMax - minRange) curMin += 1;
+              else curMax -= 1;
+            } else {
+              if (curMax > curMin + minRange) curMax -= 1;
+              else curMin += 1;
+            }
+            changed = true;
+          }
+        } else if (scale.__zoomAcc <= -threshold) {
+          // Zoom OUT: expand range by exactly 1 month
+          scale.__zoomAcc = 0;
+          if (curMin > minLimit || curMax < maxLimit) {
+            if (centerRatio > 0.5) {
+              if (curMax < maxLimit) curMax += 1;
+              else if (curMin > minLimit) curMin -= 1;
+            } else {
+              if (curMin > minLimit) curMin -= 1;
+              else if (curMax < maxLimit) curMax += 1;
+            }
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          scale.options.min = curMin;
+          scale.options.max = curMax;
+          scale.min = curMin;
+          scale.max = curMax;
+          if (scale.chart && typeof scale.chart.update === 'function') {
+            scale.chart.update('none');
+          }
+          if (scale.chart && typeof scale.chart.notifyPlugins === 'function') {
+            scale.chart.notifyPlugins('afterScaleRangeChange', { scale: scale });
+          }
+          return true;
+        }
+
+        return false;
       };
     }
   })();
@@ -1547,12 +1630,12 @@ function observeRevealItems() {
       pan: {
         enabled: true,
         mode: 'x', // STRICTLY horizontal panning only!
-        threshold: 10 // 10px intentional threshold prevents vertical scroll conflicts
+        threshold: 8 // Responsive horizontal panning without lagging
       },
       zoom: {
         wheel: {
           enabled: true,
-          speed: 0.05, // Calibrated mouse wheel speed
+          speed: 0.008, // Very low, gentle mouse wheel speed in small steps
           modifierKey: null
         },
         pinch: {
@@ -1573,8 +1656,9 @@ function observeRevealItems() {
     canvas.__zoomResetAttached = true;
 
     canvas.addEventListener('dblclick', function() {
-      if (canvas.__currentChart && typeof canvas.__currentChart.resetZoom === 'function') {
-        canvas.__currentChart.resetZoom();
+      if (canvas.__currentChart) {
+        resetChartZoomByInstance(canvas.__currentChart);
+        showToast('Zoom Reset');
       }
     });
 
@@ -1616,8 +1700,8 @@ function observeRevealItems() {
       var currentTime = new Date().getTime();
       var tapInterval = currentTime - lastTapTime;
       if (tapInterval < 320 && tapInterval > 40) {
-        if (canvas.__currentChart && typeof canvas.__currentChart.resetZoom === 'function') {
-          canvas.__currentChart.resetZoom();
+        if (canvas.__currentChart) {
+          resetChartZoomByInstance(canvas.__currentChart);
           showToast('Zoom Reset');
         }
       }
@@ -1625,60 +1709,18 @@ function observeRevealItems() {
     }, { passive: true });
   }
 
-  function attachChartZoomReset(canvas, chart) {
-    if (!canvas || !chart) return;
-    canvas.style.touchAction = 'pan-y pinch-zoom';
-    canvas.addEventListener('dblclick', function() {
-      if (chart && typeof chart.resetZoom === 'function') chart.resetZoom();
-    });
-
-    var lastTapTime = 0;
-    var touchStartX = 0;
-    var touchStartY = 0;
-    var touchMoved = false;
-    var hadMultiTouch = false;
-
-    canvas.addEventListener('touchstart', function(e) {
-      if (e.touches.length > 1) {
-        hadMultiTouch = true;
-      } else if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchMoved = false;
-      }
-    }, { passive: true });
-
-    canvas.addEventListener('touchmove', function(e) {
-      if (e.touches.length > 1) {
-        hadMultiTouch = true;
-      } else if (e.touches.length === 1) {
-        var dx = Math.abs(e.touches[0].clientX - touchStartX);
-        var dy = Math.abs(e.touches[0].clientY - touchStartY);
-        if (dx > 8 || dy > 8) {
-          touchMoved = true;
-        }
-      }
-    }, { passive: true });
-
-    canvas.addEventListener('touchend', function(e) {
-      if (hadMultiTouch) {
-        if (e.touches.length === 0) hadMultiTouch = false;
-        return;
-      }
-      if (touchMoved) return;
-
-      var currentTime = new Date().getTime();
-      var tapInterval = currentTime - lastTapTime;
-      if (tapInterval < 320 && tapInterval > 40) {
-        if (chart && typeof chart.resetZoom === 'function') {
-          chart.resetZoom();
-          showToast('Zoom Reset');
-        }
-        lastTapTime = 0;
-      } else {
-        lastTapTime = currentTime;
-      }
-    }, { passive: true });
+  function resetChartZoomByInstance(chartObj) {
+    if (!chartObj) return;
+    if (chartObj.scales && chartObj.scales.x) {
+      chartObj.scales.x.__zoomAcc = 0;
+      delete chartObj.scales.x.options.min;
+      delete chartObj.scales.x.options.max;
+    }
+    if (typeof chartObj.resetZoom === 'function') {
+      chartObj.resetZoom();
+    } else {
+      chartObj.update();
+    }
   }
 
   function resetChartZoom(chartKey) {
@@ -1691,8 +1733,8 @@ function observeRevealItems() {
     else if (chartKey === 'chart-simulator') chartObj = CHART_SIMULATOR;
     else if (chartKey === 'chart-fullview-canvas' || chartKey === 'fullview') chartObj = CHART_FULLVIEW;
 
-    if (chartObj && typeof chartObj.resetZoom === 'function') {
-      chartObj.resetZoom();
+    if (chartObj) {
+      resetChartZoomByInstance(chartObj);
       showToast('Chart Zoom Reset');
     }
   }
@@ -2545,7 +2587,10 @@ function observeRevealItems() {
       tbody.appendChild(tr);
     });
 
-    // If a drilldown was already active, refresh it
+    // Default to the latest year if none is selected, ensuring immediate load
+    if (!SELECTED_DRILLDOWN_YEAR && ys.length > 0) {
+      SELECTED_DRILLDOWN_YEAR = String(ys[ys.length - 1].year);
+    }
     if (SELECTED_DRILLDOWN_YEAR) {
       openYearDrilldown(SELECTED_DRILLDOWN_YEAR);
     }
@@ -2670,21 +2715,21 @@ function observeRevealItems() {
     var yData = ys.find(function(item) { return String(item.year) === String(year); });
     if (!yData) return;
 
-    // Header info
+    // 1. Header info
     var titleEl = document.getElementById('drilldown-title');
     if (titleEl) titleEl.innerText = year + ' Monthly Breakdown';
-    var sign = yData.totalAdded >= 0 ? '+' : '';
-    var gSign = yData.growthPct >= 0 ? '+' : '';
+    var sign = (yData.totalAdded || 0) >= 0 ? '+' : '';
+    var gSign = (yData.growthPct || 0) >= 0 ? '+' : '';
     var gPill = document.getElementById('drilldown-growth-pill');
     if (gPill) {
-      gPill.innerText = gSign + yData.growthPct + '% Year Return (' + sign + formatIndian(yData.totalAdded, false) + ')';
-      gPill.className = 'glow-badge ' + (yData.growthPct >= 0 ? 'positive' : 'negative');
+      gPill.innerText = gSign + (yData.growthPct || 0) + '% Year Return (' + sign + formatIndian(yData.totalAdded || 0, false) + ')';
+      gPill.className = 'glow-badge ' + ((yData.growthPct || 0) >= 0 ? 'positive' : 'negative');
     }
 
     var chartTitleEl = document.getElementById('drilldown-chart-title');
     if (chartTitleEl) chartTitleEl.innerText = year + ' Monthly Investment Progression by Category';
 
-    // Year Switcher buttons with persistent Glider Pill & Jelly Effect
+    // 2. Year Switcher buttons with persistent Glider Pill & Jelly Effect
     var switcher = document.getElementById('drilldown-year-switcher');
     if (switcher) {
       var existingBtns = switcher.querySelectorAll('.segment-btn');
@@ -2729,138 +2774,38 @@ function observeRevealItems() {
       }
     }
 
-    // 4 Analytics Metric Cards
+    // 3. 4 Analytics Metric Cards (Rendered first so content is never blank)
     var kpis = document.getElementById('drilldown-kpis');
     if (kpis) {
+      var bestGain = typeof yData.bestMonthGain === 'number' ? yData.bestMonthGain : 0;
+      var bestPct = typeof yData.bestMonthPct === 'number' ? yData.bestMonthPct : 0;
+      var worstGain = typeof yData.worstMonthGain === 'number' ? yData.worstMonthGain : 0;
+      var worstPct = typeof yData.worstMonthPct === 'number' ? yData.worstMonthPct : 0;
       kpis.innerHTML =
         '<div class="drilldown-metric-card">' +
           '<div class="drilldown-metric-title">Annual Net Wealth Added</div>' +
-          '<div class="drilldown-metric-val" style="color:var(--emerald-bright);">' + sign + formatIndian(yData.totalAdded, false) + '</div>' +
-          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + formatIndian(yData.startWealth, false) + ' &rarr; ' + formatIndian(yData.closingWealth, false) + ' (' + gSign + yData.growthPct + '%)</div>' +
+          '<div class="drilldown-metric-val" style="color:var(--emerald-bright);">' + sign + formatIndian(yData.totalAdded || 0, false) + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + formatIndian(yData.startWealth || 0, false) + ' &rarr; ' + formatIndian(yData.closingWealth || 0, false) + ' (' + gSign + (yData.growthPct || 0) + '%)</div>' +
         '</div>' +
         '<div class="drilldown-metric-card">' +
           '<div class="drilldown-metric-title">Monthly Savings Pace</div>' +
-          '<div class="drilldown-metric-val">' + formatIndian(yData.avgMonthlyAdded, false) + '<span style="font-size:12px; color:var(--text-muted);"> /mo</span></div>' +
-          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + yData.monthsLogged + ' months recorded in ' + year + '</div>' +
+          '<div class="drilldown-metric-val">' + formatIndian(yData.avgMonthlyAdded || 0, false) + '<span style="font-size:12px; color:var(--text-muted);"> /mo</span></div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + (yData.monthsLogged || 0) + ' months recorded in ' + year + '</div>' +
         '</div>' +
         '<div class="drilldown-metric-card">' +
           '<div class="drilldown-metric-title">Best Month in ' + year + '</div>' +
-          '<div class="drilldown-metric-val" style="color:var(--cyan-core);">' + yData.bestMonthLabel + '</div>' +
-          '<div class="drilldown-metric-sub" style="color:var(--emerald-bright); font-family:JetBrains Mono;">+' + formatIndian(yData.bestMonthGain, false) + ' (' + (yData.bestMonthPct >= 0 ? '+' : '') + yData.bestMonthPct + '%)</div>' +
+          '<div class="drilldown-metric-val" style="color:var(--cyan-core);">' + (yData.bestMonthLabel || '--') + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--emerald-bright); font-family:JetBrains Mono;">+' + formatIndian(bestGain, false) + ' (' + (bestPct >= 0 ? '+' : '') + bestPct + '%)</div>' +
         '</div>' +
         '<div class="drilldown-metric-card">' +
           '<div class="drilldown-metric-title">Lowest Month in ' + year + '</div>' +
-          '<div class="drilldown-metric-val" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + ';">' + yData.worstMonthLabel + '</div>' +
-          '<div class="drilldown-metric-sub" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + '; font-family:JetBrains Mono;">' + (yData.worstMonthGain >= 0 ? '+' : '') + formatIndian(yData.worstMonthGain, false) + ' (' + (yData.worstMonthPct >= 0 ? '+' : '') + yData.worstMonthPct + '%)</div>' +
+          '<div class="drilldown-metric-val" style="color:' + (worstGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + ';">' + (yData.worstMonthLabel || '--') + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:' + (worstGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + '; font-family:JetBrains Mono;">' + (worstGain >= 0 ? '+' : '') + formatIndian(worstGain, false) + ' (' + (worstPct >= 0 ? '+' : '') + worstPct + '%)</div>' +
         '</div>';
     }
 
-    // Render Drilldown Chart - Continuous Category Breakdown
+    // 4. Populate Drilldown Monthly Breakdown Table (Rendered before chart so rows are always 100% visible)
     var months = yData.monthlyRecords || [];
-    var cLabels = months.map(function(m) { return m.label; });
-    var cMarket = months.map(function(m) { return m.total_market; });
-    var cBank = months.map(function(m) { return m.total_bank; });
-    var cEpf = months.map(function(m) { return m.epf; });
-
-    var allDrillVals = cMarket.concat(cBank, cEpf);
-    var maxDrill = allDrillVals.length ? Math.max.apply(null, allDrillVals) : 100000;
-    var minDrill = allDrillVals.length ? Math.min.apply(null, allDrillVals) : 0;
-    var padDrill = Math.max((maxDrill - minDrill) * 0.08, 10000);
-    var yMinDrill = Math.max(0, Math.floor(minDrill - padDrill));
-    var yMaxDrill = Math.ceil(maxDrill + padDrill);
-
-    var isMobile = (window.innerWidth <= 768);
-
-    var canvasEl = document.getElementById('chart-drilldown-year');
-    if (canvasEl) {
-      var ctxD = canvasEl.getContext('2d');
-      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
-
-      CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
-        type: 'line',
-        data: {
-          labels: cLabels,
-          datasets: [
-            {
-              label: 'Market Assets',
-              data: cMarket,
-              borderColor: '#34D399',
-              backgroundColor: 'rgba(52, 211, 153, 0.12)',
-              borderWidth: 2.8,
-              pointBackgroundColor: '#34D399',
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              tension: 0,
-              fill: true
-            },
-            {
-              label: 'Bank & Fixed Deposits',
-              data: cBank,
-              borderColor: '#FBBF24',
-              backgroundColor: 'rgba(251, 191, 36, 0.12)',
-              borderWidth: 2.8,
-              pointBackgroundColor: '#FBBF24',
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              tension: 0,
-              fill: true
-            },
-            {
-              label: 'EPF Balance',
-              data: cEpf,
-              borderColor: '#C084FC',
-              backgroundColor: 'rgba(192, 132, 252, 0.12)',
-              borderWidth: 2.8,
-              pointBackgroundColor: '#C084FC',
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              tension: 0,
-              fill: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false
-          },
-          plugins: {
-            legend: {
-              display: true,
-              labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
-            },
-            tooltip: getLiquidGlassTooltipConfig(),
-            zoom: getChartZoomConfig(cLabels)
-          },
-          scales: {
-            x: {
-              min: (isMobile && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
-              max: (isMobile && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600' } }
-            },
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              min: yMinDrill,
-              max: yMaxDrill,
-              ticks: {
-                display: true, // Minimal compact Y-axis on mobile
-                color: '#34D399',
-                font: { family: 'JetBrains Mono', size: isMobile ? 8.5 : 10.5 },
-                padding: isMobile ? 2 : 4,
-                maxTicksLimit: isMobile ? 4 : 8,
-                callback: function(v) { return formatCompactLakhs(v); }
-              }
-            }
-          }
-        }
-      });
-      attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
-    }
-
-    // Populate Drilldown Monthly Breakdown Table with Center-Aligned Headers and Cells
     var tBody = document.getElementById('drilldown-table-body');
     if (tBody) {
       tBody.innerHTML = '';
@@ -2868,22 +2813,24 @@ function observeRevealItems() {
         var mRow = document.createElement('tr');
         mRow.className = 'liquid-table-row';
 
-        var isPos = m.monthlyChange >= 0;
+        var mChange = typeof m.monthlyChange === 'number' ? m.monthlyChange : 0;
+        var isPos = mChange >= 0;
         var cSign = isPos ? '+' : '';
-        var pctSign = m.monthlyChangePct >= 0 ? '+' : '';
+        var mPct = typeof m.monthlyChangePct === 'number' ? m.monthlyChangePct : 0;
+        var pctSign = mPct >= 0 ? '+' : '';
         var colorStyle = isPos ? 'color:var(--emerald-bright);' : 'color:var(--coral-bright);';
         var noteHtml = m.notes
           ? '<button type="button" class="compact-note-btn filled" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="View & Edit Note: ' + escapeHtml(m.notes).replace(/"/g, '&quot;') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Note</span></button>'
           : '<button type="button" class="compact-note-btn empty" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="Add note for this month"><span>+ Note</span></button>';
 
         mRow.innerHTML =
-          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + m.label + '</td>' +
-          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_bank, false) + '</td>' +
-          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.epf, false) + '</td>' +
-          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market, false) + '</td>' +
-          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth, false) + '</td>' +
-          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(m.monthlyChange, false) + '</td>' +
-          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + (m.monthlyChangePct !== undefined && m.monthlyChangePct !== null ? m.monthlyChangePct.toFixed(2) : '0.00') + '%</span></td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + (m.label || m.monthIso) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_bank || 0, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.epf || 0, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market || 0, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth || 0, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(mChange, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + mPct.toFixed(2) + '%</span></td>' +
           '<td style="padding:10px 8px; text-align:center;">' + noteHtml + '</td>' +
           '<td style="padding:8px 8px; text-align:center; white-space:nowrap;">' +
             '<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">' +
@@ -2899,6 +2846,123 @@ function observeRevealItems() {
       });
     }
 
+    // 5. Render Drilldown Chart - Continuous Category Breakdown
+    try {
+      var cLabels = months.map(function(m) { return m.label || ''; });
+      var cMarket = months.map(function(m) { return Number(m.total_market) || 0; });
+      var cBank = months.map(function(m) { return Number(m.total_bank) || 0; });
+      var cEpf = months.map(function(m) { return Number(m.epf) || 0; });
+
+      var allDrillVals = cMarket.concat(cBank, cEpf);
+      var validDrillVals = allDrillVals.filter(function(v) { return typeof v === 'number' && !isNaN(v) && isFinite(v); });
+      var maxDrill = validDrillVals.length ? Math.max.apply(null, validDrillVals) : 100000;
+      var minDrill = validDrillVals.length ? Math.min.apply(null, validDrillVals) : 0;
+      var padDrill = Math.max((maxDrill - minDrill) * 0.08, 10000);
+      var yMinDrill = Math.max(0, Math.floor(minDrill - padDrill));
+      var yMaxDrill = Math.ceil(maxDrill + padDrill);
+
+      var isMobile = (window.innerWidth <= 768);
+
+      var canvasEl = document.getElementById('chart-drilldown-year');
+      if (canvasEl) {
+        var ctxD = canvasEl.getContext('2d');
+        if (CHART_DRILLDOWN_YEAR) {
+          CHART_DRILLDOWN_YEAR.destroy();
+          CHART_DRILLDOWN_YEAR = null;
+        }
+
+        CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
+          type: 'line',
+          data: {
+            labels: cLabels,
+            datasets: [
+              {
+                label: 'Market Assets',
+                data: cMarket,
+                borderColor: '#34D399',
+                backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                borderWidth: 2.8,
+                pointBackgroundColor: '#34D399',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0,
+                fill: true
+              },
+              {
+                label: 'Bank & Fixed Deposits',
+                data: cBank,
+                borderColor: '#FBBF24',
+                backgroundColor: 'rgba(251, 191, 36, 0.12)',
+                borderWidth: 2.8,
+                pointBackgroundColor: '#FBBF24',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0,
+                fill: true
+              },
+              {
+                label: 'EPF Balance',
+                data: cEpf,
+                borderColor: '#C084FC',
+                backgroundColor: 'rgba(192, 132, 252, 0.12)',
+                borderWidth: 2.8,
+                pointBackgroundColor: '#C084FC',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0,
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                display: true,
+                labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
+              },
+              tooltip: getLiquidGlassTooltipConfig(),
+              zoom: getChartZoomConfig(cLabels)
+            },
+            scales: {
+              x: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#CBD5E1', font: { weight: '600' } }
+              },
+              y: {
+                grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                min: yMinDrill,
+                max: yMaxDrill,
+                ticks: {
+                  display: true, // Minimal compact Y-axis on mobile
+                  color: '#34D399',
+                  font: { family: 'JetBrains Mono', size: isMobile ? 8.5 : 10.5 },
+                  padding: isMobile ? 2 : 4,
+                  maxTicksLimit: isMobile ? 4 : 8,
+                  callback: function(v) { return formatCompactLakhs(v); }
+                }
+              }
+            }
+          }
+        });
+        attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
+
+        setTimeout(function() {
+          if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+        }, 80);
+        setTimeout(function() {
+          if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+        }, 260);
+      }
+    } catch(drillChartErr) {
+      console.error('Error rendering yearly drilldown chart:', drillChartErr);
+    }
+
     if (smoothScroll) {
       var sectionEl = document.getElementById('yearly-drilldown-inline');
       if (sectionEl) {
@@ -2907,7 +2971,7 @@ function observeRevealItems() {
     }
   }
 
-/* ==========================================================================
+  /* ==========================================================================
      7. VIEW 3: YEAR-WISE SIMULATOR & OPTIONAL MULTI-CATEGORY MILESTONES
      ========================================================================== */
   function runYearSimulator() {
