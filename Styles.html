@@ -1430,7 +1430,7 @@
   .canvas-holder canvas,
   .chart-timeline-inner canvas,
   .drilldown-canvas-holder canvas {
-    touch-action: pan-y !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   /* Segmented Optical Liquid-Glass Wells with Sliding Mercury Glider */
@@ -2930,12 +2930,14 @@
     overflow: hidden;
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .liquid-drilldown-backdrop.open {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto !important;
   }
 
   .liquid-drilldown-dialog {
@@ -3027,9 +3029,6 @@
     width: 100%;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    contain: paint layout;
-    will-change: scroll-position;
-    transform: translateZ(0);
   }
 
   /* Sleek Liquid Close Button */
@@ -4013,6 +4012,7 @@
       flex-shrink: 0 !important;
     }
 
+    .btn-reset-zoom span,
     .btn-reset-zoom .reset-label {
       display: none !important;
     }

@@ -1479,28 +1479,19 @@ function observeRevealItems() {
     Chart.defaults.elements.line.tension = 0; // Crisp straight lines between data points to show exact slope changes
   }
 
-  // Ultra-Gentle Horizontal-Only Zoom Engine & Strict Vertical Y-Axis Lockdown
+  // Calibrated Horizontal-Only Zoom Engine & Strict Vertical Y-Axis Lockdown
   (function initChartZoomEngine() {
     if (typeof window === 'undefined') return;
 
     if (window.Hammer && window.Hammer.Pinch) {
-      // Intentional gesture threshold prevents accidental micro-pinches
-      window.Hammer.Pinch.prototype.defaults.threshold = 0.08;
+      // Calibrated gesture threshold: responsive but avoids accidental micro-pinches
+      window.Hammer.Pinch.prototype.defaults.threshold = 0.05;
     }
 
     var zoomPlugin = (window.ChartZoom) || (window.Chart && window.Chart.registry && window.Chart.registry.plugins ? window.Chart.registry.plugins.get('zoom') : null);
     if (!zoomPlugin) return;
 
-    // 1. Strict lockdown of all vertical y-axes: scrolling & zooming are strictly horizontal ONLY
-    if (zoomPlugin.panFunctions) {
-      zoomPlugin.panFunctions.default = function(scale, delta, limits) {
-        if (!scale || !scale.isHorizontal() || scale.id === 'y' || scale.id === 'yLeft' || scale.id === 'yRight') {
-          return true; // Fixed! Y-axis NEVER scrolls or pans!
-        }
-        return false;
-      };
-    }
-
+    // 1. Strict zoom lockdown for vertical Y-axes
     if (zoomPlugin.zoomFunctions) {
       zoomPlugin.zoomFunctions.default = function(scale, zoom, center, limits) {
         if (!scale || !scale.isHorizontal() || scale.id === 'y' || scale.id === 'yLeft' || scale.id === 'yRight') {
@@ -1509,78 +1500,15 @@ function observeRevealItems() {
         return false;
       };
 
-      // 2. Wrap Category Zoom (Horizontal Timeline) with Ultra-Gentle Small-Step Damping
+      // 2. Wrap Category Zoom (Horizontal Timeline) with calibrated gentle small-step damping
+      var origZoomCategory = zoomPlugin.zoomFunctions.category;
       zoomPlugin.zoomFunctions.category = function(scale, zoom, center, limits) {
         if (!scale || !scale.isHorizontal()) return true;
         var isTouchPhone = (typeof window !== 'undefined' && window.innerWidth <= 768);
-        // Low sensitivity: gentle small steps on phone (0.12) and desktop (0.20)
-        var sensitivity = isTouchPhone ? 0.12 : 0.20;
-
-        var deltaFactor = (zoom - 1.0);
-        if (Math.abs(deltaFactor) < 0.0001) return true;
-
-        var currentRange = Math.max(scale.max - scale.min, 1);
-        if (typeof scale._zoomAccumulator !== 'number' || isNaN(scale._zoomAccumulator)) {
-          scale._zoomAccumulator = 0;
-        }
-
-        scale._zoomAccumulator += currentRange * deltaFactor * sensitivity;
-
-        // Discard sub-step noise until a full discrete step (+1 or -1 month) is accumulated
-        if (Math.abs(scale._zoomAccumulator) < 1.0) {
-          return true;
-        }
-
-        var step = scale._zoomAccumulator >= 1.0 ? 1 : -1;
-        scale._zoomAccumulator -= step;
-
-        var minLimit = 0;
-        var labels = scale.getLabels ? scale.getLabels() : [];
-        var maxLimit = labels.length ? labels.length - 1 : scale.max;
-
-        var minRange = 8;
-        if (limits && limits.x && typeof limits.x.minRange === 'number') {
-          minRange = limits.x.minRange;
-        }
-
-        var newMin = scale.min;
-        var newMax = scale.max;
-
-        if (step > 0) {
-          // Zoom in: shrink range by 1 index
-          if (newMax - newMin <= minRange) {
-            return true; // Reached minimum limit; do not over-zoom
-          }
-          var centerVal = center ? (scale.getValueForPixel ? scale.getValueForPixel(center.x) : (newMin + newMax) / 2) : (newMin + newMax) / 2;
-          var distToMin = Math.abs(centerVal - newMin);
-          var distToMax = Math.abs(newMax - centerVal);
-          if (distToMin > distToMax) {
-            newMin = Math.min(newMin + 1, newMax - minRange);
-          } else {
-            newMax = Math.max(newMax - 1, newMin + minRange);
-          }
-        } else {
-          // Zoom out: expand range by 1 index
-          if (newMin <= minLimit && newMax >= maxLimit) {
-            return true; // Already at full timeline overview
-          }
-          if (newMin > minLimit && newMax < maxLimit) {
-            if ((newMin + newMax) % 2 === 0) newMin--;
-            else newMax++;
-          } else if (newMin > minLimit) {
-            newMin--;
-          } else if (newMax < maxLimit) {
-            newMax++;
-          }
-        }
-
-        scale.options.min = newMin;
-        scale.options.max = newMax;
-        scale.min = newMin;
-        scale.max = newMax;
-
-        if (scale.chart) {
-          scale.chart.update('none');
+        var sensitivity = isTouchPhone ? 0.45 : 0.55;
+        var dampedZoom = 1 + (zoom - 1) * sensitivity;
+        if (typeof origZoomCategory === 'function') {
+          return origZoomCategory(scale, dampedZoom, center, limits);
         }
         return true;
       };
@@ -1589,8 +1517,7 @@ function observeRevealItems() {
 
   function getChartZoomConfig(labels) {
     var totalPoints = (labels && labels.length) ? labels.length : 12;
-    // Keep at least 8 months visible so timeline never over-zooms into a distorted micro-slice
-    var calculatedMinRange = totalPoints <= 8 ? Math.max(3, totalPoints - 1) : 8;
+    var calculatedMinRange = totalPoints <= 8 ? Math.max(2, Math.min(totalPoints, 4)) : 8;
     return {
       limits: {
         x: {
@@ -1617,7 +1544,7 @@ function observeRevealItems() {
       pan: {
         enabled: true,
         mode: 'x', // STRICTLY horizontal panning only!
-        threshold: 12
+        threshold: 5
       },
       zoom: {
         wheel: {
@@ -1635,7 +1562,7 @@ function observeRevealItems() {
 
   function attachChartZoomReset(canvas, chart) {
     if (!canvas || !chart) return;
-    canvas.style.touchAction = 'pan-y';
+    canvas.style.touchAction = 'pan-y pinch-zoom';
     canvas.addEventListener('dblclick', function() {
       if (chart && typeof chart.resetZoom === 'function') chart.resetZoom();
     });
@@ -1669,40 +1596,24 @@ function observeRevealItems() {
     }, { passive: true });
 
     canvas.addEventListener('touchend', function(e) {
-      if (chart && chart.scales && chart.scales.x) {
-        chart.scales.x._zoomAccumulator = 0;
-      }
       if (hadMultiTouch) {
-        if (e.touches.length === 0) {
-          hadMultiTouch = false;
-        }
-        lastTapTime = 0;
+        if (e.touches.length === 0) hadMultiTouch = false;
         return;
       }
+      if (touchMoved) return;
 
-      if (touchMoved) {
-        lastTapTime = 0;
-        return;
-      }
-
-      var now = Date.now();
-      var tapGap = now - lastTapTime;
-      if (tapGap > 40 && tapGap < 280) {
+      var currentTime = new Date().getTime();
+      var tapInterval = currentTime - lastTapTime;
+      if (tapInterval < 320 && tapInterval > 40) {
         if (chart && typeof chart.resetZoom === 'function') {
           chart.resetZoom();
-          if (e.cancelable) e.preventDefault();
+          showToast('Zoom Reset');
         }
         lastTapTime = 0;
       } else {
-        lastTapTime = now;
+        lastTapTime = currentTime;
       }
-    });
-
-    canvas.addEventListener('touchcancel', function() {
-      hadMultiTouch = false;
-      touchMoved = false;
-      lastTapTime = 0;
-    });
+    }, { passive: true });
   }
 
   function resetChartZoom(chartKey) {
@@ -1939,6 +1850,12 @@ function observeRevealItems() {
     var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
     var xMax = (isMobile && cd.labels.length > 8) ? cd.labels[cd.labels.length - 1] : undefined;
 
+    // Fixed Y-axis bounds anchoring: Y-axis never rescales during horizontal panning or zooming
+    var maxNetWorth = Math.max.apply(null, cd.netWorth.concat(trendData || []));
+    var minNetWorth = Math.min.apply(null, cd.netWorth);
+    var yMin = isStacked ? 0 : Math.max(0, Math.floor(minNetWorth * 0.92));
+    var yMax = Math.ceil(maxNetWorth * 1.08);
+
     CHART_NETWORTH = new Chart(ctx, {
       type: 'line',
       data: { labels: cd.labels, datasets: datasets },
@@ -1946,7 +1863,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: (window.innerWidth <= 768 ? (isStacked ? 6 : 8) : 10), left: 4, right: 8, bottom: 4 }
+          padding: { top: (isMobile ? (isStacked ? 6 : 8) : 10), left: (isMobile ? 2 : 4), right: (isMobile ? 4 : 8), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -1971,8 +1888,15 @@ function observeRevealItems() {
           },
           y: {
             stacked: isStacked,
+            min: yMin,
+            max: yMax,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#64748B', font: { size: 10 }, callback: function(v) { return formatCompactLakhs(v); } }
+            ticks: {
+              display: !isMobile, // Hide Y-axis text on mobile non-full-screen view
+              color: '#38BDF8',   // Match primary line color
+              font: { size: 10 },
+              callback: function(v) { return formatCompactLakhs(v); }
+            }
           }
         }
       }
@@ -2047,6 +1971,9 @@ function observeRevealItems() {
     var ctx = document.getElementById('chart-reaction').getContext('2d');
     if (CHART_REACTION) CHART_REACTION.destroy();
 
+    var isMobile = (window.innerWidth <= 768);
+    var showYTicks = !isMobile;
+
     var datasets = [];
     var scales = {
       x: {
@@ -2056,72 +1983,101 @@ function observeRevealItems() {
     };
 
     if (REACTION_FILTER === 'mf') {
+      // RATE on LEFT (Nifty 50 Benchmark), HOLDING on RIGHT (My Mutual Funds)
       datasets = [
-        {
-          id: 'mf',
-          label: 'My Mutual Funds',
-          data: rx.mfRaw,
-          borderColor: '#38BDF8',
-          backgroundColor: 'rgba(56, 189, 248, 0.12)',
-          borderWidth: 2.8,
-          tension: 0,
-          fill: true,
-          pointRadius: 3.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#38BDF8',
-          yAxisID: 'yLeft'
-        },
         {
           id: 'nifty',
           label: 'Nifty 50 Benchmark',
           data: rx.niftyRaw,
-          borderColor: 'rgba(52, 211, 153, 0.45)',
+          borderColor: '#38BDF8',
           backgroundColor: 'transparent',
           borderWidth: 2.0,
           tension: 0,
           pointRadius: 0,
           pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(52, 211, 153, 0.45)',
-          yAxisID: 'yRight'
+          pointBackgroundColor: '#38BDF8',
+          yAxisID: 'yLeft' // Rate is LEFT side
+        },
+        {
+          id: 'mf',
+          label: 'My Mutual Funds',
+          data: rx.mfRaw,
+          borderColor: '#10B981', // Money invested in Nifty / MF is GREEN
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          borderWidth: 2.8,
+          tension: 0,
+          fill: true,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#10B981',
+          yAxisID: 'yRight' // Holding is RIGHT side
         }
       ];
 
+      // Fixed global bounds
+      var minRate = Math.min.apply(null, rx.niftyRaw);
+      var maxRate = Math.max.apply(null, rx.niftyRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.mfRaw);
+      var maxHolding = Math.max.apply(null, rx.mfRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
       scales.yLeft = {
         type: 'linear',
-        position: 'left',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: true,
-          color: '#38BDF8',
-          font: { size: 9.5 },
-          callback: function(v) { return formatCompactLakhs(v); }
-        },
-        title: {
-          display: true,
-          text: 'Mutual Funds (₹)',
-          color: '#38BDF8',
-          font: { size: 10.5, weight: '700' }
-        }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: {
-          display: true,
-          color: '#34D399',
+          display: showYTicks,
+          color: '#38BDF8', // Text matches Nifty line color
           font: { size: 9.5 },
           callback: function(v) { return Math.round(v).toLocaleString('en-IN'); }
         },
         title: {
-          display: true,
+          display: showYTicks,
           text: 'Nifty 50 Benchmark',
-          color: '#34D399',
+          color: '#38BDF8',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: showYTicks,
+          color: '#10B981', // Text matches Mutual Funds green line color
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
+        },
+        title: {
+          display: showYTicks,
+          text: 'Mutual Funds (₹)',
+          color: '#10B981',
           font: { size: 10.5, weight: '700' }
         }
       };
     } else if (REACTION_FILTER === 'gold') {
+      // RATE on LEFT (Gold Spot Rate), HOLDING on RIGHT (My Gold Holdings)
       datasets = [
+        {
+          id: 'goldRate',
+          label: 'Gold Rate (₹ / 10g)',
+          data: rx.goldBenchRaw,
+          borderColor: '#FB923C',
+          backgroundColor: 'transparent',
+          borderWidth: 2.0,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointBackgroundColor: '#FB923C',
+          yAxisID: 'yLeft' // Rate is LEFT side
+        },
         {
           id: 'goldHolding',
           label: 'My Gold Holdings',
@@ -2134,59 +2090,73 @@ function observeRevealItems() {
           pointRadius: 3.5,
           pointHoverRadius: 6,
           pointBackgroundColor: '#FACC15',
-          yAxisID: 'yLeft'
-        },
-        {
-          id: 'goldRate',
-          label: 'Gold Rate (₹ / 10g)',
-          data: rx.goldBenchRaw,
-          borderColor: 'rgba(250, 204, 21, 0.40)',
-          backgroundColor: 'transparent',
-          borderWidth: 2.0,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(250, 204, 21, 0.40)',
-          yAxisID: 'yRight'
+          yAxisID: 'yRight' // Holding is RIGHT side
         }
       ];
 
+      var minRate = Math.min.apply(null, rx.goldBenchRaw);
+      var maxRate = Math.max.apply(null, rx.goldBenchRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.goldHoldingRaw);
+      var maxHolding = Math.max.apply(null, rx.goldHoldingRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
       scales.yLeft = {
         type: 'linear',
-        position: 'left',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: true,
-          color: '#FACC15',
-          font: { size: 9.5 },
-          callback: function(v) { return formatCompactLakhs(v); }
-        },
-        title: {
-          display: true,
-          text: 'Gold Holdings (₹)',
-          color: '#FACC15',
-          font: { size: 10.5, weight: '700' }
-        }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: {
-          display: true,
-          color: '#FB923C',
+          display: showYTicks,
+          color: '#FB923C', // Text matches Gold Rate line color
           font: { size: 9.5 },
           callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
         },
         title: {
-          display: true,
+          display: showYTicks,
           text: 'Gold Rate (₹ / 10g)',
           color: '#FB923C',
           font: { size: 10.5, weight: '700' }
         }
       };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: showYTicks,
+          color: '#FACC15', // Text matches Gold Holdings yellow line color
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
+        },
+        title: {
+          display: showYTicks,
+          text: 'Gold Holdings (₹)',
+          color: '#FACC15',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
     } else if (REACTION_FILTER === 'silver') {
+      // RATE on LEFT (Silver Spot Rate), HOLDING on RIGHT (My Silver Holdings)
       datasets = [
+        {
+          id: 'silverRate',
+          label: 'Silver Rate (₹ / 1kg)',
+          data: rx.silverBenchRaw,
+          borderColor: '#38BDF8',
+          backgroundColor: 'transparent',
+          borderWidth: 2.0,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointBackgroundColor: '#38BDF8',
+          yAxisID: 'yLeft' // Rate is LEFT side
+        },
         {
           id: 'silverHolding',
           label: 'My Silver Holdings',
@@ -2199,62 +2169,76 @@ function observeRevealItems() {
           pointRadius: 3.5,
           pointHoverRadius: 6,
           pointBackgroundColor: '#E2E8F0',
-          yAxisID: 'yLeft'
-        },
-        {
-          id: 'silverRate',
-          label: 'Silver Rate (₹ / 1kg)',
-          data: rx.silverBenchRaw,
-          borderColor: 'rgba(226, 232, 240, 0.40)',
-          backgroundColor: 'transparent',
-          borderWidth: 2.0,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(226, 232, 240, 0.40)',
-          yAxisID: 'yRight'
+          yAxisID: 'yRight' // Holding is RIGHT side
         }
       ];
 
+      var minRate = Math.min.apply(null, rx.silverBenchRaw);
+      var maxRate = Math.max.apply(null, rx.silverBenchRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.silverHoldingRaw);
+      var maxHolding = Math.max.apply(null, rx.silverHoldingRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
       scales.yLeft = {
         type: 'linear',
-        position: 'left',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: true,
-          color: '#E2E8F0',
+          display: showYTicks,
+          color: '#38BDF8', // Text matches Silver Rate line color
+          font: { size: 9.5 },
+          callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
+        },
+        title: {
+          display: showYTicks,
+          text: 'Silver Rate (₹ / 1kg)',
+          color: '#38BDF8',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: showYTicks,
+          color: '#E2E8F0', // Text matches Silver Holdings line color
           font: { size: 9.5 },
           callback: function(v) { return formatCompactLakhs(v); }
         },
         title: {
-          display: true,
+          display: showYTicks,
           text: 'Silver Holdings (₹)',
           color: '#E2E8F0',
           font: { size: 10.5, weight: '700' }
         }
       };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: {
-          display: true,
-          color: '#60A5FA',
-          font: { size: 9.5 },
-          callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
-        },
-        title: {
-          display: true,
-          text: 'Silver Rate (₹ / 1kg)',
-          color: '#60A5FA',
-          font: { size: 10.5, weight: '700' }
-        }
-      };
     } else {
-      // 'bank' Mode: Bank & Fixed Deposits vs RBI Repo Rate Benchmark
+      // 'bank' Mode: RATE on LEFT (Repo Rate), HOLDING on RIGHT (Bank & FD Deposits)
       var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
       var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
+
       datasets = [
+        {
+          id: 'repoRate',
+          label: 'RBI Repo Rate Benchmark',
+          data: repoData,
+          borderColor: '#EC4899',
+          backgroundColor: 'transparent',
+          borderWidth: 2.0,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointBackgroundColor: '#EC4899',
+          yAxisID: 'yLeft' // Rate is LEFT side
+        },
         {
           id: 'bankHolding',
           label: 'Bank & Fixed Deposits',
@@ -2267,56 +2251,50 @@ function observeRevealItems() {
           pointRadius: 3.5,
           pointHoverRadius: 6,
           pointBackgroundColor: '#F59E0B',
-          yAxisID: 'yLeft'
-        },
-        {
-          id: 'repoRate',
-          label: 'RBI Repo Rate Benchmark',
-          data: repoData,
-          borderColor: 'rgba(245, 158, 11, 0.40)',
-          backgroundColor: 'transparent',
-          borderWidth: 2.0,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(245, 158, 11, 0.40)',
-          yAxisID: 'yRight'
+          yAxisID: 'yRight' // Holding is RIGHT side
         }
       ];
 
+      var minHolding = Math.min.apply(null, bankData);
+      var maxHolding = Math.max.apply(null, bankData);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
       scales.yLeft = {
         type: 'linear',
-        position: 'left',
+        position: 'left', // Rate on LEFT
+        min: 4.0,
+        max: 8.5,
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: true,
-          color: '#F59E0B',
-          font: { size: 9.5 },
-          callback: function(v) { return formatCompactLakhs(v); }
-        },
-        title: {
-          display: true,
-          text: 'Bank & FD Deposits (₹)',
-          color: '#F59E0B',
-          font: { size: 10.5, weight: '700' }
-        }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        suggestedMin: 4.5,
-        suggestedMax: 8.5,
-        ticks: {
-          display: true,
-          color: '#EC4899',
+          display: showYTicks,
+          color: '#EC4899', // Text matches Repo Rate line color
           font: { size: 9.5 },
           callback: function(v) { return Number(v).toFixed(1) + '%'; }
         },
         title: {
-          display: true,
+          display: showYTicks,
           text: 'RBI Repo Rate (% p.a.)',
           color: '#EC4899',
+          font: { size: 10.5, weight: '700' }
+        }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: {
+          display: showYTicks,
+          color: '#F59E0B', // Text matches Bank Deposits amber line color
+          font: { size: 9.5 },
+          callback: function(v) { return formatCompactLakhs(v); }
+        },
+        title: {
+          display: showYTicks,
+          text: 'Bank & FD Deposits (₹)',
+          color: '#F59E0B',
           font: { size: 10.5, weight: '700' }
         }
       };
@@ -2329,7 +2307,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 6, left: 4, right: 8, bottom: 4 }
+          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 2 : 8), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -2358,6 +2336,13 @@ function observeRevealItems() {
     var isMobile = window.innerWidth <= 768;
     var xMin = (isMobile && cd.labels.length > 8) ? cd.labels[Math.max(0, cd.labels.length - 9)] : undefined;
     var xMax = (isMobile && cd.labels.length > 8) ? cd.labels[cd.labels.length - 1] : undefined;
+
+    // Fixed Y-axis bounds anchoring: Y-axis never rescales during horizontal panning or zooming
+    var minChange = Math.min.apply(null, cd.monthlyChange.concat(rollingPace || []));
+    var maxChange = Math.max.apply(null, cd.monthlyChange.concat(rollingPace || []));
+    var padChange = Math.max((maxChange - minChange) * 0.1, 1000);
+    var yMinChange = Math.floor(minChange - padChange);
+    var yMaxChange = Math.ceil(maxChange + padChange);
 
     CHART_MONTHLY_CHANGE = new Chart(ctx, {
       type: 'line',
@@ -2394,7 +2379,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 6, left: 4, right: 8, bottom: 4 }
+          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 2 : 8), bottom: 4 }
         },
         plugins: {
           legend: { display: false },
@@ -2409,8 +2394,15 @@ function observeRevealItems() {
             ticks: { color: '#64748B', font: { size: 9.5 }, maxTicksLimit: 10 }
           },
           y: {
+            min: yMinChange,
+            max: yMaxChange,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#64748B', font: { size: 9.5 }, callback: function(v) { return formatCompactLakhs(v); } }
+            ticks: {
+              display: !isMobile, // Hide Y-axis text on mobile non-full-screen view
+              color: '#38BDF8',   // Match line color
+              font: { size: 9.5 },
+              callback: function(v) { return formatCompactLakhs(v); }
+            }
           }
         }
       }
@@ -2716,6 +2708,14 @@ function observeRevealItems() {
 
     var ctxD = document.getElementById('chart-drilldown-year').getContext('2d');
     if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
+
+    var allDrillVals = cMarket.concat(cBank, cEpf);
+    var maxDrill = allDrillVals.length ? Math.max.apply(null, allDrillVals) : 100000;
+    var minDrill = allDrillVals.length ? Math.min.apply(null, allDrillVals) : 0;
+    var padDrill = Math.max((maxDrill - minDrill) * 0.08, 10000);
+    var yMinDrill = Math.max(0, Math.floor(minDrill - padDrill));
+    var yMaxDrill = Math.ceil(maxDrill + padDrill);
+
     CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
       type: 'line',
       data: {
@@ -2783,9 +2783,11 @@ function observeRevealItems() {
           },
           y: {
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            grace: '8%',
+            min: yMinDrill,
+            max: yMaxDrill,
             ticks: {
-              color: '#64748B',
+              display: !(window.innerWidth <= 768), // Hide Y-axis text on mobile
+              color: '#34D399',                     // Match line color
               font: { family: 'JetBrains Mono', size: 10.5 },
               callback: function(v) { return formatCompactLakhs(v); }
             }
@@ -2794,6 +2796,11 @@ function observeRevealItems() {
       }
     });
     attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
+
+    // Ensure chart resizes smoothly when modal settles
+    setTimeout(function() {
+      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+    }, 150);
 
     // Populate Drilldown Monthly Breakdown Table with Center-Aligned Headers and Cells
     var tBody = document.getElementById('drilldown-table-body');
@@ -4245,6 +4252,11 @@ function observeRevealItems() {
       ];
     }
 
+    var maxNetWorth = Math.max.apply(null, cd.netWorth.concat(trendData || []));
+    var minNetWorth = Math.min.apply(null, cd.netWorth);
+    var yMin = isStacked ? 0 : Math.max(0, Math.floor(minNetWorth * 0.92));
+    var yMax = Math.ceil(maxNetWorth * 1.08);
+
     CHART_FULLVIEW = new Chart(ctx, {
       type: 'line',
       data: { labels: cd.labels, datasets: datasets },
@@ -4289,10 +4301,12 @@ function observeRevealItems() {
           },
           y: {
             stacked: isStacked,
+            min: yMin,
+            max: yMax,
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
             ticks: {
               display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
-              color: '#94A3B8',
+              color: '#38BDF8', // Text matches Networth line
               font: { family: 'JetBrains Mono', size: 11 },
               padding: 4,
               callback: function(v) { return formatCompactLakhs(v); }
@@ -4316,48 +4330,75 @@ function observeRevealItems() {
     };
 
     if (mode === 'mf') {
+      // RATE on LEFT (Nifty 50 Benchmark), HOLDING on RIGHT (My Mutual Funds)
       datasets = [
+        {
+          label: 'Nifty 50 Benchmark',
+          data: rx.niftyRaw,
+          borderColor: '#38BDF8',
+          borderWidth: 2.0,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointBackgroundColor: '#38BDF8',
+          yAxisID: 'yLeft' // Rate on LEFT
+        },
         {
           label: 'My Mutual Funds',
           data: rx.mfRaw,
-          borderColor: '#38BDF8',
-          backgroundColor: 'rgba(56, 189, 248, 0.12)',
+          borderColor: '#10B981', // Money invested in Nifty / MF is GREEN
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
           borderWidth: 3,
           tension: 0,
           fill: true,
           pointRadius: 4,
           pointHoverRadius: 7,
-          pointBackgroundColor: '#38BDF8',
-          yAxisID: 'yLeft'
-        },
+          pointBackgroundColor: '#10B981',
+          yAxisID: 'yRight' // Holding on RIGHT
+        }
+      ];
+
+      var minRate = Math.min.apply(null, rx.niftyRaw);
+      var maxRate = Math.max.apply(null, rx.niftyRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.mfRaw);
+      var maxHolding = Math.max.apply(null, rx.mfRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
+        grid: { color: 'rgba(255, 255, 255, 0.06)' },
+        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Nifty 50 Index', color: '#38BDF8', font: { weight: '700' } }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#10B981', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        title: { display: true, text: 'Mutual Funds Value (₹)', color: '#10B981', font: { weight: '700' } }
+      };
+    } else if (mode === 'gold') {
+      // RATE on LEFT (Gold Spot Rate), HOLDING on RIGHT (My Gold Holdings)
+      datasets = [
         {
-          label: 'Nifty 50 Benchmark',
-          data: rx.niftyRaw,
-          borderColor: 'rgba(52, 211, 153, 0.45)',
+          label: 'Gold Rate (₹ / 10g)',
+          data: rx.goldBenchRaw,
+          borderColor: '#FB923C',
           borderWidth: 2.0,
           tension: 0,
           pointRadius: 0,
           pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(52, 211, 153, 0.45)',
-          yAxisID: 'yRight'
-        }
-      ];
-      scales.yLeft = {
-        type: 'linear',
-        position: 'left',
-        grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
-        title: { display: true, text: 'Mutual Funds Value (₹)', color: '#38BDF8', font: { weight: '700' } }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: { color: 'rgba(56, 189, 248, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Nifty 50 Index', color: 'rgba(56, 189, 248, 0.70)', font: { weight: '700' } }
-      };
-    } else if (mode === 'gold') {
-      datasets = [
+          pointBackgroundColor: '#FB923C',
+          yAxisID: 'yLeft' // Rate on LEFT
+        },
         {
           label: 'My Gold Holdings',
           data: rx.goldHoldingRaw,
@@ -4369,36 +4410,51 @@ function observeRevealItems() {
           pointRadius: 4,
           pointHoverRadius: 7,
           pointBackgroundColor: '#FACC15',
-          yAxisID: 'yLeft'
-        },
+          yAxisID: 'yRight' // Holding on RIGHT
+        }
+      ];
+
+      var minRate = Math.min.apply(null, rx.goldBenchRaw);
+      var maxRate = Math.max.apply(null, rx.goldBenchRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.goldHoldingRaw);
+      var maxHolding = Math.max.apply(null, rx.goldHoldingRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
+        grid: { color: 'rgba(255, 255, 255, 0.06)' },
+        ticks: { color: '#FB923C', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: '#FB923C', font: { weight: '700' } }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        title: { display: true, text: 'Gold Holdings (₹)', color: '#FACC15', font: { weight: '700' } }
+      };
+    } else if (mode === 'silver') {
+      // RATE on LEFT (Silver Spot Rate), HOLDING on RIGHT (My Silver Holdings)
+      datasets = [
         {
-          label: 'Gold Rate (₹ / 10g)',
-          data: rx.goldBenchRaw,
-          borderColor: 'rgba(250, 204, 21, 0.40)',
+          label: 'Silver Rate (₹ / 1kg)',
+          data: rx.silverBenchRaw,
+          borderColor: '#38BDF8',
           borderWidth: 2.0,
           tension: 0,
           pointRadius: 0,
           pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(250, 204, 21, 0.40)',
-          yAxisID: 'yRight'
-        }
-      ];
-      scales.yLeft = {
-        type: 'linear',
-        position: 'left',
-        grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#FACC15', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
-        title: { display: true, text: 'Gold Holdings (₹)', color: '#FACC15', font: { weight: '700' } }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: { color: 'rgba(250, 204, 21, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Gold Spot Rate (₹ / 10g)', color: 'rgba(250, 204, 21, 0.70)', font: { weight: '700' } }
-      };
-    } else if (mode === 'silver') {
-      datasets = [
+          pointBackgroundColor: '#38BDF8',
+          yAxisID: 'yLeft' // Rate on LEFT
+        },
         {
           label: 'My Silver Holdings',
           data: rx.silverHoldingRaw,
@@ -4410,39 +4466,53 @@ function observeRevealItems() {
           pointRadius: 4,
           pointHoverRadius: 7,
           pointBackgroundColor: '#E2E8F0',
-          yAxisID: 'yLeft'
-        },
+          yAxisID: 'yRight' // Holding on RIGHT
+        }
+      ];
+
+      var minRate = Math.min.apply(null, rx.silverBenchRaw);
+      var maxRate = Math.max.apply(null, rx.silverBenchRaw);
+      var padRate = Math.max((maxRate - minRate) * 0.08, 100);
+
+      var minHolding = Math.min.apply(null, rx.silverHoldingRaw);
+      var maxHolding = Math.max.apply(null, rx.silverHoldingRaw);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
+      scales.yLeft = {
+        type: 'linear',
+        position: 'left', // Rate on LEFT
+        min: Math.max(0, Math.floor(minRate - padRate)),
+        max: Math.ceil(maxRate + padRate),
+        grid: { color: 'rgba(255, 255, 255, 0.06)' },
+        ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
+        title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: '#38BDF8', font: { weight: '700' } }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        title: { display: true, text: 'Silver Holdings (₹)', color: '#E2E8F0', font: { weight: '700' } }
+      };
+    } else {
+      // 'bank' Mode: RATE on LEFT (Repo Rate), HOLDING on RIGHT (Bank & FD Deposits)
+      var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
+      var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
+      datasets = [
         {
-          label: 'Silver Rate (₹ / 1kg)',
-          data: rx.silverBenchRaw,
-          borderColor: 'rgba(226, 232, 240, 0.40)',
+          label: 'RBI Repo Rate Benchmark',
+          data: repoData,
+          borderColor: '#EC4899',
           borderWidth: 2.0,
           tension: 0,
           pointRadius: 0,
           pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(226, 232, 240, 0.40)',
-          yAxisID: 'yRight'
-        }
-      ];
-      scales.yLeft = {
-        type: 'linear',
-        position: 'left',
-        grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#E2E8F0', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
-        title: { display: true, text: 'Silver Holdings (₹)', color: '#E2E8F0', font: { weight: '700' } }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: { color: 'rgba(226, 232, 240, 0.70)', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); } },
-        title: { display: true, text: 'Silver Spot Rate (₹ / 1kg)', color: 'rgba(226, 232, 240, 0.70)', font: { weight: '700' } }
-      };
-    } else {
-      // 'bank' Mode: Bank & Fixed Deposits vs RBI Repo Rate Benchmark
-      var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
-      var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
-      datasets = [
+          pointBackgroundColor: '#EC4899',
+          yAxisID: 'yLeft' // Rate on LEFT
+        },
         {
           label: 'Bank & Fixed Deposits',
           data: bankData,
@@ -4454,35 +4524,32 @@ function observeRevealItems() {
           pointRadius: 4,
           pointHoverRadius: 7,
           pointBackgroundColor: '#F59E0B',
-          yAxisID: 'yLeft'
-        },
-        {
-          label: 'RBI Repo Rate Benchmark',
-          data: repoData,
-          borderColor: 'rgba(245, 158, 11, 0.40)',
-          borderWidth: 2.0,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointBackgroundColor: 'rgba(245, 158, 11, 0.40)',
-          yAxisID: 'yRight'
+          yAxisID: 'yRight' // Holding on RIGHT
         }
       ];
+
+      var minHolding = Math.min.apply(null, bankData);
+      var maxHolding = Math.max.apply(null, bankData);
+      var padHolding = Math.max((maxHolding - minHolding) * 0.08, 1000);
+
       scales.yLeft = {
         type: 'linear',
-        position: 'left',
+        position: 'left', // Rate on LEFT
+        min: 4.0,
+        max: 8.5,
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#F59E0B', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
-        title: { display: true, text: 'Bank & Fixed Deposits (₹)', color: '#F59E0B', font: { weight: '700' } }
-      };
-      scales.yRight = {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        suggestedMin: 4.5,
-        suggestedMax: 8.5,
         ticks: { color: '#EC4899', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Number(v).toFixed(1) + '%'; } },
         title: { display: true, text: 'RBI Repo Rate (% p.a.)', color: '#EC4899', font: { weight: '700' } }
+      };
+
+      scales.yRight = {
+        type: 'linear',
+        position: 'right', // Holding on RIGHT
+        min: Math.max(0, Math.floor(minHolding - padHolding)),
+        max: Math.ceil(maxHolding + padHolding),
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#F59E0B', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return formatCompactLakhs(v); } },
+        title: { display: true, text: 'Bank & Fixed Deposits (₹)', color: '#F59E0B', font: { weight: '700' } }
       };
     }
 
@@ -4539,6 +4606,12 @@ function observeRevealItems() {
     var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
     var rollingPace = calculateRollingAverage(changes, 12);
 
+    var minChange = Math.min.apply(null, changes.concat(rollingPace || []));
+    var maxChange = Math.max.apply(null, changes.concat(rollingPace || []));
+    var padChange = Math.max((maxChange - minChange) * 0.1, 1000);
+    var yMinChange = Math.floor(minChange - padChange);
+    var yMaxChange = Math.ceil(maxChange + padChange);
+
     if (isBars) {
       CHART_FULLVIEW = new Chart(ctx, {
         type: 'bar',
@@ -4583,21 +4656,23 @@ function observeRevealItems() {
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: {
-              color: '#CBD5E1',
-              font: { weight: '600', size: 11 },
-              padding: 4,
-              maxRotation: 0,
-              maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
-            }
-          },
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#CBD5E1',
+                font: { weight: '600', size: 11 },
+                padding: 4,
+                maxRotation: 0,
+                maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
+              }
+            },
             y: {
+              min: yMinChange,
+              max: yMaxChange,
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: {
                 display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
-                color: '#94A3B8',
+                color: '#34D399',
                 padding: 4,
                 callback: function(v) { return formatCompactLakhs(v); }
               }
@@ -4654,21 +4729,23 @@ function observeRevealItems() {
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: {
-              color: '#CBD5E1',
-              font: { weight: '600', size: 11 },
-              padding: 4,
-              maxRotation: 0,
-              maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
-            }
-          },
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#CBD5E1',
+                font: { weight: '600', size: 11 },
+                padding: 4,
+                maxRotation: 0,
+                maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
+              }
+            },
             y: {
+              min: yMinChange,
+              max: yMaxChange,
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: {
                 display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
-                color: '#94A3B8',
+                color: '#38BDF8',
                 padding: 4,
                 callback: function(v) { return formatCompactLakhs(v); }
               }
