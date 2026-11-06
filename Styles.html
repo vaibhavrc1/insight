@@ -401,16 +401,65 @@
     z-index: 0;
     overflow: hidden;
     background: #01040A;
+    contain: strict;
+    transform: translateZ(0);
   }
 
-  #live-bg-canvas {
+  .contour-waves-container {
     position: absolute;
-    inset: 0;
+    inset: -6% -6%;
+    width: 112%;
+    height: 112%;
+    pointer-events: none;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .contour-svg {
     width: 100%;
     height: 100%;
     display: block;
-    pointer-events: none;
-    z-index: 0;
+    overflow: visible;
+  }
+
+  .contour-group {
+    transform-origin: 50% 50%;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .contour-group-1 {
+    animation: contour-drift-1 22s ease-in-out infinite alternate;
+  }
+  .contour-group-2 {
+    animation: contour-drift-2 28s ease-in-out infinite alternate;
+  }
+  .contour-group-3 {
+    animation: contour-drift-3 32s ease-in-out infinite alternate;
+  }
+  .contour-group-4 {
+    animation: contour-drift-4 38s ease-in-out infinite alternate;
+  }
+
+  @keyframes contour-drift-1 {
+    0% { transform: translate3d(0, 0, 0) scaleY(1); }
+    50% { transform: translate3d(-2%, -24px, 0) scaleY(1.06); }
+    100% { transform: translate3d(1.5%, 16px, 0) scaleY(0.96); }
+  }
+  @keyframes contour-drift-2 {
+    0% { transform: translate3d(0, 0, 0) scaleY(1); }
+    50% { transform: translate3d(2%, 22px, 0) scaleY(0.95); }
+    100% { transform: translate3d(-1.5%, -18px, 0) scaleY(1.05); }
+  }
+  @keyframes contour-drift-3 {
+    0% { transform: translate3d(0, 0, 0) scaleY(1); }
+    50% { transform: translate3d(-1.5%, 18px, 0) scaleY(1.04); }
+    100% { transform: translate3d(2%, -22px, 0) scaleY(0.97); }
+  }
+  @keyframes contour-drift-4 {
+    0% { transform: translate3d(0, 0, 0) scaleY(1); }
+    50% { transform: translate3d(1.8%, -20px, 0) scaleY(0.97); }
+    100% { transform: translate3d(-2%, 20px, 0) scaleY(1.05); }
   }
 
   /* Subtle architectural dot matrix for depth perception */
@@ -430,6 +479,9 @@
      ========================================================================== */
   .liquid-slab {
     position: relative;
+    contain: layout style;
+    transform: translateZ(0);
+    will-change: transform;
     background: linear-gradient(
       168deg,
       rgba(26, 37, 62, 0.72) 0%,
