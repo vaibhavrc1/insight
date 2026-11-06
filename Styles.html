@@ -679,7 +679,7 @@
   }
 
   /* ==========================================================================
-     7. NAVIGATION TRACK & LIQUID-MERCURY GLIDER
+     7. NAVIGATION TRACK & LIQUID-MERCURY GLIDER (APPLE LIQUID GLASS)
      ========================================================================== */
   .nav-well {
     display: none;
@@ -687,31 +687,49 @@
     gap: 4px;
     padding: 5px;
     border-radius: 999px;
-    background: var(--glass-well);
-    box-shadow: var(--ao-recessed-well);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(20, 32, 54, 0.45) 0%, rgba(10, 16, 28, 0.58) 100%) !important;
+    backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.42) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+      0 10px 30px -4px rgba(0, 0, 0, 0.50),
+      0 2px 8px -2px rgba(0, 0, 0, 0.30),
+      0 0 16px rgba(56, 189, 248, 0.08),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+      inset 0 2px 6px rgba(0, 0, 0, 0.25) !important;
     position: relative;
     overflow: visible;
   }
 
-  /* Liquid Floating Glider Pill (Desktop) */
+  /* Liquid Floating Glider Pill (Desktop visionOS Optical Lens) */
   .nav-glider-pill {
     position: absolute;
     top: 5px;
     bottom: 5px;
     border-radius: 999px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.14) 100%);
-    border: 1px solid rgba(56, 189, 248, 0.55);
-    box-shadow: 
-      0 0 24px rgba(56, 189, 248, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    background:
+      radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.10) 45%, transparent 75%),
+      linear-gradient(135deg, rgba(56, 189, 248, 0.40) 0%, rgba(14, 165, 233, 0.22) 50%, rgba(99, 102, 241, 0.24) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.90) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.35) !important;
+    box-shadow:
+      0 4px 16px -2px rgba(14, 165, 233, 0.45),
+      0 0 20px rgba(56, 189, 248, 0.35),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.40),
+      inset 0 0 12px rgba(56, 189, 248, 0.20) !important;
+    backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
     pointer-events: none;
-    transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
-    backdrop-filter: blur(8px);
+    transition: all 0.34s cubic-bezier(0.34, 1.45, 0.64, 1);
     z-index: 1;
   }
   .nav-glider-pill.stretching {
-    transform: scaleX(1.04) scaleY(0.97);
+    transform: scaleX(1.08) scaleY(0.94);
   }
 
   .nav-pill-btn {
@@ -719,36 +737,44 @@
     z-index: 2;
     background: transparent;
     border: 1px solid transparent;
-    color: var(--text-muted);
+    color: rgba(226, 232, 240, 0.70);
     padding: 8px 18px;
     border-radius: 999px;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: color 0.2s ease, transform 0.15s ease;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
   }
 
   .nav-pill-btn:hover {
     color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.20), 0 2px 8px rgba(0, 0, 0, 0.20);
   }
   .nav-pill-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.95);
   }
 
   .nav-pill-btn.active {
-    color: #FFFFFF;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(56, 189, 248, 0.7);
+    color: #FFFFFF !important;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 255, 255, 0.75), 0 0 22px rgba(56, 189, 248, 0.65) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
   .nav-pill-btn.active svg {
-    animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1);
-    color: #38BDF8;
+    animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1) !important;
+    color: #38BDF8 !important;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 14px rgba(56, 189, 248, 0.40)) !important;
   }
 
-  /* Mobile Floating Optical Liquid-Glass Dock with Specular Light Rim */
+  /* Mobile Floating Optical Liquid-Glass Dock with Specular Light Rim (Apple Liquid Glass) */
   .mobile-dock {
     position: fixed !important;
     bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
@@ -757,20 +783,22 @@
     max-width: 480px;
     margin: 0 auto;
     z-index: 1500 !important;
-    background: linear-gradient(180deg, rgba(20, 32, 58, 0.58) 0%, rgba(8, 14, 28, 0.68) 100%) !important;
+    background: linear-gradient(180deg, rgba(22, 34, 58, 0.52) 0%, rgba(8, 14, 26, 0.64) 100%) !important;
     backdrop-filter: blur(28px) saturate(210%) brightness(1.15) !important;
     -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.15) !important;
-    border-radius: 22px;
+    border-radius: 24px;
     box-shadow: 
       0 20px 48px -8px rgba(0, 0, 0, 0.75),
       0 0 24px rgba(56, 189, 248, 0.16),
-      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.55) !important;
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.50),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.50),
+      inset 0 2px 6px rgba(0, 0, 0, 0.25) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     display: flex;
     justify-content: space-around;
-    padding: 6px 4px;
+    padding: 6px 6px;
     overflow: visible;
     transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease !important;
   }
@@ -782,26 +810,32 @@
     transform: translateY(140%) !important;
   }
 
-  /* Liquid Mercury Glider Pill (Mobile Dock) */
+  /* Liquid Mercury Glider Pill (Mobile Dock visionOS Optical Lens) */
   .dock-glider-pill {
     position: absolute;
     top: 6px;
     bottom: 6px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.42) 0%, rgba(52, 211, 153, 0.22) 100%) !important;
-    border: 1px solid rgba(56, 189, 248, 0.65) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.65) !important;
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 75%),
+      linear-gradient(135deg, rgba(56, 189, 248, 0.42) 0%, rgba(14, 165, 233, 0.24) 50%, rgba(52, 211, 153, 0.22) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.40) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.90) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.35) !important;
     box-shadow: 
-      0 0 22px rgba(56, 189, 248, 0.5),
-      inset 0 1.5px 1.5px rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+      0 4px 18px -2px rgba(14, 165, 233, 0.50),
+      0 0 22px rgba(56, 189, 248, 0.35),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.40),
+      inset 0 0 12px rgba(56, 189, 248, 0.25) !important;
+    backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
     pointer-events: none;
-    transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
+    transition: all 0.34s cubic-bezier(0.34, 1.45, 0.64, 1);
     z-index: 1;
   }
   .dock-glider-pill.stretching {
-    transform: scaleX(1.18) scaleY(0.90) !important;
+    transform: scaleX(1.15) scaleY(0.92) !important;
   }
 
   .dock-btn {
@@ -809,28 +843,39 @@
     z-index: 2;
     background: none;
     border: 1px solid transparent;
-    color: var(--text-muted);
-    font-size: 10.5px;
-    font-weight: 700;
+    color: rgba(226, 232, 240, 0.70);
+    font-size: 11px;
+    font-weight: 600;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 7px 12px;
-    border-radius: 16px;
+    padding: 8px 14px;
+    border-radius: 18px;
     cursor: pointer;
-    transition: color 0.2s ease, transform 0.15s ease;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
+  }
+  .dock-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
   .dock-btn:active {
     transform: scale(0.92);
   }
   .dock-btn.active {
-    color: #FFFFFF;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 255, 255, 0.75), 0 0 20px rgba(56, 189, 248, 0.65) !important;
+    background: transparent !important;
+    border-color: transparent !important;
   }
   .dock-btn.active svg {
     color: #38BDF8 !important;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.90)) drop-shadow(0 0 14px rgba(56, 189, 248, 0.50)) !important;
     animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1) !important;
+    transform: scale(1.08);
   }
 
   /* ==========================================================================
@@ -1422,27 +1467,30 @@
     touch-action: pan-y !important;
   }
 
-  /* Segmented Optical Liquid-Glass Wells with Sliding Mercury Glider */
+  /* Segmented Optical Liquid-Glass Wells with Sliding Mercury Glider (Apple Liquid Glass) */
   .segment-well {
     position: relative;
     display: inline-flex;
     align-items: center;
-    background: linear-gradient(180deg, rgba(16, 26, 48, 0.55) 0%, rgba(8, 14, 26, 0.68) 100%) !important;
-    backdrop-filter: blur(20px) saturate(190%) brightness(1.12) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.12) !important;
+    background: linear-gradient(180deg, rgba(20, 32, 54, 0.45) 0%, rgba(10, 16, 28, 0.58) 100%) !important;
+    backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
     box-shadow: 
-      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.22),
-      inset 0 2px 6px rgba(0, 0, 0, 0.65),
-      0 1px 0 rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.32) !important;
-    padding: 3px;
-    border-radius: 12px;
-    gap: 2px;
+      0 6px 20px -2px rgba(0, 0, 0, 0.40),
+      0 1px 4px rgba(0, 0, 0, 0.25),
+      inset 0 1.2px 1.5px 0 rgba(255, 255, 255, 0.22),
+      inset 0 -1.2px 2px 0 rgba(0, 0, 0, 0.35),
+      inset 0 2px 5px rgba(0, 0, 0, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.40) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 3px 4px;
+    border-radius: 14px;
+    gap: 3px;
     max-width: 100%;
     overflow: visible !important;
     flex-wrap: nowrap !important;
-    height: 36px;
+    height: 38px;
     box-sizing: border-box;
   }
   .segment-well::-webkit-scrollbar {
@@ -1454,40 +1502,46 @@
   /* Liquid Sliding Glider Pill for Segmented Selectors */
   .segment-glider-pill {
     position: absolute;
-    border-radius: 9px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.40) 0%, rgba(14, 165, 233, 0.20) 100%) !important;
-    border: 1px solid rgba(56, 189, 248, 0.65) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.6) !important;
+    border-radius: 10px;
+    background:
+      radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 75%),
+      linear-gradient(135deg, rgba(56, 189, 248, 0.40) 0%, rgba(14, 165, 233, 0.22) 50%, rgba(99, 102, 241, 0.24) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.90) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.35) !important;
     box-shadow: 
-      0 0 18px rgba(56, 189, 248, 0.45),
-      inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+      0 3px 14px -2px rgba(14, 165, 233, 0.45),
+      0 0 16px rgba(56, 189, 248, 0.30),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.40),
+      inset 0 0 10px rgba(56, 189, 248, 0.20) !important;
     pointer-events: none;
     transition: left 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 top 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 width 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 height 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 transform 0.18s ease-out;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
     z-index: 1;
   }
   .segment-glider-pill.stretching {
-    transform: scaleX(1.08) scaleY(0.96);
+    transform: scaleX(1.08) scaleY(0.95);
   }
 
   .segment-btn {
     position: relative;
     z-index: 2;
     background: transparent !important;
-    border: none !important;
+    border: 1px solid transparent !important;
     box-shadow: none !important;
-    color: var(--text-muted);
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 9px;
+    color: rgba(226, 232, 240, 0.70);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 14px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
     user-select: none;
     flex-shrink: 0;
@@ -1499,11 +1553,21 @@
 
   .segment-btn:hover {
     color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.20), 0 2px 6px rgba(0, 0, 0, 0.20) !important;
+  }
+  .segment-btn:active {
+    transform: scale(0.95);
   }
 
   .segment-btn.active {
     color: #FFFFFF !important;
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 10px rgba(56, 189, 248, 0.75) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
 
   .label-short {
@@ -1517,13 +1581,15 @@
       display: inline;
     }
     .segment-well {
-      height: 33px;
-      padding: 2px;
+      height: 34px;
+      padding: 2px 3px;
+      border-radius: 12px;
     }
     .segment-btn {
-      padding: 3px 9px;
+      padding: 0 10px;
       font-size: 11px;
-      height: 27px;
+      height: 28px;
+      border-radius: 9px;
     }
   }
 
@@ -4807,52 +4873,63 @@
       linear-gradient(165deg, rgba(22, 36, 68, 0.32) 0%, rgba(7, 12, 24, 0.46) 100%) !important;
   }
 
-  /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
+  /* Convex Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells - Apple Liquid Glass) */
   .nav-glider-pill,
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 48%, transparent 75%),
-      linear-gradient(180deg, rgba(56, 189, 248, 0.24) 0%, rgba(14, 165, 233, 0.12) 55%, rgba(52, 211, 153, 0.16) 100%) !important;
-    backdrop-filter: blur(16px) saturate(180%) brightness(1.0) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.0) !important;
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
-    border-top: 1.2px solid rgba(255, 255, 255, 0.45) !important;
+      radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.10) 45%, transparent 75%),
+      linear-gradient(135deg, rgba(56, 189, 248, 0.40) 0%, rgba(14, 165, 233, 0.22) 50%, rgba(99, 102, 241, 0.24) 100%) !important;
+    backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.90) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.35) !important;
     box-shadow:
-      0 4px 14px -2px rgba(14, 165, 233, 0.25),
-      0 0 16px rgba(56, 189, 248, 0.20),
-      inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.25) !important;
+      0 4px 18px -2px rgba(14, 165, 233, 0.45),
+      0 0 20px rgba(56, 189, 248, 0.35),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.40),
+      inset 0 0 12px rgba(56, 189, 248, 0.22) !important;
   }
 
-  /* Carved Crystal Navigation & Segment Wells */
+  /* Apple Liquid Glass Navigation & Segment Wells */
   .nav-well,
   .segment-well,
   .month-stepper-control {
     background:
-      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.025) 0%, transparent 70%),
-      linear-gradient(180deg, rgba(8, 14, 28, 0.65) 0%, rgba(4, 8, 18, 0.82) 100%) !important;
-    backdrop-filter: blur(28px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.75) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: var(--ao-recessed-well) !important;
+      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.06) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(20, 32, 54, 0.45) 0%, rgba(10, 16, 28, 0.58) 100%) !important;
+    backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.42) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+      0 8px 28px -4px rgba(0, 0, 0, 0.50),
+      0 2px 6px rgba(0, 0, 0, 0.25),
+      0 0 16px rgba(56, 189, 248, 0.08),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+      inset 0 2px 6px rgba(0, 0, 0, 0.25) !important;
   }
 
   /* Floating Optical Liquid-Glass Mobile Dock */
   .mobile-dock {
     background:
-      radial-gradient(260px circle at var(--glass-x, 50%) var(--glass-y, 20%), rgba(255, 255, 255, 0.04) 0%, transparent 70%),
-      linear-gradient(180deg, rgba(16, 25, 44, 0.82) 0%, rgba(7, 12, 22, 0.92) 100%) !important;
-    backdrop-filter: blur(32px) saturate(165%) brightness(1.0) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(165%) brightness(1.0) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-top: 1.2px solid rgba(255, 255, 255, 0.28) !important;
+      radial-gradient(280px circle at var(--glass-x, 50%) var(--glass-y, 20%), rgba(255, 255, 255, 0.08) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(22, 34, 58, 0.52) 0%, rgba(8, 14, 26, 0.64) 100%) !important;
+    backdrop-filter: blur(28px) saturate(210%) brightness(1.15) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow:
-      0 22px 50px -8px rgba(0, 0, 0, 0.85),
-      0 0 18px rgba(56, 189, 248, 0.10),
-      var(--liquid-refraction) !important;
+      0 20px 48px -8px rgba(0, 0, 0, 0.75),
+      0 0 24px rgba(56, 189, 248, 0.16),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.50),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.50),
+      inset 0 2px 6px rgba(0, 0, 0, 0.25) !important;
   }
 
   /* Modals, Popovers, Drilldowns & Security Vault in True Liquid Glass */
@@ -4927,7 +5004,8 @@
     .liquid-slab,
     .pin-vault-card,
     .loading-glass-card,
-    .mobile-dock {
+    .mobile-dock,
+    .segment-well {
       backdrop-filter: blur(var(--glass-blur, 6px)) !important;
       -webkit-backdrop-filter: blur(var(--glass-blur, 6px)) !important;
       contain: layout paint style;
