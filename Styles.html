@@ -3775,18 +3775,243 @@
       gap: 12px !important;
       padding: 5px 12px !important;
     }
+    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-top-bar {
+      display: contents !important;
+    }
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-title-wrap {
-      grid-column: auto !important;
-      grid-row: auto !important;
       flex: 0 0 auto !important;
     }
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-controls-bar {
-      grid-column: auto !important;
-      grid-row: auto !important;
       flex: 0 1 auto !important;
       width: auto !important;
     }
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-controls-bar .segment-well {
+      width: auto !important;
+      max-width: 100% !important;
+      flex: 0 0 auto !important;
+      overflow: hidden !important;
+    }
+    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-controls-bar .segment-btn {
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+    }
+    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-right {
+      margin-left: auto !important;
+      flex: 0 0 auto !important;
+    }
+  }
+
+  /* Native Mobile Landscape: Zero Margins Widescreen */
+  @media (max-height: 550px) and (max-width: 950px) {
+    .liquid-chart-fullview-dialog {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    .fullview-dialog-header {
+      flex-direction: row !important;
+      padding: 4px 12px !important;
+    }
+    .fullview-header-top-bar {
+      display: contents !important;
+    }
+  }
+
+  /* Minimalist Responsive Header - Desktop & Mobile */
+  .fullview-dialog-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 15, 26, 0.96);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  /* On desktop: display: contents flattens the top bar so Title is on left and Buttons are on far top-right */
+  .fullview-header-top-bar {
+    display: contents;
+  }
+
+  .fullview-title-wrap {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .fullview-title {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  .fullview-header-controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 1 auto;
+  }
+
+  .fullview-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto !important; /* Anchors Close and Reset buttons firmly to top-right on Desktop */
+    flex-shrink: 0;
+  }
+
+  /* Rotate button is strictly mobile only */
+  .btn-fullview-rotate {
+    display: none !important;
+  }
+
+  .btn-reset-zoom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #CBD5E1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .btn-reset-zoom:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.30);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+  }
+
+  /* Canvas Container - Maximizes Screen Real Estate, Clean Minimal Margins (Essential for Vertical Mode) */
+  .fullview-canvas-wrap {
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 4px 14px 8px 14px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .fullview-canvas-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .liquid-chart-fullview-backdrop {
+      padding: 4px;
+    }
+    .liquid-chart-fullview-dialog {
+      width: 100vw;
+      height: 98vh;
+      border-radius: 14px;
+    }
+
+    /* Mobile 2-Row Header Layout: Row 1 = Title + Neatly Aligned Buttons; Row 2 = Full-Width Controls */
+    .fullview-dialog-header {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 6px !important;
+      padding: 8px 10px 6px 10px !important;
+    }
+
+    .fullview-header-top-bar {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      width: 100% !important;
+      gap: 8px !important;
+    }
+
+    .fullview-title-wrap {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .fullview-title {
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      margin: 0 !important;
+    }
+
+    .fullview-header-right {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      flex-shrink: 0 !important;
+      margin-left: 0 !important;
+    }
+
+    .btn-fullview-rotate {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      height: 28px !important;
+      padding: 0 7px !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      border-radius: 8px !important;
+      gap: 4px !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      color: #CBD5E1 !important;
+    }
+    .btn-fullview-rotate:hover {
+      background: rgba(255, 255, 255, 0.16) !important;
+      color: #FFFFFF !important;
+    }
+    .btn-fullview-rotate.active {
+      background: rgba(14, 165, 233, 0.25) !important;
+      border-color: #38bdf8 !important;
+      color: #38bdf8 !important;
+    }
+
+    .btn-reset-zoom {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      border-radius: 8px !important;
+    }
+    .btn-reset-zoom .reset-label {
+      display: none !important;
+    }
+
+    .fullview-header-controls-bar {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      width: 100% !important;
+    }
+
+    .fullview-header-controls-bar .segment-well {
       width: 100% !important;
       justify-content: center !important;
       height: 32px !important;
@@ -5044,22 +5269,23 @@
 
 
   /* ==========================================================================
-     V83 VIBRANT SATURATED LIQUID GLASS (CRISP HIGH-SATURATION, ZERO BLURRY BLOOM)
+     V84 TRANSLUCENT VIBRANT LIQUID GLASS & RUBY GLASS CLOSE/DELETE BUTTONS
      ========================================================================== */
-  /* 1. Vibrant Primary CTA Button - Rich saturated electric cyan-emerald gradient with crisp specular highlight */
+  /* 1. Translucent Vibrant Primary CTA Button - Natural Liquid Translucency */
   .btn-emissive {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 42%),
-      linear-gradient(135deg, #0284c7 0%, #0ea5e9 45%, #10b981 100%) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(56, 189, 248, 0.55) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.65) !important;
-    border-bottom: 1px solid rgba(2, 132, 199, 0.40) !important;
+      linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(14, 165, 233, 0.40) 45%, rgba(16, 185, 129, 0.45) 100%),
+      rgba(10, 18, 32, 0.35) !important;
+    backdrop-filter: blur(14px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.45) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.60) !important;
+    border-bottom: 1px solid rgba(2, 132, 199, 0.35) !important;
     box-shadow:
-      0 4px 14px -2px rgba(14, 165, 233, 0.45),
+      0 4px 14px -2px rgba(14, 165, 233, 0.40),
       0 1px 3px rgba(0, 0, 0, 0.35),
-      inset 0 1px 0.5px rgba(255, 255, 255, 0.55),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.50),
       inset 0 -1px 2px rgba(0, 0, 0, 0.25) !important;
     color: #FFFFFF !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
@@ -5069,30 +5295,33 @@
   .btn-emissive:hover {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 40%, transparent 42%),
-      linear-gradient(135deg, #0369a1 0%, #0284c7 45%, #059669 100%) !important;
+      linear-gradient(135deg, rgba(2, 132, 199, 0.58) 0%, rgba(14, 165, 233, 0.52) 45%, rgba(16, 185, 129, 0.55) 100%),
+      rgba(10, 18, 32, 0.40) !important;
     transform: translateY(-1px) !important;
     box-shadow:
-      0 6px 18px -2px rgba(14, 165, 233, 0.55),
-      inset 0 1px 0.5px rgba(255, 255, 255, 0.65) !important;
+      0 6px 18px -2px rgba(14, 165, 233, 0.50),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.60) !important;
   }
 
-  /* 2. Crisp Vibrant Glass Glider Pills (No Diffuse Fog) */
+  /* 2. Translucent Liquid Glass Glider Pills */
   .nav-glider-pill,
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 42%),
-      linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(56, 189, 248, 0.15) 100%),
-      rgba(15, 23, 42, 0.70) !important;
-    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 42%),
+      linear-gradient(135deg, rgba(14, 165, 233, 0.22) 0%, rgba(56, 189, 248, 0.14) 100%),
+      rgba(15, 23, 42, 0.40) !important;
+    backdrop-filter: blur(8px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.30) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
     box-shadow:
-      0 3px 10px rgba(0, 0, 0, 0.40),
+      0 3px 10px rgba(0, 0, 0, 0.35),
       inset 0 1px 1px rgba(255, 255, 255, 0.35),
       inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
   }
 
-  /* 3. High-Contrast Active Text / Icons (Crisp, Zero Blurry Text Halo) */
+  /* 3. High-Contrast Active Text / Icons */
   .segment-btn.active,
   .nav-pill-btn.active,
   .dock-btn.active {
@@ -5100,21 +5329,58 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7) !important;
   }
 
-  /* 4. Selected Month Button - Rich Vibrant Pure Electric Blue */
+  /* 4. Translucent Selected Month Button */
   .popover-month-btn.selected {
-    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%) !important;
-    border-color: #38bdf8 !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 42%),
+      linear-gradient(135deg, rgba(2, 132, 199, 0.50) 0%, rgba(14, 165, 233, 0.42) 100%),
+      rgba(10, 18, 32, 0.35) !important;
+    backdrop-filter: blur(12px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(170%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.55) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.60) !important;
     color: #FFFFFF !important;
-    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
   }
 
-  /* 5. Active Mobile Rotate Button */
-  .btn-fullview-rotate.active {
-    background: rgba(14, 165, 233, 0.25) !important;
-    border-color: #38bdf8 !important;
-    color: #38bdf8 !important;
-    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+  /* 5. Translucent Dark Red Ruby Glass for Close & Delete Buttons */
+  .btn-fullview-close,
+  .btn-overlay-close,
+  .btn-action-icon.delete,
+  .btn-delete {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 42%),
+      rgba(220, 38, 38, 0.18) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(239, 68, 68, 0.32) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-bottom: 1px solid rgba(185, 28, 28, 0.40) !important;
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.45),
+      0 0 10px rgba(239, 68, 68, 0.18),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px rgba(185, 28, 28, 0.25) !important;
+    color: #FCA5A5 !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .btn-fullview-close:hover,
+  .btn-overlay-close:hover,
+  .btn-action-icon.delete:hover,
+  .btn-delete:hover {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 42%),
+      rgba(220, 38, 38, 0.36) !important;
+    border-color: rgba(239, 68, 68, 0.65) !important;
+    border-top-color: rgba(255, 255, 255, 0.55) !important;
+    color: #FFFFFF !important;
+    transform: scale(1.05) translateY(-1px) !important;
+    box-shadow:
+      0 4px 14px -1px rgba(220, 38, 38, 0.50),
+      0 0 14px rgba(239, 68, 68, 0.30),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.45) !important;
   }
 
   /* 6. Active PIN Key */
@@ -5127,10 +5393,9 @@
   }
 
   /* ==========================================================================
-     V83 MOBILE MONTHLY BREAKDOWN & PERFORMANCE OPTIMIZATION (ZERO GLITCHES)
+     V84 MOBILE MONTHLY BREAKDOWN & PERFORMANCE OPTIMIZATION
      ========================================================================== */
   @media (max-width: 768px) {
-    /* A. Eliminate Nested Backdrop-Filter thrashing in Modals & Cards */
     .liquid-drilldown-dialog,
     .month-detail-dialog {
       backdrop-filter: blur(12px) !important;
@@ -5147,7 +5412,6 @@
       contain: layout style;
     }
 
-    /* B. Monthly History List GPU Memory & Repaint Optimization */
     #history-records-list .liquid-slab {
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
@@ -5160,17 +5424,15 @@
     }
     #history-records-list .liquid-slab::after,
     #history-records-list .liquid-slab::before {
-      display: none !important; /* Disable expensive multi-pass masking composite on mobile list */
+      display: none !important;
     }
 
-    /* C. Disable heavy 108-cell shimmer animation loops on mobile table */
     .liquid-drilldown-dialog.tab-hologram-landing .liquid-table-wrap table tbody tr td,
     .liquid-table-row.tab-hologram-landing td,
     .view-section.tab-hologram-landing .liquid-table-wrap table tbody tr td {
       animation: none !important;
     }
 
-    /* D. Butter-Smooth 120Hz Touch Scrolling */
     .liquid-table-wrap {
       -webkit-overflow-scrolling: touch !important;
       overscroll-behavior-x: contain !important;

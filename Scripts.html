@@ -3785,8 +3785,17 @@ function observeRevealItems() {
     var title = document.getElementById('fullview-title');
     var controls = document.getElementById('fullview-header-controls');
     var canvas = document.getElementById('chart-fullview-canvas');
-
     if (!canvas) return;
+
+    canvas.removeAttribute('width');
+    canvas.removeAttribute('height');
+    canvas.style.width = '';
+    canvas.style.height = '';
+
+    // Set title and build persistent controls track('width');
+    canvas.removeAttribute('height');
+    canvas.style.width = '';
+    canvas.style.height = '';
 
     // Set title and build persistent controls track (once per modal open)
     setupFullViewHeader(chartType, title, controls);
