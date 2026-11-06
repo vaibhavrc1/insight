@@ -2247,7 +2247,24 @@
     border-color: rgba(56, 189, 248, 0.45);
   }
 
-  @media (max-width: 768px) {
+    @media (max-width: 768px) {
+    .view-section.tab-hologram-landing *::before,
+    .view-section.tab-hologram-landing *::after,
+    .liquid-drilldown-dialog.tab-hologram-landing *::before,
+    .liquid-drilldown-dialog.tab-hologram-landing *::after {
+      animation: none !important;
+    }
+    .liquid-drilldown-dialog {
+      width: calc(100vw - 16px) !important;
+      max-width: calc(100vw - 16px) !important;
+      height: min(94vh, 94dvh) !important;
+      max-height: min(94vh, 94dvh) !important;
+      will-change: auto !important;
+    }
+    .drilldown-canvas-holder.scrollable-timeline {
+      overflow-x: hidden !important; /* Prevent touch gesture hijack in drilldown */
+    }
+
     .custom-month-picker-wrap {
       width: 100% !important;
       position: relative !important;

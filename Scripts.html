@@ -582,7 +582,14 @@ function observeRevealItems() {
     if (targetDesktopBtn) repositionGliderPill(targetDesktopBtn, 'nav-glider-pill', 'main-nav-well', true);
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
 
-    // 3. Increment transition token to instantly invalidate any previous in-flight transitions
+    // 3. IMMEDIATELY Render Target View Content (Zero delay, 100% reliable - no waiting for animation timers!)
+    if (viewId === 'yearly' && APP_STATE) {
+      try { renderYearlyView(APP_STATE); } catch(e) { console.error(e); }
+    } else if (viewId === 'history' && APP_STATE) {
+      try { renderHistory(APP_STATE); } catch(e) { console.error(e); }
+    }
+
+    // 4. View Staging & Fast Crisp Transitions
     VIEW_TRANSITION_TOKEN++;
     var thisTransitionToken = VIEW_TRANSITION_TOKEN;
 
@@ -634,20 +641,14 @@ function observeRevealItems() {
         IS_VIEW_TRANSITIONING = false;
         nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
         observeRevealItems();
-        if (viewId === 'yearly' && APP_STATE) {
-          try { renderYearlyView(APP_STATE); } catch(e) { console.error(e); }
-        }
-        if (viewId === 'history' && APP_STATE) {
-          try { renderHistory(APP_STATE); } catch(e) { console.error(e); }
-        }
       }
 
-      CURRENT_FINALIZE_TIMER = setTimeout(finalize, 950);
+      CURRENT_FINALIZE_TIMER = setTimeout(finalize, 250);
 
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return;
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 2600);
+      }, 1200);
 
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) {
@@ -657,6 +658,7 @@ function observeRevealItems() {
       nextView.className = 'view-section active tab-hologram-landing';
       nextView.querySelectorAll('.reveal-item').forEach(function(el) { el.classList.add('is-visible'); });
       IS_VIEW_TRANSITIONING = false;
+      observeRevealItems();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -675,10 +677,10 @@ function observeRevealItems() {
       }
       scrollTimelineChartsToLatest();
       syncAllSegmentGliders(false);
-    }, 100);
+    }, 80);
   }
 
-  /* ==========================================================================
+/* ==========================================================================
      3. INITIALIZATION, STATE LOADING & PULL-TO-REFRESH
      ========================================================================== */
   var IS_PULL_REFRESHING = false;
@@ -1549,7 +1551,7 @@ function observeRevealItems() {
       zoom: {
         wheel: {
           enabled: true,
-          speed: 0.02, // Gentle, small-step mouse wheel zoom
+          speed: 0.05, // Gentle, small-step mouse wheel zoom
           modifierKey: null
         },
         pinch: {
@@ -1892,9 +1894,11 @@ function observeRevealItems() {
             max: yMax,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
             ticks: {
-              display: !isMobile, // Hide Y-axis text on mobile non-full-screen view
+              display: true, // Minimal compact Y-axis text on mobile
               color: '#38BDF8',   // Match primary line color
-              font: { size: 10 },
+              font: { size: isMobile ? 8.5 : 10, family: 'JetBrains Mono' },
+              padding: isMobile ? 2 : 4,
+              maxTicksLimit: isMobile ? 4 : 8,
               callback: function(v) { return formatCompactLakhs(v); }
             }
           }
@@ -1972,7 +1976,6 @@ function observeRevealItems() {
     if (CHART_REACTION) CHART_REACTION.destroy();
 
     var isMobile = (window.innerWidth <= 768);
-    var showYTicks = !isMobile;
 
     var datasets = [];
     var scales = {
@@ -2030,13 +2033,13 @@ function observeRevealItems() {
         max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: showYTicks,
-          color: '#38BDF8', // Text matches Nifty line color
+          display: !isMobile, // Rate Y-axis text HIDDEN on mobile (only 1 Y-axis on mobile!)
+          color: '#38BDF8',
           font: { size: 9.5 },
           callback: function(v) { return Math.round(v).toLocaleString('en-IN'); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile,
           text: 'Nifty 50 Benchmark',
           color: '#38BDF8',
           font: { size: 10.5, weight: '700' }
@@ -2050,13 +2053,15 @@ function observeRevealItems() {
         max: Math.ceil(maxHolding + padHolding),
         grid: { drawOnChartArea: false },
         ticks: {
-          display: showYTicks,
+          display: true, // Actual investment Y-axis SHOWN on mobile (minimal compact style)
           color: '#10B981', // Text matches Mutual Funds green line color
-          font: { size: 9.5 },
+          font: { size: isMobile ? 8.5 : 9.5, family: 'JetBrains Mono' },
+          padding: isMobile ? 2 : 4,
+          maxTicksLimit: isMobile ? 4 : 8,
           callback: function(v) { return formatCompactLakhs(v); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile, // Hide title text on mobile to save space
           text: 'Mutual Funds (₹)',
           color: '#10B981',
           font: { size: 10.5, weight: '700' }
@@ -2109,13 +2114,13 @@ function observeRevealItems() {
         max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: showYTicks,
-          color: '#FB923C', // Text matches Gold Rate line color
+          display: !isMobile, // Rate Y-axis text HIDDEN on mobile
+          color: '#FB923C',
           font: { size: 9.5 },
           callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile,
           text: 'Gold Rate (₹ / 10g)',
           color: '#FB923C',
           font: { size: 10.5, weight: '700' }
@@ -2129,13 +2134,15 @@ function observeRevealItems() {
         max: Math.ceil(maxHolding + padHolding),
         grid: { drawOnChartArea: false },
         ticks: {
-          display: showYTicks,
-          color: '#FACC15', // Text matches Gold Holdings yellow line color
-          font: { size: 9.5 },
+          display: true, // Actual investment Y-axis SHOWN on mobile
+          color: '#FACC15', // Text matches Gold yellow line color
+          font: { size: isMobile ? 8.5 : 9.5, family: 'JetBrains Mono' },
+          padding: isMobile ? 2 : 4,
+          maxTicksLimit: isMobile ? 4 : 8,
           callback: function(v) { return formatCompactLakhs(v); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile,
           text: 'Gold Holdings (₹)',
           color: '#FACC15',
           font: { size: 10.5, weight: '700' }
@@ -2188,13 +2195,13 @@ function observeRevealItems() {
         max: Math.ceil(maxRate + padRate),
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: showYTicks,
-          color: '#38BDF8', // Text matches Silver Rate line color
+          display: !isMobile, // Rate Y-axis text HIDDEN on mobile
+          color: '#38BDF8',
           font: { size: 9.5 },
           callback: function(v) { return '₹' + Math.round(v).toLocaleString('en-IN'); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile,
           text: 'Silver Rate (₹ / 1kg)',
           color: '#38BDF8',
           font: { size: 10.5, weight: '700' }
@@ -2208,13 +2215,15 @@ function observeRevealItems() {
         max: Math.ceil(maxHolding + padHolding),
         grid: { drawOnChartArea: false },
         ticks: {
-          display: showYTicks,
-          color: '#E2E8F0', // Text matches Silver Holdings line color
-          font: { size: 9.5 },
+          display: true, // Actual investment Y-axis SHOWN on mobile
+          color: '#E2E8F0', // Text matches Silver line color
+          font: { size: isMobile ? 8.5 : 9.5, family: 'JetBrains Mono' },
+          padding: isMobile ? 2 : 4,
+          maxTicksLimit: isMobile ? 4 : 8,
           callback: function(v) { return formatCompactLakhs(v); }
         },
         title: {
-          display: showYTicks,
+          display: !isMobile,
           text: 'Silver Holdings (₹)',
           color: '#E2E8F0',
           font: { size: 10.5, weight: '700' }
@@ -2224,11 +2233,10 @@ function observeRevealItems() {
       // 'bank' Mode: RATE on LEFT (Repo Rate), HOLDING on RIGHT (Bank & FD Deposits)
       var bankData = rx.bankRaw || (APP_STATE.chartData ? APP_STATE.chartData.bank : []);
       var repoData = rx.repoRaw || rx.labels.map(function() { return 6.50; });
-
       datasets = [
         {
-          id: 'repoRate',
-          label: 'RBI Repo Rate Benchmark',
+          id: 'repo',
+          label: 'RBI Repo Rate (%)',
           data: repoData,
           borderColor: '#EC4899',
           backgroundColor: 'transparent',
@@ -2240,7 +2248,7 @@ function observeRevealItems() {
           yAxisID: 'yLeft' // Rate is LEFT side
         },
         {
-          id: 'bankHolding',
+          id: 'bank',
           label: 'Bank & Fixed Deposits',
           data: bankData,
           borderColor: '#F59E0B',
@@ -2266,14 +2274,14 @@ function observeRevealItems() {
         max: 8.5,
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          display: showYTicks,
-          color: '#EC4899', // Text matches Repo Rate line color
+          display: !isMobile, // Rate Y-axis text HIDDEN on mobile
+          color: '#EC4899',
           font: { size: 9.5 },
-          callback: function(v) { return Number(v).toFixed(1) + '%'; }
+          callback: function(v) { return v.toFixed(1) + '%'; }
         },
         title: {
-          display: showYTicks,
-          text: 'RBI Repo Rate (% p.a.)',
+          display: !isMobile,
+          text: 'Repo Rate (%)',
           color: '#EC4899',
           font: { size: 10.5, weight: '700' }
         }
@@ -2286,19 +2294,26 @@ function observeRevealItems() {
         max: Math.ceil(maxHolding + padHolding),
         grid: { drawOnChartArea: false },
         ticks: {
-          display: showYTicks,
-          color: '#F59E0B', // Text matches Bank Deposits amber line color
-          font: { size: 9.5 },
+          display: true, // Actual investment Y-axis SHOWN on mobile
+          color: '#F59E0B', // Text matches Bank amber line color
+          font: { size: isMobile ? 8.5 : 9.5, family: 'JetBrains Mono' },
+          padding: isMobile ? 2 : 4,
+          maxTicksLimit: isMobile ? 4 : 8,
           callback: function(v) { return formatCompactLakhs(v); }
         },
         title: {
-          display: showYTicks,
-          text: 'Bank & FD Deposits (₹)',
+          display: !isMobile,
+          text: 'Bank Deposits (₹)',
           color: '#F59E0B',
           font: { size: 10.5, weight: '700' }
         }
       };
     }
+
+    var xMin = (isMobile && rx.labels.length > 8) ? rx.labels[Math.max(0, rx.labels.length - 9)] : undefined;
+    var xMax = (isMobile && rx.labels.length > 8) ? rx.labels[rx.labels.length - 1] : undefined;
+    scales.x.min = xMin;
+    scales.x.max = xMax;
 
     CHART_REACTION = new Chart(ctx, {
       type: 'line',
@@ -2307,13 +2322,13 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 2 : 8), bottom: 4 }
+          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 4 : 8), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
-            position: 'top',
-            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 12 }
+            display: true,
+            labels: { color: '#CBD5E1', font: { size: 10.5, weight: '600' }, boxWidth: 12, padding: 10 }
           },
           tooltip: getLiquidGlassTooltipConfig(),
           zoom: getChartZoomConfig(rx.labels)
@@ -2379,7 +2394,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 2 : 8), bottom: 4 }
+          padding: { top: 6, left: (isMobile ? 2 : 4), right: (isMobile ? 4 : 8), bottom: 4 }
         },
         plugins: {
           legend: { display: false },
@@ -2398,9 +2413,11 @@ function observeRevealItems() {
             max: yMaxChange,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
             ticks: {
-              display: !isMobile, // Hide Y-axis text on mobile non-full-screen view
+              display: true, // Minimal compact Y-axis text on mobile
               color: '#38BDF8',   // Match line color
-              font: { size: 9.5 },
+              font: { size: isMobile ? 8.5 : 9.5, family: 'JetBrains Mono' },
+              padding: isMobile ? 2 : 4,
+              maxTicksLimit: isMobile ? 4 : 8,
               callback: function(v) { return formatCompactLakhs(v); }
             }
           }
@@ -2569,6 +2586,7 @@ function observeRevealItems() {
     SELECTED_DRILLDOWN_YEAR = null;
     var backdrop = document.getElementById('yearly-drilldown-backdrop');
     if (backdrop) backdrop.classList.remove('open');
+    document.body.style.overflow = '';
     document.querySelectorAll('.yearly-card').forEach(function(c) {
       c.classList.remove('active-year');
     });
@@ -2601,20 +2619,11 @@ function observeRevealItems() {
     var backdrop = document.getElementById('yearly-drilldown-backdrop');
     if (!backdrop) return;
     backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     var dialog = backdrop.querySelector('.liquid-drilldown-dialog');
     if (dialog) {
-      if (window.innerWidth <= 768) {
-        // Mobile performance optimization: avoid forced layout reflow and heavy 108-cell shimmer
-        dialog.classList.remove('tab-hologram-landing');
-      } else {
-        dialog.classList.remove('tab-hologram-landing');
-        void dialog.offsetWidth;
-        dialog.classList.add('tab-hologram-landing');
-        setTimeout(function() {
-          if (dialog) dialog.classList.remove('tab-hologram-landing');
-        }, 2200);
-      }
+      dialog.classList.remove('tab-hologram-landing');
     }
 
     var bodyEl = backdrop.querySelector('.drilldown-dialog-body');
@@ -2671,7 +2680,10 @@ function observeRevealItems() {
       if (activeBtn) {
         setTimeout(function() {
           repositionSegmentGlider(activeBtn, true);
-        }, 30);
+        }, 40);
+        setTimeout(function() {
+          repositionSegmentGlider(activeBtn, false);
+        }, 250);
       }
     }
 
@@ -2700,14 +2712,11 @@ function observeRevealItems() {
       '</div>';
 
     // Render Drilldown Chart - Continuous Category Breakdown
-    var months = yData.monthlyRecords;
+    var months = yData.monthlyRecords || [];
     var cLabels = months.map(function(m) { return m.label; });
     var cMarket = months.map(function(m) { return m.total_market; });
     var cBank = months.map(function(m) { return m.total_bank; });
     var cEpf = months.map(function(m) { return m.epf; });
-
-    var ctxD = document.getElementById('chart-drilldown-year').getContext('2d');
-    if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
 
     var allDrillVals = cMarket.concat(cBank, cEpf);
     var maxDrill = allDrillVals.length ? Math.max.apply(null, allDrillVals) : 100000;
@@ -2715,6 +2724,11 @@ function observeRevealItems() {
     var padDrill = Math.max((maxDrill - minDrill) * 0.08, 10000);
     var yMinDrill = Math.max(0, Math.floor(minDrill - padDrill));
     var yMaxDrill = Math.ceil(maxDrill + padDrill);
+
+    var isMobile = (window.innerWidth <= 768);
+
+    var ctxD = document.getElementById('chart-drilldown-year').getContext('2d');
+    if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
 
     CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
       type: 'line',
@@ -2776,8 +2790,8 @@ function observeRevealItems() {
         },
         scales: {
           x: {
-            min: (window.innerWidth <= 768 && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
-            max: (window.innerWidth <= 768 && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
+            min: (isMobile && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
+            max: (isMobile && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
             ticks: { color: '#CBD5E1', font: { weight: '600' } }
           },
@@ -2786,9 +2800,11 @@ function observeRevealItems() {
             min: yMinDrill,
             max: yMaxDrill,
             ticks: {
-              display: !(window.innerWidth <= 768), // Hide Y-axis text on mobile
-              color: '#34D399',                     // Match line color
-              font: { family: 'JetBrains Mono', size: 10.5 },
+              display: true, // Minimal compact Y-axis on mobile
+              color: '#34D399',
+              font: { family: 'JetBrains Mono', size: isMobile ? 8.5 : 10.5 },
+              padding: isMobile ? 2 : 4,
+              maxTicksLimit: isMobile ? 4 : 8,
               callback: function(v) { return formatCompactLakhs(v); }
             }
           }
@@ -2797,10 +2813,19 @@ function observeRevealItems() {
     });
     attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
 
-    // Ensure chart resizes smoothly when modal settles
+    // Multi-milestone canvas resize to guarantee clean render after dialog opens
+    requestAnimationFrame(function() {
+      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+    });
     setTimeout(function() {
       if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
-    }, 150);
+    }, 120);
+    setTimeout(function() {
+      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+    }, 280);
+    setTimeout(function() {
+      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
+    }, 450);
 
     // Populate Drilldown Monthly Breakdown Table with Center-Aligned Headers and Cells
     var tBody = document.getElementById('drilldown-table-body');
@@ -2824,7 +2849,7 @@ function observeRevealItems() {
         '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market, false) + '</td>' +
         '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth, false) + '</td>' +
         '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(m.monthlyChange, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + m.monthlyChangePct.toFixed(2) + '%</span></td>' +
+        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + (m.monthlyChangePct !== undefined && m.monthlyChangePct !== null ? m.monthlyChangePct.toFixed(2) : '0.00') + '%</span></td>' +
         '<td style="padding:10px 8px; text-align:center;">' + noteHtml + '</td>' +
         '<td style="padding:8px 8px; text-align:center; white-space:nowrap;">' +
           '<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">' +
@@ -2840,7 +2865,7 @@ function observeRevealItems() {
     });
   }
 
-  /* ==========================================================================
+/* ==========================================================================
      7. VIEW 3: YEAR-WISE SIMULATOR & OPTIONAL MULTI-CATEGORY MILESTONES
      ========================================================================== */
   function runYearSimulator() {
@@ -4252,6 +4277,7 @@ function observeRevealItems() {
       ];
     }
 
+    var isMobileVertical = (window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED);
     var maxNetWorth = Math.max.apply(null, cd.netWorth.concat(trendData || []));
     var minNetWorth = Math.min.apply(null, cd.netWorth);
     var yMin = isStacked ? 0 : Math.max(0, Math.floor(minNetWorth * 0.92));
@@ -4265,8 +4291,8 @@ function observeRevealItems() {
         maintainAspectRatio: false,
         layout: {
           padding: {
-            left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
-            right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+            left: (isMobileVertical ? 2 : 4),
+            right: (isMobileVertical ? 4 : 12),
             top: (window.innerWidth <= 768 ? 6 : 10),
             bottom: 4
           }
@@ -4305,10 +4331,11 @@ function observeRevealItems() {
             max: yMax,
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
             ticks: {
-              display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
+              display: true, // 1 minimal Y-axis shown even in vertical full-screen mode!
               color: '#38BDF8', // Text matches Networth line
-              font: { family: 'JetBrains Mono', size: 11 },
-              padding: 4,
+              font: { family: 'JetBrains Mono', size: isMobileVertical ? 9 : 11 },
+              padding: isMobileVertical ? 2 : 4,
+              maxTicksLimit: isMobileVertical ? 5 : 8,
               callback: function(v) { return formatCompactLakhs(v); }
             }
           }
@@ -4538,8 +4565,8 @@ function observeRevealItems() {
         min: 4.0,
         max: 8.5,
         grid: { color: 'rgba(255, 255, 255, 0.06)' },
-        ticks: { color: '#EC4899', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return Number(v).toFixed(1) + '%'; } },
-        title: { display: true, text: 'RBI Repo Rate (% p.a.)', color: '#EC4899', font: { weight: '700' } }
+        ticks: { color: '#EC4899', font: { family: 'JetBrains Mono', size: 11 }, padding: 4, callback: function(v) { return v.toFixed(1) + '%'; } },
+        title: { display: true, text: 'RBI Repo Rate (%)', color: '#EC4899', font: { weight: '700' } }
       };
 
       scales.yRight = {
@@ -4554,15 +4581,20 @@ function observeRevealItems() {
     }
 
     if (isMobileVertical) {
+      // In vertical full-screen mode on mobile:
+      // Include ONLY 1 Y-axis (the actual investment holding on the right side)
       if (scales.yLeft) {
         if (!scales.yLeft.ticks) scales.yLeft.ticks = {};
-        scales.yLeft.ticks.display = false;
+        scales.yLeft.ticks.display = false; // Rate Y-axis hidden
         if (scales.yLeft.title) scales.yLeft.title.display = false;
       }
       if (scales.yRight) {
         if (!scales.yRight.ticks) scales.yRight.ticks = {};
-        scales.yRight.ticks.display = false;
-        if (scales.yRight.title) scales.yRight.title.display = false;
+        scales.yRight.ticks.display = true; // Actual investment holding Y-axis SHOWN!
+        scales.yRight.ticks.font = { size: 9, family: 'JetBrains Mono' };
+        scales.yRight.ticks.padding = 2;
+        scales.yRight.ticks.maxTicksLimit = 5;
+        if (scales.yRight.title) scales.yRight.title.display = false; // Title hidden to preserve edge-to-edge space
       }
     }
 
@@ -4576,7 +4608,7 @@ function observeRevealItems() {
         layout: {
           padding: {
             left: (isMobileVertical ? 2 : 4),
-            right: (isMobileVertical ? 2 : 12),
+            right: (isMobileVertical ? 4 : 12),
             top: 6,
             bottom: 4
           }
@@ -4606,6 +4638,7 @@ function observeRevealItems() {
     var bgColors = changes.map(function(v) { return v >= 0 ? 'rgba(52, 211, 153, 0.5)' : 'rgba(251, 113, 133, 0.5)'; });
     var rollingPace = calculateRollingAverage(changes, 12);
 
+    var isMobileVertical = (window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED);
     var minChange = Math.min.apply(null, changes.concat(rollingPace || []));
     var maxChange = Math.max.apply(null, changes.concat(rollingPace || []));
     var padChange = Math.max((maxChange - minChange) * 0.1, 1000);
@@ -4644,8 +4677,8 @@ function observeRevealItems() {
           maintainAspectRatio: false,
           layout: {
             padding: {
-              left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
-              right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+              left: (isMobileVertical ? 2 : 4),
+              right: (isMobileVertical ? 4 : 12),
               top: 6,
               bottom: 4
             }
@@ -4671,9 +4704,11 @@ function observeRevealItems() {
               max: yMaxChange,
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: {
-                display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
+                display: true, // 1 minimal Y-axis shown even in vertical full-screen mode!
                 color: '#34D399',
-                padding: 4,
+                font: { family: 'JetBrains Mono', size: isMobileVertical ? 9 : 11 },
+                padding: isMobileVertical ? 2 : 4,
+                maxTicksLimit: isMobileVertical ? 5 : 8,
                 callback: function(v) { return formatCompactLakhs(v); }
               }
             }
@@ -4717,8 +4752,8 @@ function observeRevealItems() {
           maintainAspectRatio: false,
           layout: {
             padding: {
-              left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
-              right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+              left: (isMobileVertical ? 2 : 4),
+              right: (isMobileVertical ? 4 : 12),
               top: 6,
               bottom: 4
             }
@@ -4744,9 +4779,11 @@ function observeRevealItems() {
               max: yMaxChange,
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: {
-                display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
-                color: '#38BDF8',
-                padding: 4,
+                display: true, // 1 minimal Y-axis shown even in vertical full-screen mode!
+                color: '#38BDF8', // Text matches line color
+                font: { family: 'JetBrains Mono', size: isMobileVertical ? 9 : 11 },
+                padding: isMobileVertical ? 2 : 4,
+                maxTicksLimit: isMobileVertical ? 5 : 8,
                 callback: function(v) { return formatCompactLakhs(v); }
               }
             }
