@@ -1784,7 +1784,7 @@ function observeRevealItems() {
       ];
     } else {
       var grad = ctx.createLinearGradient(0, 0, 0, 260);
-      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
       grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
       datasets = [
         {
@@ -1822,7 +1822,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+          padding: { top: (window.innerWidth <= 768 ? (isStacked ? 10 : 14) : 36), left: 4, right: 8, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -2205,7 +2205,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+          padding: { top: (window.innerWidth <= 768 ? 14 : 32), left: 4, right: 8, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -2270,7 +2270,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 48, left: 4, right: 8, bottom: 4 }
+          padding: { top: (window.innerWidth <= 768 ? 14 : 32), left: 4, right: 8, bottom: 4 }
         },
         plugins: {
           legend: { display: false },
@@ -3946,7 +3946,7 @@ function observeRevealItems() {
       ];
     } else {
       var grad = ctx.createLinearGradient(0, 0, 0, 500);
-      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.20)');
       grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
       datasets = [
         {
@@ -3980,7 +3980,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: 48, bottom: 4 }
+          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? (isStacked ? 12 : 16) : 36), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4214,7 +4214,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: 48, bottom: 4 }
+          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4272,7 +4272,7 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 48, bottom: 4 }
+            padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
           },
           plugins: {
             legend: { display: false },
@@ -4327,7 +4327,7 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 48, bottom: 4 }
+            padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
           },
           plugins: {
             legend: { display: false },
