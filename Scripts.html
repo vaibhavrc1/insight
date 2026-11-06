@@ -1822,7 +1822,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: (window.innerWidth <= 768 ? (isStacked ? 10 : 14) : 36), left: 4, right: 8, bottom: 4 }
+          padding: { top: (window.innerWidth <= 768 ? (isStacked ? 6 : 8) : 10), left: 4, right: 8, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -2205,7 +2205,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: (window.innerWidth <= 768 ? 14 : 32), left: 4, right: 8, bottom: 4 }
+          padding: { top: 6, left: 4, right: 8, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -2270,7 +2270,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: (window.innerWidth <= 768 ? 14 : 32), left: 4, right: 8, bottom: 4 }
+          padding: { top: 6, left: 4, right: 8, bottom: 4 }
         },
         plugins: {
           legend: { display: false },
@@ -3844,9 +3844,39 @@ function observeRevealItems() {
     if (canvas) buildFullViewChart(canvas);
   }
 
+  var IS_FULLVIEW_ROTATED = false;
+
+  function toggleFullViewOrientation() {
+    var backdrop = document.getElementById('chart-fullview-backdrop');
+    var btn = document.getElementById('btn-fullview-rotate');
+    if (!backdrop) return;
+
+    IS_FULLVIEW_ROTATED = !IS_FULLVIEW_ROTATED;
+    if (IS_FULLVIEW_ROTATED) {
+      backdrop.classList.add('landscape-rotated');
+      if (btn) btn.classList.add('active');
+    } else {
+      backdrop.classList.remove('landscape-rotated');
+      if (btn) btn.classList.remove('active');
+    }
+
+    setTimeout(function() {
+      if (CHART_FULLVIEW) {
+        CHART_FULLVIEW.resize();
+      }
+      window.dispatchEvent(new Event('resize'));
+    }, 160);
+  }
+
   function closeChartFullView() {
     var backdrop = document.getElementById('chart-fullview-backdrop');
-    if (backdrop) backdrop.classList.remove('open');
+    if (backdrop) {
+      backdrop.classList.remove('open');
+      backdrop.classList.remove('landscape-rotated');
+    }
+    var rotateBtn = document.getElementById('btn-fullview-rotate');
+    if (rotateBtn) rotateBtn.classList.remove('active');
+    IS_FULLVIEW_ROTATED = false;
     document.body.style.overflow = '';
     if (CHART_FULLVIEW) {
       CHART_FULLVIEW.destroy();
@@ -3980,7 +4010,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? (isStacked ? 12 : 16) : 36), bottom: 4 }
+          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 6 : 10), bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4214,7 +4244,7 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
+          padding: { left: 4, right: 12, top: 6, bottom: 4 }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4272,7 +4302,7 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
+            padding: { left: 4, right: 12, top: 6, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
@@ -4327,7 +4357,7 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 14 : 32), bottom: 4 }
+            padding: { left: 4, right: 12, top: 6, bottom: 4 }
           },
           plugins: {
             legend: { display: false },
