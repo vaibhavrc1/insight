@@ -2952,10 +2952,19 @@ function observeRevealItems() {
      ========================================================================== */
   var PICKER_YEAR = new Date().getFullYear();
 
+  function ensureMonthPopoverInBody() {
+    var popover = document.getElementById('custom-month-popover');
+    if (popover && popover.parentElement !== document.body) {
+      document.body.appendChild(popover);
+    }
+  }
+
   function initCustomMonthPicker() {
+    ensureMonthPopoverInBody();
     document.addEventListener('click', function(e) {
       var wrap = document.getElementById('custom-month-picker-wrap');
-      if (wrap && !wrap.contains(e.target)) {
+      var pop = document.getElementById('custom-month-popover');
+      if (wrap && pop && !wrap.contains(e.target) && !pop.contains(e.target)) {
         closeMonthPopover();
       }
     });
@@ -2966,6 +2975,7 @@ function observeRevealItems() {
       event.preventDefault();
       event.stopPropagation();
     }
+    ensureMonthPopoverInBody();
     var popover = document.getElementById('custom-month-popover');
     var btn = document.getElementById('custom-month-btn');
     if (!popover) return;
@@ -2981,6 +2991,26 @@ function observeRevealItems() {
         PICKER_YEAR = new Date().getFullYear();
       }
       renderPickerGrid();
+
+      // Viewport-relative positioning so it is never trapped in any card box
+      if (window.innerWidth > 768) {
+        if (btn) {
+          var rect = btn.getBoundingClientRect();
+          popover.style.position = 'fixed';
+          popover.style.top = (rect.bottom + 8) + 'px';
+          var left = rect.right - 285;
+          if (left < 12) left = 12;
+          if (left + 285 > window.innerWidth) left = window.innerWidth - 295;
+          popover.style.left = left + 'px';
+          popover.style.transform = 'none';
+        }
+      } else {
+        popover.style.position = 'fixed';
+        popover.style.top = '50%';
+        popover.style.left = '50%';
+        popover.style.transform = 'translate(-50%, -50%)';
+      }
+
       popover.classList.add('open');
       if (btn) btn.classList.add('active');
     }
@@ -3865,7 +3895,14 @@ function observeRevealItems() {
         CHART_FULLVIEW.resize();
       }
       window.dispatchEvent(new Event('resize'));
-    }, 160);
+    }, 80);
+
+    setTimeout(function() {
+      if (CHART_FULLVIEW) {
+        CHART_FULLVIEW.resize();
+      }
+      window.dispatchEvent(new Event('resize'));
+    }, 260);
   }
 
   function closeChartFullView() {
