@@ -700,14 +700,19 @@
     top: 5px;
     bottom: 5px;
     border-radius: 999px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.14) 100%);
-    border: 1px solid rgba(56, 189, 248, 0.55);
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
+      rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-top: 1px solid rgba(255, 255, 255, 0.38);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 
-      0 0 24px rgba(56, 189, 248, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.6);
+      0 3px 12px rgba(0, 0, 0, 0.32),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20);
     pointer-events: none;
     transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px);
     z-index: 1;
   }
   .nav-glider-pill.stretching {
@@ -741,11 +746,11 @@
 
   .nav-pill-btn.active {
     color: #FFFFFF;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(56, 189, 248, 0.7);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   }
   .nav-pill-btn.active svg {
     animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1);
-    color: #38BDF8;
+    color: #FFFFFF;
   }
 
   /* Mobile Floating Optical Liquid-Glass Dock with Specular Light Rim */
@@ -757,17 +762,17 @@
     max-width: 480px;
     margin: 0 auto;
     z-index: 1500 !important;
-    background: linear-gradient(180deg, rgba(20, 32, 58, 0.58) 0%, rgba(8, 14, 28, 0.68) 100%) !important;
-    backdrop-filter: blur(6px) saturate(180%) brightness(1.10) !important;
-    -webkit-backdrop-filter: blur(6px) saturate(180%) brightness(1.10) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(10, 16, 28, 0.65) !important;
+    backdrop-filter: blur(8px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
     border-radius: 22px;
     box-shadow: 
-      0 20px 48px -8px rgba(0, 0, 0, 0.75),
-      0 0 24px rgba(56, 189, 248, 0.16),
-      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.55) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+      0 16px 40px -6px rgba(0, 0, 0, 0.65),
+      0 2px 6px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     display: flex;
     justify-content: space-around;
     padding: 6px 4px;
@@ -788,14 +793,18 @@
     top: 6px;
     bottom: 6px;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.42) 0%, rgba(52, 211, 153, 0.22) 100%) !important;
-    border: 1px solid rgba(56, 189, 248, 0.65) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.65) !important;
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
+      rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 
-      0 0 22px rgba(56, 189, 248, 0.5),
-      inset 0 1.5px 1.5px rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
+      0 3px 12px rgba(0, 0, 0, 0.32),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
     pointer-events: none;
     transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
     z-index: 1;
@@ -829,7 +838,7 @@
     color: #FFFFFF;
   }
   .dock-btn.active svg {
-    color: #38BDF8 !important;
+    color: #FFFFFF !important;
     animation: tabIconPop 0.45s cubic-bezier(0.34, 1.45, 0.64, 1) !important;
   }
 
@@ -1455,20 +1464,24 @@
   .segment-glider-pill {
     position: absolute;
     border-radius: 9px;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.40) 0%, rgba(14, 165, 233, 0.20) 100%) !important;
-    border: 1px solid rgba(56, 189, 248, 0.65) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.6) !important;
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
+      rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 
-      0 0 18px rgba(56, 189, 248, 0.45),
-      inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+      0 2px 8px rgba(0, 0, 0, 0.28),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
     pointer-events: none;
     transition: left 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 top 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 width 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 height 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 transform 0.18s ease-out;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
     z-index: 1;
   }
   .segment-glider-pill.stretching {
@@ -1503,7 +1516,7 @@
 
   .segment-btn.active {
     color: #FFFFFF !important;
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
   }
 
   .label-short {
@@ -4807,57 +4820,56 @@
       linear-gradient(165deg, rgba(22, 36, 68, 0.32) 0%, rgba(7, 12, 24, 0.46) 100%) !important;
   }
 
-  /* Convex Glossy Liquid-Mercury Droplet Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
+  /* Natural Clear Glass Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
   .nav-glider-pill,
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.08) 48%, rgba(56, 189, 248, 0.15) 50%, rgba(14, 165, 233, 0.35) 100%) !important;
-    backdrop-filter: blur(4px) saturate(180%) brightness(1.0) !important;
-    -webkit-backdrop-filter: blur(4px) saturate(180%) brightness(1.0) !important;
-    border: 1px solid rgba(56, 189, 248, 0.55) !important;
-    border-top: 1.5px solid #FFFFFF !important;
-    border-bottom: 1px solid rgba(14, 165, 233, 0.40) !important;
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
+      rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow:
-      0 4px 16px -2px rgba(14, 165, 233, 0.40),
-      0 0 18px rgba(56, 189, 248, 0.25),
-      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.90),
-      inset 0 -1.5px 2px 0 rgba(14, 165, 233, 0.40) !important;
+      0 3px 12px rgba(0, 0, 0, 0.32),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
   }
 
-  /* Glossy Polished Glass Navigation & Segment Wells (Low Blur, High Gloss Sheen) */
+  /* Natural Glass Navigation & Segment Wells (Seamless Uniform Translucency) */
   .nav-well,
   .segment-well,
   .month-stepper-control {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.15) 52%, rgba(0, 0, 0, 0.40) 100%),
-      rgba(9, 14, 26, 0.72) !important;
-    backdrop-filter: blur(5px) saturate(160%) brightness(1.08) !important;
-    -webkit-backdrop-filter: blur(5px) saturate(160%) brightness(1.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%),
+      rgba(10, 16, 28, 0.55) !important;
+    backdrop-filter: blur(8px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     box-shadow:
-      0 10px 30px -4px rgba(0, 0, 0, 0.65),
-      0 2px 6px rgba(0, 0, 0, 0.35),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.50) !important;
+      0 8px 24px -4px rgba(0, 0, 0, 0.45),
+      0 2px 6px rgba(0, 0, 0, 0.20),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.12) !important;
   }
 
-  /* Floating Glossy Optical Mobile Dock (Low 6px Blur, Shiny Specular Bevel) */
+  /* Floating Natural Optical Glass Mobile Dock */
   .mobile-dock {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(8, 14, 28, 0.70) 52%, rgba(5, 9, 20, 0.82) 100%) !important;
-    backdrop-filter: blur(6px) saturate(180%) brightness(1.10) !important;
-    -webkit-backdrop-filter: blur(6px) saturate(180%) brightness(1.10) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%),
+      rgba(10, 16, 28, 0.65) !important;
+    backdrop-filter: blur(8px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     box-shadow:
-      0 20px 48px -8px rgba(0, 0, 0, 0.75),
-      0 0 24px rgba(56, 189, 248, 0.14),
-      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.50) !important;
+      0 16px 40px -6px rgba(0, 0, 0, 0.65),
+      0 2px 6px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.18) !important;
   }
 
   /* Modals, Popovers, Drilldowns & Security Vault in True Liquid Glass */
