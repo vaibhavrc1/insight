@@ -442,24 +442,24 @@
   }
 
   @keyframes contour-drift-1 {
-    0% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(-2%, -24px, 0) scaleY(1.06); }
-    100% { transform: translate3d(1.5%, 16px, 0) scaleY(0.96); }
+    0% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(-2.5%, -22px, 0); }
+    100% { transform: translate3d(2%, 18px, 0); }
   }
   @keyframes contour-drift-2 {
-    0% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(2%, 22px, 0) scaleY(0.95); }
-    100% { transform: translate3d(-1.5%, -18px, 0) scaleY(1.05); }
+    0% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(2.5%, 20px, 0); }
+    100% { transform: translate3d(-2%, -18px, 0); }
   }
   @keyframes contour-drift-3 {
-    0% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(-1.5%, 18px, 0) scaleY(1.04); }
-    100% { transform: translate3d(2%, -22px, 0) scaleY(0.97); }
+    0% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(-2%, 18px, 0); }
+    100% { transform: translate3d(2.5%, -20px, 0); }
   }
   @keyframes contour-drift-4 {
-    0% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(1.8%, -20px, 0) scaleY(0.97); }
-    100% { transform: translate3d(-2%, 20px, 0) scaleY(1.05); }
+    0% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(2%, -18px, 0); }
+    100% { transform: translate3d(-2.5%, 22px, 0); }
   }
 
   /* Subtle architectural dot matrix for depth perception */
@@ -499,7 +499,6 @@
                 border-color 0.25s ease;
     overflow: hidden;
     isolation: isolate;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
   }
 
   /* Directional Liquid Glass Rim Refraction Border */
@@ -4756,7 +4755,6 @@
     -webkit-backdrop-filter: blur(var(--glass-blur, 6px)) saturate(210%) brightness(1.10) contrast(1.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     isolation: isolate;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
     box-shadow:
       0 8px 20px -4px rgba(0, 0, 0, 0.22),
       0 2px 6px rgba(0, 0, 0, 0.12),
@@ -4923,3 +4921,23 @@
       inset 0 -2px 3px rgba(0, 0, 0, 0.45) !important;
   }
 </style>
+
+  /* Mobile Glass Performance Optimization (Single-Pass 6px Blur, 120Hz/60Hz Compositing) */
+  @media (max-width: 768px) {
+    .liquid-slab,
+    .pin-vault-card,
+    .loading-glass-card,
+    .mobile-dock {
+      backdrop-filter: blur(var(--glass-blur, 6px)) !important;
+      -webkit-backdrop-filter: blur(var(--glass-blur, 6px)) !important;
+      contain: layout paint style;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .contour-waves-container {
+      inset: -10% -10%;
+      width: 120%;
+      height: 120%;
+    }
+  }

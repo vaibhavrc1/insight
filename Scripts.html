@@ -1013,7 +1013,7 @@ function observeRevealItems() {
 
     // Touch events for mobile phones
     window.addEventListener('touchstart', onPtrTouchStart, { passive: true });
-    window.addEventListener('touchmove', onPtrTouchMove, { passive: false });
+    window.addEventListener('touchmove', onPtrTouchMove, { passive: true });
     window.addEventListener('touchend', onPtrTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onPtrTouchEnd, { passive: true });
 
