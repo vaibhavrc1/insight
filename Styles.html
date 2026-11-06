@@ -98,8 +98,7 @@
   body.vault-locked .app-shell,
   body.vault-locked #app-loading-screen,
   body.vault-locked .liquid-toast,
-  body.vault-locked .mobile-dock,
-  body.vault-locked .lighting-stage {
+  body.vault-locked .mobile-dock {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -114,11 +113,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #03060F;
-    background-image: 
-      radial-gradient(circle at 50% 12%, rgba(14, 165, 233, 0.30), transparent 55%),
-      radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.22), transparent 50%),
-      radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.18), transparent 50%);
+    background: rgba(2, 4, 10, 0.50);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
     padding: 18px;
     overflow-y: auto;
     user-select: none;
@@ -3771,16 +3768,29 @@
     }
 
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-dialog-header {
+      display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: space-between !important;
+      justify-content: flex-start !important;
+      gap: 12px !important;
       padding: 5px 12px !important;
     }
-    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-top-bar {
-      width: auto !important;
+    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-title-wrap {
+      grid-column: auto !important;
+      grid-row: auto !important;
+      flex: 0 0 auto !important;
     }
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-controls-bar {
+      grid-column: auto !important;
+      grid-row: auto !important;
+      flex: 0 1 auto !important;
       width: auto !important;
+    }
+    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-right {
+      grid-column: auto !important;
+      grid-row: auto !important;
+      margin-left: auto !important;
+      flex: 0 0 auto !important;
     }
   }
 
@@ -3800,12 +3810,12 @@
     }
   }
 
-  /* Minimalist Multi-Row Responsive Header */
+  /* Minimalist Responsive Header */
   .fullview-dialog-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     padding: 8px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(10, 15, 26, 0.96);
@@ -3813,17 +3823,10 @@
     box-sizing: border-box;
   }
 
-  .fullview-header-top-bar {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-  }
-
   .fullview-title-wrap {
     display: flex;
     align-items: center;
-    min-width: 0;
+    flex-shrink: 0;
   }
 
   .fullview-title {
@@ -3840,13 +3843,20 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 0 1 auto;
   }
 
   .fullview-header-right {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto !important; /* Strictly anchors Reset & Close buttons to far top right on Desktop */
     flex-shrink: 0;
+  }
+
+  /* Rotate button is strictly mobile only */
+  .btn-fullview-rotate {
+    display: none !important;
   }
 
   /* Single Sleek Close Button */
@@ -3902,23 +3912,18 @@
       border-radius: 14px;
     }
     .fullview-dialog-header {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 6px !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto !important;
+      grid-template-rows: auto auto !important;
+      row-gap: 8px !important;
+      column-gap: 10px !important;
+      align-items: center !important;
       padding: 8px 10px 6px 10px !important;
     }
 
-    .fullview-header-top-bar {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-      gap: 8px !important;
-    }
-
     .fullview-title-wrap {
-      flex: 1 1 auto !important;
+      grid-column: 1 / 2 !important;
+      grid-row: 1 / 2 !important;
       min-width: 0 !important;
       overflow: hidden !important;
     }
@@ -3933,10 +3938,28 @@
     }
 
     .fullview-header-right {
+      grid-column: 2 / 3 !important;
+      grid-row: 1 / 2 !important;
+      margin-left: 0 !important;
       display: inline-flex !important;
       align-items: center !important;
-      gap: 5px !important;
+      gap: 6px !important;
+      justify-self: end !important;
       flex-shrink: 0 !important;
+    }
+
+    .btn-fullview-rotate {
+      display: inline-flex !important;
+    }
+
+    .fullview-header-controls-bar {
+      grid-column: 1 / 3 !important;
+      grid-row: 2 / 3 !important;
+      width: 100% !important;
+      display: flex !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 6px !important;
     }
 
     .btn-reset-zoom {
@@ -5052,13 +5075,11 @@
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.18) !important;
   }
 
-  /* Modals, Popovers, Drilldowns & Security Vault in True Liquid Glass */
-  .pin-vault-card,
+  /* Modals, Drilldowns & Toasts */
   .loading-glass-card,
   .liquid-modal-dialog,
   .liquid-drilldown-dialog,
   .liquid-chart-fullview-dialog,
-  .liquid-month-popover,
   .liquid-toast,
   .liquid-undo-toast {
     background:
@@ -5071,6 +5092,34 @@
       0 32px 80px -12px rgba(0, 0, 0, 0.95),
       0 2px 8px rgba(0, 0, 0, 0.60),
       var(--liquid-refraction) !important;
+  }
+
+  /* Month Popover in Natural Translucent Liquid Glass */
+  .liquid-month-popover {
+    background:
+      linear-gradient(165deg, rgba(16, 24, 44, 0.58) 0%, rgba(10, 15, 28, 0.72) 100%) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 
+      0 16px 44px -4px rgba(0, 0, 0, 0.75),
+      0 0 32px rgba(14, 165, 233, 0.22),
+      inset 0 1px 1.5px rgba(255, 255, 255, 0.25) !important;
+  }
+
+  /* PIN Vault Card in Pure Translucent Liquid Glass */
+  .pin-vault-card {
+    background:
+      linear-gradient(165deg, rgba(18, 30, 52, 0.48) 0%, rgba(8, 14, 26, 0.68) 100%) !important;
+    backdrop-filter: blur(32px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(170%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.30) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.40) !important;
+    box-shadow: 
+      0 28px 70px rgba(0, 0, 0, 0.75),
+      0 0 45px rgba(14, 165, 233, 0.25),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.28) !important;
   }
 
   .drilldown-dialog-header,
@@ -5185,4 +5234,68 @@
       height: 120%;
     }
   }
+
+
+  /* ==========================================================================
+     LIGHT-EMITTING HIGHLIGHTED & ACTIVE ELEMENTS (V82 LIQUID GLOW)
+     ========================================================================== */
+  .btn-emissive {
+    box-shadow:
+      0 6px 20px -3px rgba(14, 165, 233, 0.55),
+      0 0 24px -2px rgba(14, 165, 233, 0.60),
+      0 0 40px -4px rgba(16, 185, 129, 0.30),
+      0 2px 4px rgba(0, 0, 0, 0.30),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35) !important;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .btn-emissive:hover {
+    box-shadow:
+      0 8px 26px -3px rgba(14, 165, 233, 0.70),
+      0 0 32px -2px rgba(14, 165, 233, 0.75),
+      0 0 45px -4px rgba(16, 185, 129, 0.40),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .nav-glider-pill,
+  .dock-glider-pill,
+  .segment-glider-pill {
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.35),
+      0 0 16px rgba(56, 189, 248, 0.32),
+      inset 0 1px 1px rgba(255, 255, 255, 0.35),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .segment-btn.active,
+  .nav-pill-btn.active,
+  .dock-btn.active {
+    color: #FFFFFF !important;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.75), 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .popover-month-btn.selected {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.45) 0%, rgba(2, 132, 199, 0.35) 100%) !important;
+    border-color: rgba(56, 189, 248, 0.65) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 18px rgba(14, 165, 233, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.85) !important;
+  }
+
+  .btn-fullview-rotate.active {
+    background: rgba(14, 165, 233, 0.32) !important;
+    border-color: rgba(56, 189, 248, 0.75) !important;
+    color: #38BDF8 !important;
+    box-shadow: 0 0 18px rgba(14, 165, 233, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.30) !important;
+  }
+
+  .pin-key:active {
+    transform: scale(0.92) !important;
+    background: rgba(14, 165, 233, 0.35) !important;
+    border-color: rgba(56, 189, 248, 0.70) !important;
+    box-shadow: 0 0 16px rgba(14, 165, 233, 0.6) !important;
+    color: #FFFFFF !important;
+  }
+
 </style>

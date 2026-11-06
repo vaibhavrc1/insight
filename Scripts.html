@@ -3890,19 +3890,23 @@ function observeRevealItems() {
       if (btn) btn.classList.remove('active');
     }
 
-    setTimeout(function() {
-      if (CHART_FULLVIEW) {
-        CHART_FULLVIEW.resize();
-      }
-      window.dispatchEvent(new Event('resize'));
-    }, 80);
+    // Destroy existing chart immediately to purge stale aspect ratio / bitmap buffer
+    if (CHART_FULLVIEW) {
+      CHART_FULLVIEW.destroy();
+      CHART_FULLVIEW = null;
+    }
 
+    // Rebuild chart cleanly on fresh 1:1 pixel canvas dimensions once DOM layout reflow finishes
     setTimeout(function() {
-      if (CHART_FULLVIEW) {
-        CHART_FULLVIEW.resize();
+      var canvas = document.getElementById('chart-fullview-canvas');
+      if (canvas) {
+        canvas.removeAttribute('width');
+        canvas.removeAttribute('height');
+        canvas.style.width = '';
+        canvas.style.height = '';
+        buildFullViewChart(canvas);
       }
-      window.dispatchEvent(new Event('resize'));
-    }, 260);
+    }, 120);
   }
 
   function closeChartFullView() {
@@ -3936,6 +3940,51 @@ function observeRevealItems() {
     if (CHART_FULLVIEW) {
       CHART_FULLVIEW.destroy();
       CHART_FULLVIEW = null;
+    }
+
+    // Hook boundingClientRect on wrap and canvas so Chart.js 4 uses the true unrotated layout box
+    // rather than the rotated viewport projection bounding rect (preventing 2.3x horizontal stretch)!
+    var wrap = canvas.parentElement;
+    if (wrap && !wrap._bcrHooked) {
+      var origWrapBCR = wrap.getBoundingClientRect.bind(wrap);
+      wrap.getBoundingClientRect = function() {
+        var rect = origWrapBCR();
+        if (IS_FULLVIEW_ROTATED) {
+          return {
+            top: rect.top,
+            left: rect.left,
+            right: rect.right,
+            bottom: rect.bottom,
+            x: rect.x,
+            y: rect.y,
+            width: wrap.clientWidth || rect.height,
+            height: wrap.clientHeight || rect.width
+          };
+        }
+        return rect;
+      };
+      wrap._bcrHooked = true;
+    }
+
+    if (canvas && !canvas._bcrHooked) {
+      var origCanvasBCR = canvas.getBoundingClientRect.bind(canvas);
+      canvas.getBoundingClientRect = function() {
+        var rect = origCanvasBCR();
+        if (IS_FULLVIEW_ROTATED) {
+          return {
+            top: rect.top,
+            left: rect.left,
+            right: rect.right,
+            bottom: rect.bottom,
+            x: rect.x,
+            y: rect.y,
+            width: wrap ? wrap.clientWidth : rect.height,
+            height: wrap ? wrap.clientHeight : rect.width
+          };
+        }
+        return rect;
+      };
+      canvas._bcrHooked = true;
     }
 
     switch (CURRENT_FULLVIEW_TYPE) {
@@ -4073,7 +4122,8 @@ function observeRevealItems() {
               color: '#CBD5E1',
               font: { weight: '600', size: 11 },
               padding: 4,
-              maxRotation: 0
+              maxRotation: 0,
+              maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
             }
           },
           y: {
@@ -4347,10 +4397,16 @@ function observeRevealItems() {
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 4, maxRotation: 0 }
-            },
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: {
+              color: '#CBD5E1',
+              font: { weight: '600', size: 11 },
+              padding: 4,
+              maxRotation: 0,
+              maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
+            }
+          },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
@@ -4402,10 +4458,16 @@ function observeRevealItems() {
             zoom: getChartZoomConfig(cd.labels)
           },
           scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#CBD5E1', font: { weight: '600', size: 11 }, padding: 4, maxRotation: 0 }
-            },
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: {
+              color: '#CBD5E1',
+              font: { weight: '600', size: 11 },
+              padding: 4,
+              maxRotation: 0,
+              maxTicksLimit: (IS_FULLVIEW_ROTATED ? 24 : (window.innerWidth <= 768 ? 9 : 15))
+            }
+          },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
               ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
