@@ -701,18 +701,22 @@
     bottom: 5px;
     border-radius: 999px;
     background: 
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
-      rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-top: 1px solid rgba(255, 255, 255, 0.38);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
+      rgba(15, 23, 42, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 
-      0 3px 12px rgba(0, 0, 0, 0.32),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20);
+      0 4px 16px -2px rgba(0, 0, 0, 0.55),
+      0 1px 3px rgba(0, 0, 0, 0.30),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0.5px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 12px rgba(255, 255, 255, 0.04);
     pointer-events: none;
     transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(1.5px) saturate(160%);
+    -webkit-backdrop-filter: blur(1.5px) saturate(160%);
     z-index: 1;
   }
   .nav-glider-pill.stretching {
@@ -794,17 +798,20 @@
     bottom: 6px;
     border-radius: 16px;
     background: 
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
-      rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
+      rgba(15, 23, 42, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 
-      0 3px 12px rgba(0, 0, 0, 0.32),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
+      0 4px 16px -2px rgba(0, 0, 0, 0.55),
+      0 1px 3px rgba(0, 0, 0, 0.30),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0.5px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 12px rgba(255, 255, 255, 0.04) !important;
+    backdrop-filter: blur(1.5px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(1.5px) saturate(160%) !important;
     pointer-events: none;
     transition: all 0.36s cubic-bezier(0.34, 1.45, 0.64, 1);
     z-index: 1;
@@ -1465,23 +1472,24 @@
     position: absolute;
     border-radius: 9px;
     background: 
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
-      rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
+      rgba(15, 23, 42, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 
-      0 2px 8px rgba(0, 0, 0, 0.28),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
+      0 2px 8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0.5px 0 rgba(255, 255, 255, 0.16) !important;
     pointer-events: none;
     transition: left 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 top 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 width 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 height 0.34s cubic-bezier(0.34, 1.45, 0.64, 1),
                 transform 0.18s ease-out;
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
+    backdrop-filter: blur(1.5px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(1.5px) saturate(160%) !important;
     z-index: 1;
   }
   .segment-glider-pill.stretching {
@@ -1900,7 +1908,6 @@
   .yearly-card.active-year {
     border-color: var(--cyan-core) !important;
     background:
-      radial-gradient(320px circle at var(--glass-x, 28%) var(--glass-y, 12%), rgba(56, 189, 248, 0.08) 0%, transparent 70%),
       linear-gradient(165deg, rgba(28, 48, 80, 0.65) 0%, rgba(12, 20, 38, 0.78) 48%, rgba(6, 10, 22, 0.88) 100%) !important;
     box-shadow: 0 0 24px rgba(56, 189, 248, 0.22), 0 20px 48px -12px rgba(0, 0, 0, 0.78), var(--liquid-refraction) !important;
   }
@@ -1927,7 +1934,6 @@
 
   .drilldown-metric-card {
     background:
-      radial-gradient(180px circle at var(--glass-x, 50%) var(--glass-y, 0%), rgba(255, 255, 255, 0.05) 0%, rgba(56, 189, 248, 0.02) 40%, transparent 80%),
       linear-gradient(165deg, rgba(20, 32, 58, 0.55) 0%, rgba(9, 15, 28, 0.72) 100%) !important;
     backdrop-filter: blur(20px) saturate(180%) brightness(1.0) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.0) !important;
@@ -2747,7 +2753,6 @@
 
   .month-detail-pillar-card {
     background:
-      radial-gradient(160px circle at var(--glass-x, 50%) var(--glass-y, 0%), rgba(255, 255, 255, 0.05) 0%, rgba(56, 189, 248, 0.02) 40%, transparent 80%),
       linear-gradient(165deg, rgba(20, 32, 58, 0.55) 0%, rgba(9, 15, 28, 0.72) 100%) !important;
     backdrop-filter: blur(18px) saturate(180%) brightness(1.0) !important;
     -webkit-backdrop-filter: blur(18px) saturate(180%) brightness(1.0) !important;
@@ -3396,12 +3401,6 @@
     pointer-events: none;
     /* Truly translucent optical liquid glass: allows chart lines, dots & grid to shine through */
     background:
-      radial-gradient(
-        180px circle at var(--glass-x, 50%) var(--glass-y, 0%),
-        rgba(255, 255, 255, 0.10) 0%,
-        rgba(56, 189, 248, 0.05) 40%,
-        transparent 80%
-      ),
       linear-gradient(
         135deg,
         rgba(20, 32, 58, 0.38) 0%,
@@ -3439,13 +3438,6 @@
     border-radius: inherit;
     padding: 1.1px !important;
     background:
-      radial-gradient(
-        140px circle at var(--glass-x, 50%) var(--glass-y, 0%),
-        rgba(255, 255, 255, 0.42) 0%,
-        rgba(56, 189, 248, 0.22) 35%,
-        rgba(255, 255, 255, 0.05) 65%,
-        transparent 100%
-      ),
       linear-gradient(
         142deg,
         rgba(255, 255, 255, 0.32) 0%,
@@ -4752,12 +4744,6 @@
   /* True Apple Liquid Glass Card Slab (Balanced Translucency + Deep Aurora Refraction) */
   .liquid-slab {
     background:
-      radial-gradient(
-        380px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.06) 0%,
-        rgba(56, 189, 248, 0.03) 35%,
-        transparent 70%
-      ),
       linear-gradient(
         165deg,
         rgba(22, 36, 68, 0.30) 0%,
@@ -4779,13 +4765,6 @@
   .liquid-slab::after {
     padding: 1.2px !important;
     background:
-      radial-gradient(
-        220px circle at var(--glass-x, 28%) var(--glass-y, 12%),
-        rgba(255, 255, 255, 0.22) 0%,
-        rgba(56, 189, 248, 0.12) 30%,
-        rgba(255, 255, 255, 0.03) 55%,
-        transparent 100%
-      ),
       linear-gradient(
         142deg,
         rgba(255, 255, 255, 0.18) 0%,
@@ -4809,33 +4788,30 @@
   /* Hero Bento Subsurface Caustic Glow (Deep Aurora Refraction) */
   .hero-bento {
     background:
-      radial-gradient(
-        360px circle at var(--glass-x, 22%) var(--glass-y, 15%),
-        rgba(255, 255, 255, 0.06) 0%,
-        rgba(56, 189, 248, 0.04) 36%,
-        transparent 72%
-      ),
       radial-gradient(ellipse 75% 80% at 15% 0%, rgba(56, 189, 248, 0.18) 0%, transparent 65%),
       radial-gradient(ellipse 60% 70% at 90% 100%, rgba(16, 185, 129, 0.14) 0%, transparent 65%),
       linear-gradient(165deg, rgba(22, 36, 68, 0.32) 0%, rgba(7, 12, 24, 0.46) 100%) !important;
   }
 
-  /* Natural Clear Glass Gliders (Desktop Nav, Mobile Dock, Segment Wells) */
+  /* Polished Crystalline Glass Gliders (High Gloss, Restrained Tone) */
   .nav-glider-pill,
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%),
-      rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
+      rgba(15, 23, 42, 0.22) !important;
+    backdrop-filter: blur(1.5px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(1.5px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow:
-      0 3px 12px rgba(0, 0, 0, 0.32),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20) !important;
+      0 4px 16px -2px rgba(0, 0, 0, 0.55),
+      0 1px 3px rgba(0, 0, 0, 0.30),
+      inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0.5px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 12px rgba(255, 255, 255, 0.04) !important;
   }
 
   /* Natural Glass Navigation & Segment Wells (Seamless Uniform Translucency) */
@@ -4882,7 +4858,6 @@
   .liquid-toast,
   .liquid-undo-toast {
     background:
-      radial-gradient(280px circle at var(--glass-x, 30%) var(--glass-y, 10%), rgba(255, 255, 255, 0.05) 0%, rgba(56, 189, 248, 0.03) 38%, transparent 72%),
       linear-gradient(165deg, rgba(18, 28, 52, 0.65) 0%, rgba(9, 14, 28, 0.78) 55%, rgba(5, 8, 18, 0.88) 100%) !important;
     backdrop-filter: blur(32px) saturate(180%) brightness(1.0) !important;
     -webkit-backdrop-filter: blur(32px) saturate(180%) brightness(1.0) !important;
