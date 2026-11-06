@@ -1478,10 +1478,119 @@ function observeRevealItems() {
   if (window.Chart) {
     Chart.defaults.elements.line.tension = 0; // Crisp straight lines between data points to show exact slope changes
   }
+
+  // Ultra-Gentle Horizontal-Only Zoom Engine & Strict Vertical Y-Axis Lockdown
+  (function initChartZoomEngine() {
+    if (typeof window === 'undefined') return;
+
+    if (window.Hammer && window.Hammer.Pinch) {
+      // Intentional gesture threshold prevents accidental micro-pinches
+      window.Hammer.Pinch.prototype.defaults.threshold = 0.08;
+    }
+
+    var zoomPlugin = (window.ChartZoom) || (window.Chart && window.Chart.registry && window.Chart.registry.plugins ? window.Chart.registry.plugins.get('zoom') : null);
+    if (!zoomPlugin) return;
+
+    // 1. Strict lockdown of all vertical y-axes: scrolling & zooming are strictly horizontal ONLY
+    if (zoomPlugin.panFunctions) {
+      zoomPlugin.panFunctions.default = function(scale, delta, limits) {
+        if (!scale || !scale.isHorizontal() || scale.id === 'y' || scale.id === 'yLeft' || scale.id === 'yRight') {
+          return true; // Fixed! Y-axis NEVER scrolls or pans!
+        }
+        return false;
+      };
+    }
+
+    if (zoomPlugin.zoomFunctions) {
+      zoomPlugin.zoomFunctions.default = function(scale, zoom, center, limits) {
+        if (!scale || !scale.isHorizontal() || scale.id === 'y' || scale.id === 'yLeft' || scale.id === 'yRight') {
+          return true; // Fixed! Y-axis NEVER zooms!
+        }
+        return false;
+      };
+
+      // 2. Wrap Category Zoom (Horizontal Timeline) with Ultra-Gentle Small-Step Damping
+      zoomPlugin.zoomFunctions.category = function(scale, zoom, center, limits) {
+        if (!scale || !scale.isHorizontal()) return true;
+        var isTouchPhone = (typeof window !== 'undefined' && window.innerWidth <= 768);
+        // Low sensitivity: gentle small steps on phone (0.12) and desktop (0.20)
+        var sensitivity = isTouchPhone ? 0.12 : 0.20;
+
+        var deltaFactor = (zoom - 1.0);
+        if (Math.abs(deltaFactor) < 0.0001) return true;
+
+        var currentRange = Math.max(scale.max - scale.min, 1);
+        if (typeof scale._zoomAccumulator !== 'number' || isNaN(scale._zoomAccumulator)) {
+          scale._zoomAccumulator = 0;
+        }
+
+        scale._zoomAccumulator += currentRange * deltaFactor * sensitivity;
+
+        // Discard sub-step noise until a full discrete step (+1 or -1 month) is accumulated
+        if (Math.abs(scale._zoomAccumulator) < 1.0) {
+          return true;
+        }
+
+        var step = scale._zoomAccumulator >= 1.0 ? 1 : -1;
+        scale._zoomAccumulator -= step;
+
+        var minLimit = 0;
+        var labels = scale.getLabels ? scale.getLabels() : [];
+        var maxLimit = labels.length ? labels.length - 1 : scale.max;
+
+        var minRange = 8;
+        if (limits && limits.x && typeof limits.x.minRange === 'number') {
+          minRange = limits.x.minRange;
+        }
+
+        var newMin = scale.min;
+        var newMax = scale.max;
+
+        if (step > 0) {
+          // Zoom in: shrink range by 1 index
+          if (newMax - newMin <= minRange) {
+            return true; // Reached minimum limit; do not over-zoom
+          }
+          var centerVal = center ? (scale.getValueForPixel ? scale.getValueForPixel(center.x) : (newMin + newMax) / 2) : (newMin + newMax) / 2;
+          var distToMin = Math.abs(centerVal - newMin);
+          var distToMax = Math.abs(newMax - centerVal);
+          if (distToMin > distToMax) {
+            newMin = Math.min(newMin + 1, newMax - minRange);
+          } else {
+            newMax = Math.max(newMax - 1, newMin + minRange);
+          }
+        } else {
+          // Zoom out: expand range by 1 index
+          if (newMin <= minLimit && newMax >= maxLimit) {
+            return true; // Already at full timeline overview
+          }
+          if (newMin > minLimit && newMax < maxLimit) {
+            if ((newMin + newMax) % 2 === 0) newMin--;
+            else newMax++;
+          } else if (newMin > minLimit) {
+            newMin--;
+          } else if (newMax < maxLimit) {
+            newMax++;
+          }
+        }
+
+        scale.options.min = newMin;
+        scale.options.max = newMax;
+        scale.min = newMin;
+        scale.max = newMax;
+
+        if (scale.chart) {
+          scale.chart.update('none');
+        }
+        return true;
+      };
+    }
+  })();
+
   function getChartZoomConfig(labels) {
     var totalPoints = (labels && labels.length) ? labels.length : 12;
-    // Moderate zoom: prevent pinch from over-zooming beyond a clean multi-month view (min 5 points)
-    var calculatedMinRange = totalPoints <= 5 ? Math.max(2, totalPoints - 1) : 5;
+    // Keep at least 8 months visible so timeline never over-zooms into a distorted micro-slice
+    var calculatedMinRange = totalPoints <= 8 ? Math.max(3, totalPoints - 1) : 8;
     return {
       limits: {
         x: {
@@ -1491,23 +1600,35 @@ function observeRevealItems() {
         },
         y: {
           min: 'original',
-          max: 'original'
+          max: 'original',
+          minRange: 1e9 // Absolutely locks y from zooming in or out!
+        },
+        yLeft: {
+          min: 'original',
+          max: 'original',
+          minRange: 1e9
+        },
+        yRight: {
+          min: 'original',
+          max: 'original',
+          minRange: 1e9
         }
       },
       pan: {
         enabled: true,
-        mode: 'x', // ONLY pan timeline horizontally: NEVER blocks vertical page scroll!
-        threshold: 18
+        mode: 'x', // STRICTLY horizontal panning only!
+        threshold: 12
       },
       zoom: {
         wheel: {
           enabled: true,
-          speed: 0.05
+          speed: 0.02, // Gentle, small-step mouse wheel zoom
+          modifierKey: null
         },
         pinch: {
           enabled: true
         },
-        mode: 'x' // Two-finger pinch zooms timeline horizontally
+        mode: 'x' // STRICTLY horizontal zoom only!
       }
     };
   }
@@ -1548,6 +1669,9 @@ function observeRevealItems() {
     }, { passive: true });
 
     canvas.addEventListener('touchend', function(e) {
+      if (chart && chart.scales && chart.scales.x) {
+        chart.scales.x._zoomAccumulator = 0;
+      }
       if (hadMultiTouch) {
         if (e.touches.length === 0) {
           hadMultiTouch = false;
