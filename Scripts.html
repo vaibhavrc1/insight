@@ -4128,7 +4128,12 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: (window.innerWidth <= 768 ? 6 : 10), bottom: 4 }
+          padding: {
+            left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
+            right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+            top: (window.innerWidth <= 768 ? 6 : 10),
+            bottom: 4
+          }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4162,6 +4167,7 @@ function observeRevealItems() {
             stacked: isStacked,
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
             ticks: {
+              display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
               color: '#94A3B8',
               font: { family: 'JetBrains Mono', size: 11 },
               padding: 4,
@@ -4177,6 +4183,7 @@ function observeRevealItems() {
     var mode = FULLVIEW_SUB_FILTER || 'mf';
     var rx = APP_STATE.chartData.reaction;
     var datasets = [];
+    var isMobileVertical = (window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED);
     var scales = {
       x: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
@@ -4355,6 +4362,19 @@ function observeRevealItems() {
       };
     }
 
+    if (isMobileVertical) {
+      if (scales.yLeft) {
+        if (!scales.yLeft.ticks) scales.yLeft.ticks = {};
+        scales.yLeft.ticks.display = false;
+        if (scales.yLeft.title) scales.yLeft.title.display = false;
+      }
+      if (scales.yRight) {
+        if (!scales.yRight.ticks) scales.yRight.ticks = {};
+        scales.yRight.ticks.display = false;
+        if (scales.yRight.title) scales.yRight.title.display = false;
+      }
+    }
+
     var ctx = canvas.getContext('2d');
     CHART_FULLVIEW = new Chart(ctx, {
       type: 'line',
@@ -4363,7 +4383,12 @@ function observeRevealItems() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { left: 4, right: 12, top: 6, bottom: 4 }
+          padding: {
+            left: (isMobileVertical ? 2 : 4),
+            right: (isMobileVertical ? 2 : 12),
+            top: 6,
+            bottom: 4
+          }
         },
         interaction: { mode: 'index', intersect: false },
         plugins: {
@@ -4421,7 +4446,12 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 6, bottom: 4 }
+            padding: {
+              left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
+              right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+              top: 6,
+              bottom: 4
+            }
           },
           plugins: {
             legend: { display: false },
@@ -4441,7 +4471,12 @@ function observeRevealItems() {
           },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: {
+                display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
+                color: '#94A3B8',
+                padding: 4,
+                callback: function(v) { return formatCompactLakhs(v); }
+              }
             }
           }
         }
@@ -4482,7 +4517,12 @@ function observeRevealItems() {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { left: 4, right: 12, top: 6, bottom: 4 }
+            padding: {
+              left: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 2 : 4),
+              right: ((window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED) ? 4 : 12),
+              top: 6,
+              bottom: 4
+            }
           },
           plugins: {
             legend: { display: false },
@@ -4502,7 +4542,12 @@ function observeRevealItems() {
           },
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { color: '#94A3B8', padding: 4, callback: function(v) { return formatCompactLakhs(v); } }
+              ticks: {
+                display: !(window.innerWidth <= 768 && !IS_FULLVIEW_ROTATED),
+                color: '#94A3B8',
+                padding: 4,
+                callback: function(v) { return formatCompactLakhs(v); }
+              }
             }
           }
         }

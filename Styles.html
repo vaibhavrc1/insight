@@ -3775,9 +3775,6 @@
       gap: 12px !important;
       padding: 5px 12px !important;
     }
-    .liquid-chart-fullview-backdrop.landscape-rotated .fullview-header-top-bar {
-      display: contents !important;
-    }
     .liquid-chart-fullview-backdrop.landscape-rotated .fullview-title-wrap {
       flex: 0 0 auto !important;
     }
@@ -3812,11 +3809,23 @@
       border: none !important;
     }
     .fullview-dialog-header {
+      display: flex !important;
       flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 12px !important;
       padding: 4px 12px !important;
     }
-    .fullview-header-top-bar {
-      display: contents !important;
+    .fullview-title-wrap {
+      flex: 0 0 auto !important;
+    }
+    .fullview-header-controls-bar {
+      flex: 0 1 auto !important;
+      width: auto !important;
+    }
+    .fullview-header-right {
+      margin-left: auto !important;
+      flex: 0 0 auto !important;
     }
   }
 
@@ -3826,16 +3835,12 @@
     justify-content: flex-start;
     align-items: center;
     gap: 16px;
-    padding: 8px 16px;
+    padding: 10px 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(10, 15, 26, 0.96);
     flex-shrink: 0;
     box-sizing: border-box;
-  }
-
-  /* On desktop: display: contents flattens the top bar so Title is on left and Buttons are on far top-right */
-  .fullview-header-top-bar {
-    display: contents;
+    width: 100%;
   }
 
   .fullview-title-wrap {
@@ -3865,7 +3870,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: auto !important; /* Anchors Close and Reset buttons firmly to top-right on Desktop */
+    margin-left: auto !important; /* Firmly anchors Close and Action buttons to top-right on Desktop */
     flex-shrink: 0;
   }
 
@@ -3874,27 +3879,52 @@
     display: none !important;
   }
 
+  /* Reset Zoom Button */
   .btn-reset-zoom {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    height: 30px;
-    padding: 0 10px;
+    gap: 5px;
+    height: 32px;
+    padding: 0 12px;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 700;
     color: #CBD5E1;
-    background: rgba(255, 255, 255, 0.06);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 42%),
+      rgba(14, 18, 28, 0.40);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 1px solid rgba(255, 255, 255, 0.30);
     cursor: pointer;
+    box-sizing: border-box;
     transition: all 0.18s ease;
   }
   .btn-reset-zoom:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.30);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 42%),
+      rgba(18, 24, 38, 0.50);
+    border-color: rgba(255, 255, 255, 0.25);
     color: #FFFFFF;
     transform: translateY(-1px);
+  }
+
+  /* Close Button - Exact geometric match: 32px x 32px square, rightmost element */
+  .btn-fullview-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+    flex-shrink: 0;
   }
 
   /* Canvas Container - Maximizes Screen Real Estate, Clean Minimal Margins (Essential for Vertical Mode) */
@@ -3927,25 +3957,22 @@
       border-radius: 14px;
     }
 
-    /* Mobile 2-Row Header Layout: Row 1 = Title + Neatly Aligned Buttons; Row 2 = Full-Width Controls */
+    /* Mobile Header Layout using CSS Grid:
+       Row 1: Title (left) | Header-Right (far top-right with Rotate, Reset, Close)
+       Row 2: Controls bar (centered full width) */
     .fullview-dialog-header {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 6px !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto !important;
+      grid-template-rows: auto auto !important;
+      row-gap: 8px !important;
+      column-gap: 8px !important;
+      align-items: center !important;
       padding: 8px 10px 6px 10px !important;
     }
 
-    .fullview-header-top-bar {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-      gap: 8px !important;
-    }
-
     .fullview-title-wrap {
-      flex: 1 1 auto !important;
+      grid-column: 1 !important;
+      grid-row: 1 !important;
       min-width: 0 !important;
       overflow: hidden !important;
     }
@@ -3960,26 +3987,46 @@
     }
 
     .fullview-header-right {
+      grid-column: 2 !important;
+      grid-row: 1 !important;
       display: inline-flex !important;
       align-items: center !important;
       gap: 6px !important;
       flex-shrink: 0 !important;
-      margin-left: 0 !important;
+      margin-left: auto !important;
     }
 
-    .btn-fullview-rotate {
+    /* Uniform button sizing on mobile: Exactly 32px x 32px squares for all header action buttons */
+    .btn-fullview-rotate,
+    .btn-reset-zoom,
+    .btn-fullview-close {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      height: 28px !important;
-      padding: 0 7px !important;
-      font-size: 11px !important;
-      font-weight: 700 !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      min-height: 32px !important;
+      padding: 0 !important;
       border-radius: 8px !important;
-      gap: 4px !important;
-      background: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      box-sizing: border-box !important;
+      flex-shrink: 0 !important;
+    }
+
+    .btn-reset-zoom .reset-label {
+      display: none !important;
+    }
+
+    .btn-fullview-rotate {
       color: #CBD5E1 !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 42%),
+        rgba(14, 18, 28, 0.40) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.30) !important;
+      cursor: pointer !important;
     }
     .btn-fullview-rotate:hover {
       background: rgba(255, 255, 255, 0.16) !important;
@@ -3991,20 +4038,9 @@
       color: #38bdf8 !important;
     }
 
-    .btn-reset-zoom {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 28px !important;
-      height: 28px !important;
-      padding: 0 !important;
-      border-radius: 8px !important;
-    }
-    .btn-reset-zoom .reset-label {
-      display: none !important;
-    }
-
     .fullview-header-controls-bar {
+      grid-column: 1 / -1 !important;
+      grid-row: 2 !important;
       display: flex !important;
       justify-content: center !important;
       align-items: center !important;
@@ -4028,7 +4064,7 @@
     }
 
     .fullview-canvas-wrap {
-      padding: 2px 6px 4px 6px;
+      padding: 2px 2px 4px 2px !important;
     }
     .chart-header-actions {
       gap: 6px;
@@ -5303,22 +5339,24 @@
       inset 0 1px 0.5px rgba(255, 255, 255, 0.60) !important;
   }
 
-  /* 2. Translucent Liquid Glass Glider Pills */
+  /* 2. Pure Gloss Clear Liquid Glass Gliders (Zero Blue / Neutral Optical Sheen) */
   .nav-glider-pill,
   .dock-glider-pill,
   .segment-glider-pill {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 42%),
-      linear-gradient(135deg, rgba(14, 165, 233, 0.22) 0%, rgba(56, 189, 248, 0.14) 100%),
-      rgba(15, 23, 42, 0.40) !important;
-    backdrop-filter: blur(8px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
-    border: 1px solid rgba(56, 189, 248, 0.30) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 42%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 40%, transparent 60%),
+      rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(12px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
     box-shadow:
-      0 3px 10px rgba(0, 0, 0, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.35),
-      inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
+      0 4px 16px -2px rgba(0, 0, 0, 0.60),
+      0 1px 3px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35) !important;
   }
 
   /* 3. High-Contrast Active Text / Icons */
