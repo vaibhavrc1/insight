@@ -476,9 +476,7 @@
      ========================================================================== */
   .liquid-slab {
     position: relative;
-    contain: layout style;
     transform: translateZ(0);
-    will-change: transform;
     background: linear-gradient(
       168deg,
       rgba(26, 37, 62, 0.72) 0%,
@@ -5309,9 +5307,7 @@
     .mobile-dock {
       backdrop-filter: blur(var(--glass-blur, 6px)) !important;
       -webkit-backdrop-filter: blur(var(--glass-blur, 6px)) !important;
-      contain: layout style;
       transform: translateZ(0);
-      will-change: transform;
     }
 
     .contour-waves-container {
@@ -5498,21 +5494,96 @@
     }
   }
 
-  /* Native Inline Yearly Drilldown Section */
-  #yearly-drilldown-inline {
+  /* Native Inline Yearly Drilldown Section - Stable, High-Performance, Zero Blank Glitches */
+  .drilldown-inline-container {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
     border-radius: 20px;
-    padding: 20px 22px 26px 22px;
-    box-sizing: border-box;
-    width: 100%;
-    margin-bottom: 24px;
-    contain: layout style;
+    padding: 20px 20px 24px 20px;
+    background: linear-gradient(168deg, rgba(20, 32, 58, 0.78) 0%, rgba(10, 16, 30, 0.92) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.50), var(--liquid-refraction) !important;
+    overflow: hidden !important;
+    contain: none !important;
+    transform: none !important;
+    will-change: auto !important;
   }
   @media (max-width: 768px) {
-    #yearly-drilldown-inline {
+    .drilldown-inline-container {
       padding: 14px 12px 18px 12px !important;
-      margin-bottom: 18px !important;
       border-radius: 16px !important;
     }
   }
 
+  /* Robust Table Container - Constrained to 100% width with smooth native horizontal touch swipe */
+  .drilldown-inline-container .liquid-table-wrap {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 14px !important;
+    margin-top: 14px !important;
+    background: rgba(10, 16, 28, 0.65) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 4px !important;
+    overscroll-behavior-x: contain !important;
+    contain: none !important;
+    transform: none !important;
+  }
+
+  .drilldown-inline-container .liquid-table-wrap table {
+    width: 100% !important;
+    min-width: 700px !important;
+    border-collapse: separate !important;
+    border-spacing: 0 4px !important;
+  }
+
+  /* Drilldown Metric Cards - Pure GPU-friendly solid-glass styles without nested heavy blur */
+  .drilldown-metric-card {
+    background: linear-gradient(165deg, rgba(20, 32, 58, 0.65) 0%, rgba(9, 15, 28, 0.82) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1.2px solid rgba(255, 255, 255, 0.28) !important;
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+    will-change: auto !important;
+    contain: none !important;
+  }
+
+  /* Drilldown Chart Wrapper - Fixed, isolated sizing */
+  .drilldown-chart-wrap {
+    background: rgba(12, 18, 32, 0.60) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 16px 14px !important;
+    margin-bottom: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    contain: none !important;
+  }
+
+  /* Prevent tab landing animation / dropshadow from attacking the drilldown section */
+  .drilldown-inline-container,
+  .drilldown-inline-container *,
+  .drilldown-inline-container *::before,
+  .drilldown-inline-container *::after {
+    animation: none !important;
+    filter: none !important;
+    will-change: auto !important;
+  }
 </style>
