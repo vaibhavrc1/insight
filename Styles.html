@@ -1430,7 +1430,7 @@
   .canvas-holder canvas,
   .chart-timeline-inner canvas,
   .drilldown-canvas-holder canvas {
-    touch-action: pan-y pinch-zoom !important;
+    touch-action: pan-y !important; /* pan-y lets browser scroll vertically while Hammer.js handles horizontal pan and pinch zoom */
   }
 
   /* Segmented Optical Liquid-Glass Wells with Sliding Mercury Glider */
@@ -5498,4 +5498,22 @@
       overscroll-behavior-y: contain !important;
     }
   }
+
+  /* Native Inline Yearly Drilldown Section */
+  #yearly-drilldown-inline {
+    border-radius: 20px;
+    padding: 20px 22px 26px 22px;
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 24px;
+    contain: layout style;
+  }
+  @media (max-width: 768px) {
+    #yearly-drilldown-inline {
+      padding: 14px 12px 18px 12px !important;
+      margin-bottom: 18px !important;
+      border-radius: 16px !important;
+    }
+  }
+
 </style>

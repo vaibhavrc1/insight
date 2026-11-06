@@ -1519,12 +1519,13 @@ function observeRevealItems() {
 
   function getChartZoomConfig(labels) {
     var totalPoints = (labels && labels.length) ? labels.length : 12;
-    var calculatedMinRange = totalPoints <= 8 ? Math.max(2, Math.min(totalPoints, 4)) : 8;
+    var calculatedMinRange = totalPoints <= 8 ? Math.max(2, Math.min(totalPoints, 4)) : 4;
+    var maxIndex = (labels && labels.length) ? (labels.length - 1) : 100;
     return {
       limits: {
         x: {
-          min: 'original',
-          max: 'original',
+          min: 0, // Unconstrained: allows panning all the way back to earliest history (2023)
+          max: maxIndex, // Unconstrained: allows full multi-year pan to latest month
           minRange: calculatedMinRange
         },
         y: {
@@ -1546,12 +1547,12 @@ function observeRevealItems() {
       pan: {
         enabled: true,
         mode: 'x', // STRICTLY horizontal panning only!
-        threshold: 5
+        threshold: 10 // 10px intentional threshold prevents vertical scroll conflicts
       },
       zoom: {
         wheel: {
           enabled: true,
-          speed: 0.05, // Gentle, small-step mouse wheel zoom
+          speed: 0.05, // Calibrated mouse wheel speed
           modifierKey: null
         },
         pinch: {
@@ -1560,6 +1561,68 @@ function observeRevealItems() {
         mode: 'x' // STRICTLY horizontal zoom only!
       }
     };
+  }
+
+  function attachChartZoomReset(canvas, chart) {
+    if (!canvas) return;
+    canvas.__currentChart = chart;
+    canvas.style.touchAction = 'pan-y';
+
+    // Prevent duplicate event listener stacking on repeated chart updates
+    if (canvas.__zoomResetAttached) return;
+    canvas.__zoomResetAttached = true;
+
+    canvas.addEventListener('dblclick', function() {
+      if (canvas.__currentChart && typeof canvas.__currentChart.resetZoom === 'function') {
+        canvas.__currentChart.resetZoom();
+      }
+    });
+
+    var lastTapTime = 0;
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchMoved = false;
+    var hadMultiTouch = false;
+
+    canvas.addEventListener('touchstart', function(e) {
+      if (e.touches.length > 1) {
+        hadMultiTouch = true;
+      } else if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchMoved = false;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) {
+        hadMultiTouch = true;
+      } else if (e.touches.length === 1) {
+        var dx = Math.abs(e.touches[0].clientX - touchStartX);
+        var dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 8 || dy > 8) {
+          touchMoved = true;
+        }
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', function(e) {
+      if (hadMultiTouch) {
+        if (e.touches.length === 0) hadMultiTouch = false;
+        return;
+      }
+      if (touchMoved) return;
+
+      var currentTime = new Date().getTime();
+      var tapInterval = currentTime - lastTapTime;
+      if (tapInterval < 320 && tapInterval > 40) {
+        if (canvas.__currentChart && typeof canvas.__currentChart.resetZoom === 'function') {
+          canvas.__currentChart.resetZoom();
+          showToast('Zoom Reset');
+        }
+      }
+      lastTapTime = currentTime;
+    }, { passive: true });
   }
 
   function attachChartZoomReset(canvas, chart) {
@@ -2468,7 +2531,7 @@ function observeRevealItems() {
 
       var tr = document.createElement('tr');
       tr.className = 'liquid-table-row';
-      tr.onclick = function() { openYearDrilldown(y.year); };
+      tr.onclick = function() { openYearDrilldown(y.year, true); };
       tr.innerHTML =
         '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + y.year + '</td>' +
         '<td style="padding:12px 10px; text-align:center;">' + formatIndian(bankFdOnly, false) + '</td>' +
@@ -2583,27 +2646,18 @@ function observeRevealItems() {
   }
 
   function closeYearDrilldown() {
-    SELECTED_DRILLDOWN_YEAR = null;
-    var backdrop = document.getElementById('yearly-drilldown-backdrop');
-    if (backdrop) backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-    document.querySelectorAll('.yearly-card').forEach(function(c) {
-      c.classList.remove('active-year');
-    });
+    // Inline drilldown is part of page flow, no overlay to close
   }
 
   function closeYearDrilldownOnBackdrop(event) {
-    if (event.target && event.target.id === 'yearly-drilldown-backdrop') {
-      closeYearDrilldown();
-    }
+    // No-op for inline drilldown
   }
 
   function editRecordFromDrilldown(monthIso) {
-    closeYearDrilldown();
     editRecord(monthIso);
   }
 
-  function openYearDrilldown(year) {
+  function openYearDrilldown(year, smoothScroll) {
     if (!APP_STATE) return;
     SELECTED_DRILLDOWN_YEAR = String(year);
 
@@ -2616,28 +2670,19 @@ function observeRevealItems() {
     var yData = ys.find(function(item) { return String(item.year) === String(year); });
     if (!yData) return;
 
-    var backdrop = document.getElementById('yearly-drilldown-backdrop');
-    if (!backdrop) return;
-    backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    var dialog = backdrop.querySelector('.liquid-drilldown-dialog');
-    if (dialog) {
-      dialog.classList.remove('tab-hologram-landing');
-    }
-
-    var bodyEl = backdrop.querySelector('.drilldown-dialog-body');
-    if (bodyEl) bodyEl.scrollTop = 0;
-
     // Header info
-    document.getElementById('drilldown-title').innerText = year + ' Monthly Breakdown';
+    var titleEl = document.getElementById('drilldown-title');
+    if (titleEl) titleEl.innerText = year + ' Monthly Breakdown';
     var sign = yData.totalAdded >= 0 ? '+' : '';
     var gSign = yData.growthPct >= 0 ? '+' : '';
     var gPill = document.getElementById('drilldown-growth-pill');
-    gPill.innerText = gSign + yData.growthPct + '% Year Return (' + sign + formatIndian(yData.totalAdded, false) + ')';
-    gPill.className = 'glow-badge ' + (yData.growthPct >= 0 ? 'positive' : 'negative');
+    if (gPill) {
+      gPill.innerText = gSign + yData.growthPct + '% Year Return (' + sign + formatIndian(yData.totalAdded, false) + ')';
+      gPill.className = 'glow-badge ' + (yData.growthPct >= 0 ? 'positive' : 'negative');
+    }
 
-    document.getElementById('drilldown-chart-title').innerText = year + ' Monthly Investment Progression by Category';
+    var chartTitleEl = document.getElementById('drilldown-chart-title');
+    if (chartTitleEl) chartTitleEl.innerText = year + ' Monthly Investment Progression by Category';
 
     // Year Switcher buttons with persistent Glider Pill & Jelly Effect
     var switcher = document.getElementById('drilldown-year-switcher');
@@ -2666,7 +2711,7 @@ function observeRevealItems() {
             var y = this.getAttribute('data-year');
             if (y === SELECTED_DRILLDOWN_YEAR) return;
             repositionSegmentGlider(this, true);
-            openYearDrilldown(y);
+            openYearDrilldown(y, false);
           };
           switcher.appendChild(btn);
         });
@@ -2681,35 +2726,34 @@ function observeRevealItems() {
         setTimeout(function() {
           repositionSegmentGlider(activeBtn, true);
         }, 40);
-        setTimeout(function() {
-          repositionSegmentGlider(activeBtn, false);
-        }, 250);
       }
     }
 
     // 4 Analytics Metric Cards
     var kpis = document.getElementById('drilldown-kpis');
-    kpis.innerHTML =
-      '<div class="drilldown-metric-card">' +
-        '<div class="drilldown-metric-title">Annual Net Wealth Added</div>' +
-        '<div class="drilldown-metric-val" style="color:var(--emerald-bright);">' + sign + formatIndian(yData.totalAdded, false) + '</div>' +
-        '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + formatIndian(yData.startWealth, false) + ' &rarr; ' + formatIndian(yData.closingWealth, false) + ' (' + gSign + yData.growthPct + '%)</div>' +
-      '</div>' +
-      '<div class="drilldown-metric-card">' +
-        '<div class="drilldown-metric-title">Monthly Savings Pace</div>' +
-        '<div class="drilldown-metric-val">' + formatIndian(yData.avgMonthlyAdded, false) + '<span style="font-size:12px; color:var(--text-muted);"> /mo</span></div>' +
-        '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + yData.monthsLogged + ' months recorded in ' + year + '</div>' +
-      '</div>' +
-      '<div class="drilldown-metric-card">' +
-        '<div class="drilldown-metric-title">Best Month in ' + year + '</div>' +
-        '<div class="drilldown-metric-val" style="color:var(--cyan-core);">' + yData.bestMonthLabel + '</div>' +
-        '<div class="drilldown-metric-sub" style="color:var(--emerald-bright); font-family:JetBrains Mono;">+' + formatIndian(yData.bestMonthGain, false) + ' (' + (yData.bestMonthPct >= 0 ? '+' : '') + yData.bestMonthPct + '%)</div>' +
-      '</div>' +
-      '<div class="drilldown-metric-card">' +
-        '<div class="drilldown-metric-title">Lowest Month in ' + year + '</div>' +
-        '<div class="drilldown-metric-val" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + ';">' + yData.worstMonthLabel + '</div>' +
-        '<div class="drilldown-metric-sub" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + '; font-family:JetBrains Mono;">' + (yData.worstMonthGain >= 0 ? '+' : '') + formatIndian(yData.worstMonthGain, false) + ' (' + (yData.worstMonthPct >= 0 ? '+' : '') + yData.worstMonthPct + '%)</div>' +
-      '</div>';
+    if (kpis) {
+      kpis.innerHTML =
+        '<div class="drilldown-metric-card">' +
+          '<div class="drilldown-metric-title">Annual Net Wealth Added</div>' +
+          '<div class="drilldown-metric-val" style="color:var(--emerald-bright);">' + sign + formatIndian(yData.totalAdded, false) + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + formatIndian(yData.startWealth, false) + ' &rarr; ' + formatIndian(yData.closingWealth, false) + ' (' + gSign + yData.growthPct + '%)</div>' +
+        '</div>' +
+        '<div class="drilldown-metric-card">' +
+          '<div class="drilldown-metric-title">Monthly Savings Pace</div>' +
+          '<div class="drilldown-metric-val">' + formatIndian(yData.avgMonthlyAdded, false) + '<span style="font-size:12px; color:var(--text-muted);"> /mo</span></div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--text-muted);">' + yData.monthsLogged + ' months recorded in ' + year + '</div>' +
+        '</div>' +
+        '<div class="drilldown-metric-card">' +
+          '<div class="drilldown-metric-title">Best Month in ' + year + '</div>' +
+          '<div class="drilldown-metric-val" style="color:var(--cyan-core);">' + yData.bestMonthLabel + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:var(--emerald-bright); font-family:JetBrains Mono;">+' + formatIndian(yData.bestMonthGain, false) + ' (' + (yData.bestMonthPct >= 0 ? '+' : '') + yData.bestMonthPct + '%)</div>' +
+        '</div>' +
+        '<div class="drilldown-metric-card">' +
+          '<div class="drilldown-metric-title">Lowest Month in ' + year + '</div>' +
+          '<div class="drilldown-metric-val" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + ';">' + yData.worstMonthLabel + '</div>' +
+          '<div class="drilldown-metric-sub" style="color:' + (yData.worstMonthGain >= 0 ? 'var(--text-muted)' : 'var(--coral-bright)') + '; font-family:JetBrains Mono;">' + (yData.worstMonthGain >= 0 ? '+' : '') + formatIndian(yData.worstMonthGain, false) + ' (' + (yData.worstMonthPct >= 0 ? '+' : '') + yData.worstMonthPct + '%)</div>' +
+        '</div>';
+    }
 
     // Render Drilldown Chart - Continuous Category Breakdown
     var months = yData.monthlyRecords || [];
@@ -2727,142 +2771,140 @@ function observeRevealItems() {
 
     var isMobile = (window.innerWidth <= 768);
 
-    var ctxD = document.getElementById('chart-drilldown-year').getContext('2d');
-    if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
+    var canvasEl = document.getElementById('chart-drilldown-year');
+    if (canvasEl) {
+      var ctxD = canvasEl.getContext('2d');
+      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.destroy();
 
-    CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
-      type: 'line',
-      data: {
-        labels: cLabels,
-        datasets: [
-          {
-            label: 'Market Assets',
-            data: cMarket,
-            borderColor: '#34D399',
-            backgroundColor: 'rgba(52, 211, 153, 0.12)',
-            borderWidth: 2.8,
-            pointBackgroundColor: '#34D399',
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0,
-            fill: true
-          },
-          {
-            label: 'Bank & Fixed Deposits',
-            data: cBank,
-            borderColor: '#FBBF24',
-            backgroundColor: 'rgba(251, 191, 36, 0.12)',
-            borderWidth: 2.8,
-            pointBackgroundColor: '#FBBF24',
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0,
-            fill: true
-          },
-          {
-            label: 'EPF Balance',
-            data: cEpf,
-            borderColor: '#C084FC',
-            backgroundColor: 'rgba(192, 132, 252, 0.12)',
-            borderWidth: 2.8,
-            pointBackgroundColor: '#C084FC',
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0,
-            fill: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
+      CHART_DRILLDOWN_YEAR = new Chart(ctxD, {
+        type: 'line',
+        data: {
+          labels: cLabels,
+          datasets: [
+            {
+              label: 'Market Assets',
+              data: cMarket,
+              borderColor: '#34D399',
+              backgroundColor: 'rgba(52, 211, 153, 0.12)',
+              borderWidth: 2.8,
+              pointBackgroundColor: '#34D399',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0,
+              fill: true
+            },
+            {
+              label: 'Bank & Fixed Deposits',
+              data: cBank,
+              borderColor: '#FBBF24',
+              backgroundColor: 'rgba(251, 191, 36, 0.12)',
+              borderWidth: 2.8,
+              pointBackgroundColor: '#FBBF24',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0,
+              fill: true
+            },
+            {
+              label: 'EPF Balance',
+              data: cEpf,
+              borderColor: '#C084FC',
+              backgroundColor: 'rgba(192, 132, 252, 0.12)',
+              borderWidth: 2.8,
+              pointBackgroundColor: '#C084FC',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0,
+              fill: true
+            }
+          ]
         },
-        plugins: {
-          legend: {
-            display: true,
-            labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
           },
-          tooltip: getLiquidGlassTooltipConfig(),
-          zoom: getChartZoomConfig(cLabels)
-        },
-        scales: {
-          x: {
-            min: (isMobile && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
-            max: (isMobile && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#CBD5E1', font: { weight: '600' } }
+          plugins: {
+            legend: {
+              display: true,
+              labels: { color: '#CBD5E1', font: { size: 11, weight: '700' }, boxWidth: 14, padding: 14 }
+            },
+            tooltip: getLiquidGlassTooltipConfig(),
+            zoom: getChartZoomConfig(cLabels)
           },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
-            min: yMinDrill,
-            max: yMaxDrill,
-            ticks: {
-              display: true, // Minimal compact Y-axis on mobile
-              color: '#34D399',
-              font: { family: 'JetBrains Mono', size: isMobile ? 8.5 : 10.5 },
-              padding: isMobile ? 2 : 4,
-              maxTicksLimit: isMobile ? 4 : 8,
-              callback: function(v) { return formatCompactLakhs(v); }
+          scales: {
+            x: {
+              min: (isMobile && cLabels.length > 8) ? cLabels[Math.max(0, cLabels.length - 9)] : undefined,
+              max: (isMobile && cLabels.length > 8) ? cLabels[cLabels.length - 1] : undefined,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#CBD5E1', font: { weight: '600' } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.06)' },
+              min: yMinDrill,
+              max: yMaxDrill,
+              ticks: {
+                display: true, // Minimal compact Y-axis on mobile
+                color: '#34D399',
+                font: { family: 'JetBrains Mono', size: isMobile ? 8.5 : 10.5 },
+                padding: isMobile ? 2 : 4,
+                maxTicksLimit: isMobile ? 4 : 8,
+                callback: function(v) { return formatCompactLakhs(v); }
+              }
             }
           }
         }
-      }
-    });
-    attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
-
-    // Multi-milestone canvas resize to guarantee clean render after dialog opens
-    requestAnimationFrame(function() {
-      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
-    });
-    setTimeout(function() {
-      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
-    }, 120);
-    setTimeout(function() {
-      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
-    }, 280);
-    setTimeout(function() {
-      if (CHART_DRILLDOWN_YEAR) CHART_DRILLDOWN_YEAR.resize();
-    }, 450);
+      });
+      attachChartZoomReset(ctxD.canvas, CHART_DRILLDOWN_YEAR);
+    }
 
     // Populate Drilldown Monthly Breakdown Table with Center-Aligned Headers and Cells
     var tBody = document.getElementById('drilldown-table-body');
-    tBody.innerHTML = '';
-    months.forEach(function(m) {
-      var mRow = document.createElement('tr');
-      mRow.className = 'liquid-table-row';
+    if (tBody) {
+      tBody.innerHTML = '';
+      months.forEach(function(m) {
+        var mRow = document.createElement('tr');
+        mRow.className = 'liquid-table-row';
 
-      var isPos = m.monthlyChange >= 0;
-      var cSign = isPos ? '+' : '';
-      var pctSign = m.monthlyChangePct >= 0 ? '+' : '';
-      var colorStyle = isPos ? 'color:var(--emerald-bright);' : 'color:var(--coral-bright);';
-      var noteHtml = m.notes
-        ? '<button type="button" class="compact-note-btn filled" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="View & Edit Note: ' + escapeHtml(m.notes).replace(/"/g, '&quot;') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Note</span></button>'
-        : '<button type="button" class="compact-note-btn empty" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="Add note for this month"><span>+ Note</span></button>';
+        var isPos = m.monthlyChange >= 0;
+        var cSign = isPos ? '+' : '';
+        var pctSign = m.monthlyChangePct >= 0 ? '+' : '';
+        var colorStyle = isPos ? 'color:var(--emerald-bright);' : 'color:var(--coral-bright);';
+        var noteHtml = m.notes
+          ? '<button type="button" class="compact-note-btn filled" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="View & Edit Note: ' + escapeHtml(m.notes).replace(/"/g, '&quot;') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Note</span></button>'
+          : '<button type="button" class="compact-note-btn empty" onclick="openNoteModal(\'' + m.monthIso + '\', event)" title="Add note for this month"><span>+ Note</span></button>';
 
-      mRow.innerHTML =
-        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + m.label + '</td>' +
-        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_bank, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.epf, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(m.monthlyChange, false) + '</td>' +
-        '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + (m.monthlyChangePct !== undefined && m.monthlyChangePct !== null ? m.monthlyChangePct.toFixed(2) : '0.00') + '%</span></td>' +
-        '<td style="padding:10px 8px; text-align:center;">' + noteHtml + '</td>' +
-        '<td style="padding:8px 8px; text-align:center; white-space:nowrap;">' +
-          '<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">' +
-            '<button type="button" class="btn-action-icon edit" onclick="editRecordFromDrilldown(\'' + m.monthIso + '\')" title="Edit Figures" aria-label="Edit">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
-            '</button>' +
-            '<button type="button" class="btn-action-icon delete" onclick="deleteRecordPrompt(\'' + m.monthIso + '\')" title="Delete Month" aria-label="Delete">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
-            '</button>' +
-          '</div>' +
-        '</td>';
-      tBody.appendChild(mRow);
-    });
+        mRow.innerHTML =
+          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:#FFF;">' + m.label + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_bank, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.epf, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center;">' + formatIndian(m.total_market, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:800; color:var(--cyan-core);">' + formatIndian(m.net_worth, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '">' + cSign + formatIndian(m.monthlyChange, false) + '</td>' +
+          '<td style="padding:12px 10px; text-align:center; font-weight:700; ' + colorStyle + '"><span class="glow-badge ' + (isPos ? 'positive' : 'negative') + '" style="font-size:11px; display:inline-block;">' + pctSign + (m.monthlyChangePct !== undefined && m.monthlyChangePct !== null ? m.monthlyChangePct.toFixed(2) : '0.00') + '%</span></td>' +
+          '<td style="padding:10px 8px; text-align:center;">' + noteHtml + '</td>' +
+          '<td style="padding:8px 8px; text-align:center; white-space:nowrap;">' +
+            '<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">' +
+              '<button type="button" class="btn-action-icon edit" onclick="editRecord(\'' + m.monthIso + '\')" title="Edit Figures" aria-label="Edit">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+              '</button>' +
+              '<button type="button" class="btn-action-icon delete" onclick="deleteRecordPrompt(\'' + m.monthIso + '\')" title="Delete Month" aria-label="Delete">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+              '</button>' +
+            '</div>' +
+          '</td>';
+        tBody.appendChild(mRow);
+      });
+    }
+
+    if (smoothScroll) {
+      var sectionEl = document.getElementById('yearly-drilldown-inline');
+      if (sectionEl) {
+        sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   }
 
 /* ==========================================================================
