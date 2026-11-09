@@ -53,6 +53,7 @@
 
     // 3. Scroll-Reveal Observer
     observeRevealItems();
+    ensureSilkPrismLayers();
   }
 
     var GLASS_RAF_ID = null;
@@ -542,6 +543,24 @@ function observeRevealItems() {
     }, 140);
   }
 
+  
+  /* ==========================================================================
+     SILK PRISM SWEEP COMPOSITOR (Injects zero-footprint layers into glass slabs)
+     ========================================================================== */
+  function ensureSilkPrismLayers() {
+    var cards = document.querySelectorAll('.liquid-slab');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      var first = c.firstElementChild;
+      if (!first || !first.classList.contains('silk-prism-layer')) {
+        var layer = document.createElement('div');
+        layer.className = 'silk-prism-layer';
+        layer.setAttribute('aria-hidden', 'true');
+        c.insertBefore(layer, c.firstChild);
+      }
+    }
+  }
+
   function switchView(viewId) {
     // Auto-close open modals/overlays when navigating tabs
     if (typeof closeNoteModal === 'function') closeNoteModal();
@@ -580,6 +599,7 @@ function observeRevealItems() {
     if (targetDockBtn) repositionGliderPill(targetDockBtn, 'dock-glider-pill', 'mobile-dock', true);
 
     // 3. IMMEDIATELY Render Target View Content (Zero delay, 100% reliable - no waiting for animation timers!)
+    ensureSilkPrismLayers();
     if (viewId === 'yearly' && APP_STATE) {
       try { renderYearlyView(APP_STATE); } catch(e) { console.error(e); }
     } else if (viewId === 'history' && APP_STATE) {
@@ -654,7 +674,7 @@ function observeRevealItems() {
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return;
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 1200);
+      }, 1800);
 
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) {
@@ -2556,6 +2576,7 @@ function observeRevealItems() {
         '</div>';
 
       cardsContainer.appendChild(card);
+      ensureSilkPrismLayers();
 
       var mRecs = y.monthlyRecords || [];
       var lastRec = mRecs.length ? mRecs[mRecs.length - 1] : null;
@@ -3331,6 +3352,7 @@ function observeRevealItems() {
           '</div>' +
         '</div>';
       listEl.appendChild(card);
+      ensureSilkPrismLayers();
     });
   }
 

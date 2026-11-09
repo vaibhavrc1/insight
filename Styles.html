@@ -1031,6 +1031,99 @@
     }
   }
 
+  
+  /* =========================================================================
+     SILK PRISM SWEEP SYSTEM (Gentle Dissipation & Zero Mobile Layout Shift)
+     ========================================================================= */
+  .silk-prism-layer {
+    position: absolute;
+    top: -140%;
+    left: -140%;
+    width: 380%;
+    height: 380%;
+    background: linear-gradient(
+      45deg,
+      transparent 35%,
+      rgba(192, 132, 252, 0.16) 42%,
+      rgba(56, 189, 248, 0.28) 47%,
+      rgba(255, 255, 255, 0.60) 50%,
+      rgba(52, 211, 153, 0.32) 53%,
+      rgba(251, 191, 36, 0.18) 58%,
+      transparent 65%
+    );
+    pointer-events: none !important;
+    z-index: 4;
+    opacity: 0;
+    transform: translate3d(-35%, -35%, 0);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+  }
+
+  /* 1. Slide / Tab Switching Entrance (Single Pass with Gentle Dissipation) */
+  .view-section.tab-hologram-landing .liquid-slab .silk-prism-layer {
+    opacity: 1;
+    animation: silkPrismPass 1.6s cubic-bezier(0.12, 0.8, 0.18, 1) 1 forwards;
+  }
+
+  /* Stagger delays matching incoming cards for natural cascade */
+  .view-section.tab-hologram-landing > *:nth-child(1) .silk-prism-layer { animation-delay: 0ms !important; }
+  .view-section.tab-hologram-landing > *:nth-child(2) .silk-prism-layer { animation-delay: 70ms !important; }
+  .view-section.tab-hologram-landing > *:nth-child(3) .silk-prism-layer { animation-delay: 140ms !important; }
+  .view-section.tab-hologram-landing > *:nth-child(4) .silk-prism-layer { animation-delay: 210ms !important; }
+  .view-section.tab-hologram-landing > *:nth-child(n+5) .silk-prism-layer { animation-delay: 280ms !important; }
+
+  @keyframes silkPrismPass {
+    0%   { transform: translate3d(-35%, -35%, 0); opacity: 0; }
+    20%  { opacity: 1; }
+    55%  { opacity: 0.85; }
+    75%  { opacity: 0.35; }
+    100% { transform: translate3d(32%, 32%, 0); opacity: 0; }
+  }
+
+  /* 2. In-Flight Save State (Harmonic Breathing Loop with 0.6s Calm Pause) */
+  body[data-hologram-active="true"] .liquid-slab .silk-prism-layer,
+  .liquid-slab.is-saving .silk-prism-layer {
+    opacity: 1 !important;
+    animation: silkLoopBreath 2.4s ease-in-out infinite !important;
+  }
+
+  @keyframes silkLoopBreath {
+    0%   { transform: translate3d(-35%, -35%, 0); opacity: 0; }
+    20%  { opacity: 1; }
+    55%  { opacity: 0.85; }
+    75%  { transform: translate3d(30%, 30%, 0); opacity: 0.25; }
+    85%  { transform: translate3d(35%, 35%, 0); opacity: 0; }
+    100% { transform: translate3d(-35%, -35%, 0); opacity: 0; }
+  }
+
+  /* 3. Graceful Save Settle (Gentle Silk Dissipate + Emerald Confirmation Bloom) */
+  body[data-hologram-fade="true"] .liquid-slab .silk-prism-layer,
+  .liquid-slab.is-settling .silk-prism-layer {
+    opacity: 0 !important;
+    transform: translate3d(35%, 35%, 0) scale(1.05) !important;
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  body[data-hologram-fade="true"] .liquid-slab::before,
+  .liquid-slab.is-settling::before {
+    opacity: 1 !important;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(52, 211, 153, 0.85) 50%,
+      rgba(56, 189, 248, 0.75) 100%
+    ) !important;
+    animation: emeraldBloomSettle 0.95s cubic-bezier(0.16, 1, 0.3, 1) 1 forwards !important;
+  }
+
+  @keyframes emeraldBloomSettle {
+    0%   { opacity: 0; filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.4)); }
+    25%  { opacity: 1; filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.9)); }
+    65%  { opacity: 0.6; }
+    100% { opacity: 0; filter: drop-shadow(0 0 0 transparent); }
+  }
+
+
   /* ==========================================================================
      8. DASHBOARD CARDS, BADGES & BENTO GRIDS
      ========================================================================== */
@@ -5097,7 +5190,7 @@
   /* ==========================================================================
      V84 MOBILE MONTHLY BREAKDOWN & PERFORMANCE OPTIMIZATION
      ========================================================================== */
-  @media (max-width: 768px) {,
+  @media (max-width: 768px) {
     .month-detail-dialog {
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
