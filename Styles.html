@@ -963,21 +963,8 @@
   .view-section.tab-hologram-landing hr::after,
   .view-section.tab-hologram-landing .horizontal-ruler::after,
   .view-section.tab-hologram-landing .line-breaker::after {
-    opacity: 0;
-    background: linear-gradient(
-      115deg,
-      #34D399 0%,
-      #38BDF8 25%,
-      #A855F7 50%,
-      #FFFFFF 65%,
-      #38BDF8 80%,
-      #34D399 100%
-    ) !important;
-    background-size: 200% 100% !important;
-    background-attachment: local !important;
-    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 18px rgba(52, 211, 153, 0.6));
-    animation: tabHologramDissolve 2.4s both !important;
-    will-change: opacity;
+    display: none !important;
+    animation: none !important;
   }
 
   /* Synchronized stagger delays matching each incoming card */
@@ -1033,7 +1020,7 @@
 
   
   /* =========================================================================
-     SILK PRISM SWEEP SYSTEM (Full Edge-to-Edge Transit Across All Card Widths)
+     SILK PRISM SWEEP SYSTEM (135deg Perpendicular Wavefront & Zero Reverse Glide)
      ========================================================================= */
   .silk-prism-layer {
     position: absolute;
@@ -1042,24 +1029,24 @@
     width: 300%;
     height: 300%;
     background: linear-gradient(
-      45deg,
-      transparent 38%,
-      rgba(192, 132, 252, 0.16) 43%,
-      rgba(56, 189, 248, 0.28) 47%,
-      rgba(255, 255, 255, 0.65) 50%,
-      rgba(52, 211, 153, 0.32) 53%,
-      rgba(251, 191, 36, 0.18) 57%,
-      transparent 62%
+      135deg,
+      transparent 35%,
+      rgba(192, 132, 252, 0.18) 42%,
+      rgba(56, 189, 248, 0.32) 47%,
+      rgba(255, 255, 255, 0.70) 50%,
+      rgba(52, 211, 153, 0.35) 53%,
+      rgba(251, 191, 36, 0.20) 58%,
+      transparent 65%
     );
     pointer-events: none !important;
     z-index: 4;
     opacity: 0;
     transform: translate3d(-40%, -40%, 0);
-    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
+    transition: none !important;
   }
 
-  /* 1. Slide / Tab Switching Entrance (Covers 100% of Width Edge-to-Edge) */
+  /* 1. Slide / Tab Switching Entrance (135deg Perpendicular Edge-to-Edge Sweep) */
   .view-section.tab-hologram-landing .liquid-slab .silk-prism-layer {
     opacity: 1;
     animation: silkPrismPass 1.8s cubic-bezier(0.12, 0.85, 0.2, 1) 1 forwards;
@@ -1075,12 +1062,12 @@
   @keyframes silkPrismPass {
     0%   { transform: translate3d(-40%, -40%, 0); opacity: 0; }
     15%  { opacity: 1; }
-    60%  { opacity: 0.9; }
-    85%  { opacity: 0.65; } /* Still luminous as it crosses far-right edge */
+    60%  { opacity: 0.95; }
+    85%  { opacity: 0.5; }
     100% { transform: translate3d(40%, 40%, 0); opacity: 0; }
   }
 
-  /* 2. In-Flight Save State (Harmonic Breathing Loop with 0.6s Calm Pause) */
+  /* 2. In-Flight Save State (Harmonic Breathing Loop with 0.6s Calm Pause & Invisible Reset) */
   body[data-hologram-active="true"] .liquid-slab .silk-prism-layer,
   .liquid-slab.is-saving .silk-prism-layer {
     opacity: 1 !important;
@@ -1090,9 +1077,10 @@
   @keyframes silkLoopBreath {
     0%   { transform: translate3d(-40%, -40%, 0); opacity: 0; }
     18%  { opacity: 1; }
-    60%  { opacity: 0.9; }
-    85%  { opacity: 0.35; }
-    92%  { transform: translate3d(40%, 40%, 0); opacity: 0; }
+    55%  { opacity: 0.95; }
+    82%  { opacity: 0.4; }
+    88%  { transform: translate3d(40%, 40%, 0); opacity: 0; }
+    94%  { transform: translate3d(-40%, -40%, 0); opacity: 0; }
     100% { transform: translate3d(-40%, -40%, 0); opacity: 0; }
   }
 
@@ -1101,7 +1089,7 @@
   .liquid-slab.is-settling .silk-prism-layer {
     opacity: 0 !important;
     transform: translate3d(40%, 40%, 0) scale(1.05) !important;
-    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   body[data-hologram-fade="true"] .liquid-slab::before,
