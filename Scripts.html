@@ -551,6 +551,11 @@ function observeRevealItems() {
     var cards = document.querySelectorAll('.liquid-slab');
     for (var i = 0; i < cards.length; i++) {
       var c = cards[i];
+      if (c.style.overflow === 'visible' || c.classList.contains('no-prism-sweep')) {
+        var existing = c.querySelector(':scope > .silk-prism-layer');
+        if (existing) existing.remove();
+        continue;
+      }
       var first = c.firstElementChild;
       if (!first || !first.classList.contains('silk-prism-layer')) {
         var layer = document.createElement('div');
@@ -674,7 +679,7 @@ function observeRevealItems() {
       TAB_HOLOGRAM_CLEANUP_TIMER = setTimeout(function() {
         if (thisTransitionToken !== VIEW_TRANSITION_TOKEN) return;
         if (nextView) nextView.classList.remove('tab-hologram-landing');
-      }, 1800);
+      }, 4500);
 
     } else if (nextView) {
       document.querySelectorAll('.view-section').forEach(function(el) {
