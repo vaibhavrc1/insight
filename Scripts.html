@@ -551,11 +551,6 @@ function observeRevealItems() {
     var cards = document.querySelectorAll('.liquid-slab');
     for (var i = 0; i < cards.length; i++) {
       var c = cards[i];
-      if (c.style.overflow === 'visible' || c.classList.contains('no-prism-sweep')) {
-        var existing = c.querySelector(':scope > .silk-prism-layer');
-        if (existing) existing.remove();
-        continue;
-      }
       var first = c.firstElementChild;
       if (!first || !first.classList.contains('silk-prism-layer')) {
         var layer = document.createElement('div');
